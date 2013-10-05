@@ -1,0 +1,19 @@
+<stack>
+
+  <!-- Stack summary -->
+  <description brief="Generic tele-operation framework." >
+
+    This stack contains packages which define and use a framework for managing
+    generic tele-operation source and sink devices.
+
+  </description>
+  <author>Kevin LeBlanc (kevin.canadian@gmail.com)</author>
+  <license>BSD</license>
+  <url>https://github.com/skynetish/generic_teleop/wiki</url>
+
+  <!-- Stack dependencies -->
+  <depend stack="ros"/>
+  <depend stack="common_msgs"/>
+  <depend stack="ros_comm" />
+
+</stack>

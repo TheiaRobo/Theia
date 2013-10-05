@@ -1,0 +1,15 @@
+<package>
+  <description brief="HandFollow">
+
+     HandFollow
+
+  </description>
+  <author>Diogo Almeida</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/HandFollow</url>
+  <depend package="camera_trials"/>
+
+</package>
+
+

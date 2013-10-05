@@ -1,0 +1,15 @@
+<package>
+  <description brief="ControlMux">
+
+     ControlMux
+
+  </description>
+  <author>Diogo Almeida</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ControlMux</url>
+  <depend package="HandFollow"/>
+
+</package>
+
+

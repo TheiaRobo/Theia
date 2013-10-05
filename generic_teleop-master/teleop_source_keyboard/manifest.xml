@@ -1,0 +1,28 @@
+<package>
+
+  <!-- Package summary -->
+  <description brief="Tele-operation source which uses a keyboard as input." >
+
+    This package provides header files and a library which implement a
+    tele-operation source which uses a keyboard as input.
+
+  </description>
+  <author>Kevin LeBlanc (kevin.canadian@gmail.com)</author>
+  <license>BSD</license>
+  <url>https://github.com/skynetish/generic_teleop/wiki</url>
+
+  <!-- External dependencies -->
+  <rosdep name="boost" />
+
+  <!-- Package dependencies -->
+  <depend package="teleop_framework" />
+
+  <!-- Exports -->
+  <export>
+    <cpp
+      cflags="-I${prefix}/include"
+      lflags="-L${prefix}/lib -Wl,-rpath,${prefix}/lib -lteleop_source_keyboard"
+    />
+  </export>
+
+</package>
