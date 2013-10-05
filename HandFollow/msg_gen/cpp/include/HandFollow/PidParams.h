@@ -14,7 +14,6 @@
 
 #include "ros/assert.h"
 
-#include "std_msgs/Header.h"
 
 namespace HandFollow
 {
@@ -23,21 +22,16 @@ struct PidParams_ {
   typedef PidParams_<ContainerAllocator> Type;
 
   PidParams_()
-  : header()
-  , p_x(0.0)
+  : p_x(0.0)
   , p_z(0.0)
   {
   }
 
   PidParams_(const ContainerAllocator& _alloc)
-  : header(_alloc)
-  , p_x(0.0)
+  : p_x(0.0)
   , p_z(0.0)
   {
   }
-
-  typedef  ::std_msgs::Header_<ContainerAllocator>  _header_type;
-   ::std_msgs::Header_<ContainerAllocator>  header;
 
   typedef float _p_x_type;
   float p_x;
@@ -74,12 +68,12 @@ template<class ContainerAllocator>
 struct MD5Sum< ::HandFollow::PidParams_<ContainerAllocator> > {
   static const char* value() 
   {
-    return "0363066772f9eda174ad56effcb1a0a1";
+    return "5a5e0c267dd7fe0632fbcd19cf9e2030";
   }
 
   static const char* value(const  ::HandFollow::PidParams_<ContainerAllocator> &) { return value(); } 
-  static const uint64_t static_value1 = 0x0363066772f9eda1ULL;
-  static const uint64_t static_value2 = 0x74ad56effcb1a0a1ULL;
+  static const uint64_t static_value1 = 0x5a5e0c267dd7fe06ULL;
+  static const uint64_t static_value2 = 0x32fbcd19cf9e2030ULL;
 };
 
 template<class ContainerAllocator>
@@ -96,27 +90,8 @@ template<class ContainerAllocator>
 struct Definition< ::HandFollow::PidParams_<ContainerAllocator> > {
   static const char* value() 
   {
-    return "Header header\n\
-float32 p_x\n\
+    return "float32 p_x\n\
 float32 p_z\n\
-\n\
-================================================================================\n\
-MSG: std_msgs/Header\n\
-# Standard metadata for higher-level stamped data types.\n\
-# This is generally used to communicate timestamped data \n\
-# in a particular coordinate frame.\n\
-# \n\
-# sequence ID: consecutively increasing ID \n\
-uint32 seq\n\
-#Two-integer timestamp that is expressed as:\n\
-# * stamp.secs: seconds (stamp_secs) since epoch\n\
-# * stamp.nsecs: nanoseconds since stamp_secs\n\
-# time-handling sugar is provided by the client library\n\
-time stamp\n\
-#Frame this data is associated with\n\
-# 0: no frame\n\
-# 1: global frame\n\
-string frame_id\n\
 \n\
 ";
   }
@@ -124,8 +99,7 @@ string frame_id\n\
   static const char* value(const  ::HandFollow::PidParams_<ContainerAllocator> &) { return value(); } 
 };
 
-template<class ContainerAllocator> struct HasHeader< ::HandFollow::PidParams_<ContainerAllocator> > : public TrueType {};
-template<class ContainerAllocator> struct HasHeader< const ::HandFollow::PidParams_<ContainerAllocator> > : public TrueType {};
+template<class ContainerAllocator> struct IsFixedSize< ::HandFollow::PidParams_<ContainerAllocator> > : public TrueType {};
 } // namespace message_traits
 } // namespace ros
 
@@ -138,7 +112,6 @@ template<class ContainerAllocator> struct Serializer< ::HandFollow::PidParams_<C
 {
   template<typename Stream, typename T> inline static void allInOne(Stream& stream, T m)
   {
-    stream.next(m.header);
     stream.next(m.p_x);
     stream.next(m.p_z);
   }
@@ -158,9 +131,6 @@ struct Printer< ::HandFollow::PidParams_<ContainerAllocator> >
 {
   template<typename Stream> static void stream(Stream& s, const std::string& indent, const  ::HandFollow::PidParams_<ContainerAllocator> & v) 
   {
-    s << indent << "header: ";
-s << std::endl;
-    Printer< ::std_msgs::Header_<ContainerAllocator> >::stream(s, indent + "  ", v.header);
     s << indent << "p_x: ";
     Printer<float>::stream(s, indent + "  ", v.p_x);
     s << indent << "p_z: ";

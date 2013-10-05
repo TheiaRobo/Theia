@@ -53,7 +53,6 @@ CMakeFiles/ROSBUILD_genmsg_py: ../src/HandFollow/msg/__init__.py
 ../src/HandFollow/msg/_PidParams.py: ../msg/PidParams.msg
 ../src/HandFollow/msg/_PidParams.py: /opt/ros/fuerte/share/rospy/rosbuild/scripts/genmsg_py.py
 ../src/HandFollow/msg/_PidParams.py: /opt/ros/fuerte/share/roslib/bin/gendeps
-../src/HandFollow/msg/_PidParams.py: /opt/ros/fuerte/share/std_msgs/msg/Header.msg
 ../src/HandFollow/msg/_PidParams.py: ../manifest.xml
 ../src/HandFollow/msg/_PidParams.py: /opt/ros/fuerte/share/roslang/manifest.xml
 ../src/HandFollow/msg/_PidParams.py: /opt/ros/fuerte/share/roscpp/manifest.xml

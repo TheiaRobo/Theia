@@ -27,8 +27,6 @@ ros/macros.h
 ../msg_gen/cpp/include/HandFollow/ros/macros.h
 ros/assert.h
 ../msg_gen/cpp/include/HandFollow/ros/assert.h
-std_msgs/Header.h
-../msg_gen/cpp/include/HandFollow/std_msgs/Header.h
 
 ../msg_gen/cpp/include/HandFollow/vw.h
 string
