@@ -32,10 +32,10 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/diogo/Documents/DD2425_2013/Project/ControlMux
+CMAKE_SOURCE_DIR = /home/diogo/Documents/DD2425_2013/Project/Theia/ControlMux
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/diogo/Documents/DD2425_2013/Project/ControlMux/build
+CMAKE_BINARY_DIR = /home/diogo/Documents/DD2425_2013/Project/Theia/ControlMux/build
 
 # Utility rule file for test-results.
 
@@ -58,6 +58,6 @@ CMakeFiles/test-results.dir/clean:
 .PHONY : CMakeFiles/test-results.dir/clean
 
 CMakeFiles/test-results.dir/depend:
-	cd /home/diogo/Documents/DD2425_2013/Project/ControlMux/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/diogo/Documents/DD2425_2013/Project/ControlMux /home/diogo/Documents/DD2425_2013/Project/ControlMux /home/diogo/Documents/DD2425_2013/Project/ControlMux/build /home/diogo/Documents/DD2425_2013/Project/ControlMux/build /home/diogo/Documents/DD2425_2013/Project/ControlMux/build/CMakeFiles/test-results.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/diogo/Documents/DD2425_2013/Project/Theia/ControlMux/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/diogo/Documents/DD2425_2013/Project/Theia/ControlMux /home/diogo/Documents/DD2425_2013/Project/Theia/ControlMux /home/diogo/Documents/DD2425_2013/Project/Theia/ControlMux/build /home/diogo/Documents/DD2425_2013/Project/Theia/ControlMux/build /home/diogo/Documents/DD2425_2013/Project/Theia/ControlMux/build/CMakeFiles/test-results.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/test-results.dir/depend
 

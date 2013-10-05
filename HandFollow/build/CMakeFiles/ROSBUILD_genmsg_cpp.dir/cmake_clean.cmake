@@ -3,6 +3,7 @@ FILE(REMOVE_RECURSE
   "../src/HandFollow/msg"
   "../msg_gen"
   "CMakeFiles/ROSBUILD_genmsg_cpp"
+  "../msg_gen/cpp/include/HandFollow/PidParams.h"
   "../msg_gen/cpp/include/HandFollow/vw.h"
 )
 

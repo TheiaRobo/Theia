@@ -6,6 +6,30 @@
 
 #IncludeRegexTransform: 
 
+../msg_gen/cpp/include/HandFollow/PidParams.h
+string
+-
+vector
+-
+map
+-
+ostream
+-
+ros/serialization.h
+../msg_gen/cpp/include/HandFollow/ros/serialization.h
+ros/builtin_message_traits.h
+../msg_gen/cpp/include/HandFollow/ros/builtin_message_traits.h
+ros/message_operations.h
+../msg_gen/cpp/include/HandFollow/ros/message_operations.h
+ros/time.h
+../msg_gen/cpp/include/HandFollow/ros/time.h
+ros/macros.h
+../msg_gen/cpp/include/HandFollow/ros/macros.h
+ros/assert.h
+../msg_gen/cpp/include/HandFollow/ros/assert.h
+std_msgs/Header.h
+../msg_gen/cpp/include/HandFollow/std_msgs/Header.h
+
 ../msg_gen/cpp/include/HandFollow/vw.h
 string
 -
@@ -30,19 +54,21 @@ ros/assert.h
 std_msgs/Header.h
 ../msg_gen/cpp/include/HandFollow/std_msgs/Header.h
 
-/home/diogo/Documents/DD2425_2013/Project/HandFollow/src/HandFollow.cpp
+/home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/src/HandFollow.cpp
 ros/ros.h
-/home/diogo/Documents/DD2425_2013/Project/HandFollow/src/ros/ros.h
+/home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/src/ros/ros.h
 stdlib.h
 -
 cmath
 -
 HandFollow/vw.h
 -
+HandFollow/PidParams.h
+-
 robot_messages/coords.h
 -
 
-/home/diogo/Documents/DD2425_2013/Project/robot_messages/msg_gen/cpp/include/robot_messages/coords.h
+/home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg_gen/cpp/include/robot_messages/coords.h
 string
 -
 vector
@@ -52,19 +78,19 @@ map
 ostream
 -
 ros/serialization.h
-/home/diogo/Documents/DD2425_2013/Project/robot_messages/msg_gen/cpp/include/robot_messages/ros/serialization.h
+/home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg_gen/cpp/include/robot_messages/ros/serialization.h
 ros/builtin_message_traits.h
-/home/diogo/Documents/DD2425_2013/Project/robot_messages/msg_gen/cpp/include/robot_messages/ros/builtin_message_traits.h
+/home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg_gen/cpp/include/robot_messages/ros/builtin_message_traits.h
 ros/message_operations.h
-/home/diogo/Documents/DD2425_2013/Project/robot_messages/msg_gen/cpp/include/robot_messages/ros/message_operations.h
+/home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg_gen/cpp/include/robot_messages/ros/message_operations.h
 ros/time.h
-/home/diogo/Documents/DD2425_2013/Project/robot_messages/msg_gen/cpp/include/robot_messages/ros/time.h
+/home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg_gen/cpp/include/robot_messages/ros/time.h
 ros/macros.h
-/home/diogo/Documents/DD2425_2013/Project/robot_messages/msg_gen/cpp/include/robot_messages/ros/macros.h
+/home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg_gen/cpp/include/robot_messages/ros/macros.h
 ros/assert.h
-/home/diogo/Documents/DD2425_2013/Project/robot_messages/msg_gen/cpp/include/robot_messages/ros/assert.h
+/home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg_gen/cpp/include/robot_messages/ros/assert.h
 std_msgs/Header.h
-/home/diogo/Documents/DD2425_2013/Project/robot_messages/msg_gen/cpp/include/robot_messages/std_msgs/Header.h
+/home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg_gen/cpp/include/robot_messages/std_msgs/Header.h
 
 /opt/ros/fuerte/include/XmlRpcDecl.h
 ros/macros.h
