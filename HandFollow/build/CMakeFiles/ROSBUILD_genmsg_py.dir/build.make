@@ -32,10 +32,10 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow
+CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Theia/HandFollow
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/build
+CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Theia/HandFollow/build
 
 # Utility rule file for ROSBUILD_genmsg_py.
 
@@ -46,9 +46,9 @@ CMakeFiles/ROSBUILD_genmsg_py: ../src/HandFollow/msg/__init__.py
 
 ../src/HandFollow/msg/__init__.py: ../src/HandFollow/msg/_PidParams.py
 ../src/HandFollow/msg/__init__.py: ../src/HandFollow/msg/_vw.py
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/build/CMakeFiles $(CMAKE_PROGRESS_1)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Theia/HandFollow/build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating ../src/HandFollow/msg/__init__.py"
-	/opt/ros/fuerte/share/rospy/rosbuild/scripts/genmsg_py.py --initpy /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/msg/PidParams.msg /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/msg/vw.msg
+	/opt/ros/fuerte/share/rospy/rosbuild/scripts/genmsg_py.py --initpy /home/robo/DD2425_2013/Theia/HandFollow/msg/PidParams.msg /home/robo/DD2425_2013/Theia/HandFollow/msg/vw.msg
 
 ../src/HandFollow/msg/_PidParams.py: ../msg/PidParams.msg
 ../src/HandFollow/msg/_PidParams.py: /opt/ros/fuerte/share/rospy/rosbuild/scripts/genmsg_py.py
@@ -92,18 +92,18 @@ CMakeFiles/ROSBUILD_genmsg_py: ../src/HandFollow/msg/__init__.py
 ../src/HandFollow/msg/_PidParams.py: /opt/ros/fuerte/stacks/image_common/camera_info_manager/manifest.xml
 ../src/HandFollow/msg/_PidParams.py: /opt/ros/fuerte/stacks/openni_camera/manifest.xml
 ../src/HandFollow/msg/_PidParams.py: /opt/ros/fuerte/stacks/openni_launch/manifest.xml
-../src/HandFollow/msg/_PidParams.py: /home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/manifest.xml
-../src/HandFollow/msg/_PidParams.py: /home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/manifest.xml
+../src/HandFollow/msg/_PidParams.py: /home/robo/DD2425_2013/Theia/robot_messages/manifest.xml
+../src/HandFollow/msg/_PidParams.py: /home/robo/DD2425_2013/Theia/camera_trials/manifest.xml
 ../src/HandFollow/msg/_PidParams.py: /opt/ros/fuerte/stacks/dynamic_reconfigure/msg_gen/generated
 ../src/HandFollow/msg/_PidParams.py: /opt/ros/fuerte/stacks/dynamic_reconfigure/srv_gen/generated
 ../src/HandFollow/msg/_PidParams.py: /opt/ros/fuerte/stacks/bond_core/bond/msg_gen/generated
 ../src/HandFollow/msg/_PidParams.py: /opt/ros/fuerte/stacks/nodelet_core/nodelet/srv_gen/generated
 ../src/HandFollow/msg/_PidParams.py: /opt/ros/fuerte/stacks/geometry/tf/msg_gen/generated
 ../src/HandFollow/msg/_PidParams.py: /opt/ros/fuerte/stacks/geometry/tf/srv_gen/generated
-../src/HandFollow/msg/_PidParams.py: /home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg_gen/generated
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/build/CMakeFiles $(CMAKE_PROGRESS_2)
+../src/HandFollow/msg/_PidParams.py: /home/robo/DD2425_2013/Theia/robot_messages/msg_gen/generated
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Theia/HandFollow/build/CMakeFiles $(CMAKE_PROGRESS_2)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating ../src/HandFollow/msg/_PidParams.py"
-	/opt/ros/fuerte/share/rospy/rosbuild/scripts/genmsg_py.py --noinitpy /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/msg/PidParams.msg
+	/opt/ros/fuerte/share/rospy/rosbuild/scripts/genmsg_py.py --noinitpy /home/robo/DD2425_2013/Theia/HandFollow/msg/PidParams.msg
 
 ../src/HandFollow/msg/_vw.py: ../msg/vw.msg
 ../src/HandFollow/msg/_vw.py: /opt/ros/fuerte/share/rospy/rosbuild/scripts/genmsg_py.py
@@ -148,18 +148,18 @@ CMakeFiles/ROSBUILD_genmsg_py: ../src/HandFollow/msg/__init__.py
 ../src/HandFollow/msg/_vw.py: /opt/ros/fuerte/stacks/image_common/camera_info_manager/manifest.xml
 ../src/HandFollow/msg/_vw.py: /opt/ros/fuerte/stacks/openni_camera/manifest.xml
 ../src/HandFollow/msg/_vw.py: /opt/ros/fuerte/stacks/openni_launch/manifest.xml
-../src/HandFollow/msg/_vw.py: /home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/manifest.xml
-../src/HandFollow/msg/_vw.py: /home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/manifest.xml
+../src/HandFollow/msg/_vw.py: /home/robo/DD2425_2013/Theia/robot_messages/manifest.xml
+../src/HandFollow/msg/_vw.py: /home/robo/DD2425_2013/Theia/camera_trials/manifest.xml
 ../src/HandFollow/msg/_vw.py: /opt/ros/fuerte/stacks/dynamic_reconfigure/msg_gen/generated
 ../src/HandFollow/msg/_vw.py: /opt/ros/fuerte/stacks/dynamic_reconfigure/srv_gen/generated
 ../src/HandFollow/msg/_vw.py: /opt/ros/fuerte/stacks/bond_core/bond/msg_gen/generated
 ../src/HandFollow/msg/_vw.py: /opt/ros/fuerte/stacks/nodelet_core/nodelet/srv_gen/generated
 ../src/HandFollow/msg/_vw.py: /opt/ros/fuerte/stacks/geometry/tf/msg_gen/generated
 ../src/HandFollow/msg/_vw.py: /opt/ros/fuerte/stacks/geometry/tf/srv_gen/generated
-../src/HandFollow/msg/_vw.py: /home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg_gen/generated
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/build/CMakeFiles $(CMAKE_PROGRESS_3)
+../src/HandFollow/msg/_vw.py: /home/robo/DD2425_2013/Theia/robot_messages/msg_gen/generated
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Theia/HandFollow/build/CMakeFiles $(CMAKE_PROGRESS_3)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating ../src/HandFollow/msg/_vw.py"
-	/opt/ros/fuerte/share/rospy/rosbuild/scripts/genmsg_py.py --noinitpy /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/msg/vw.msg
+	/opt/ros/fuerte/share/rospy/rosbuild/scripts/genmsg_py.py --noinitpy /home/robo/DD2425_2013/Theia/HandFollow/msg/vw.msg
 
 ROSBUILD_genmsg_py: CMakeFiles/ROSBUILD_genmsg_py
 ROSBUILD_genmsg_py: ../src/HandFollow/msg/__init__.py
@@ -177,6 +177,6 @@ CMakeFiles/ROSBUILD_genmsg_py.dir/clean:
 .PHONY : CMakeFiles/ROSBUILD_genmsg_py.dir/clean
 
 CMakeFiles/ROSBUILD_genmsg_py.dir/depend:
-	cd /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/build /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/build /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/build/CMakeFiles/ROSBUILD_genmsg_py.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/robo/DD2425_2013/Theia/HandFollow/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Theia/HandFollow /home/robo/DD2425_2013/Theia/HandFollow /home/robo/DD2425_2013/Theia/HandFollow/build /home/robo/DD2425_2013/Theia/HandFollow/build /home/robo/DD2425_2013/Theia/HandFollow/build/CMakeFiles/ROSBUILD_genmsg_py.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/ROSBUILD_genmsg_py.dir/depend
 

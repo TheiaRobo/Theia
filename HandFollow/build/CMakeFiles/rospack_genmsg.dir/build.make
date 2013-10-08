@@ -32,10 +32,10 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow
+CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Theia/HandFollow
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/build
+CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Theia/HandFollow/build
 
 # Utility rule file for rospack_genmsg.
 
@@ -57,6 +57,6 @@ CMakeFiles/rospack_genmsg.dir/clean:
 .PHONY : CMakeFiles/rospack_genmsg.dir/clean
 
 CMakeFiles/rospack_genmsg.dir/depend:
-	cd /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/build /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/build /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/build/CMakeFiles/rospack_genmsg.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/robo/DD2425_2013/Theia/HandFollow/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Theia/HandFollow /home/robo/DD2425_2013/Theia/HandFollow /home/robo/DD2425_2013/Theia/HandFollow/build /home/robo/DD2425_2013/Theia/HandFollow/build /home/robo/DD2425_2013/Theia/HandFollow/build/CMakeFiles/rospack_genmsg.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/rospack_genmsg.dir/depend
 

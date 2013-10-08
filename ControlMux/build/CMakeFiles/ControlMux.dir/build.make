@@ -32,10 +32,10 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/diogo/Documents/DD2425_2013/Project/Theia/ControlMux
+CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Theia/ControlMux
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/diogo/Documents/DD2425_2013/Project/Theia/ControlMux/build
+CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Theia/ControlMux/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/ControlMux.dir/depend.make
@@ -87,30 +87,30 @@ CMakeFiles/ControlMux.dir/src/ControlMux.o: /opt/ros/fuerte/stacks/image_pipelin
 CMakeFiles/ControlMux.dir/src/ControlMux.o: /opt/ros/fuerte/stacks/image_common/camera_info_manager/manifest.xml
 CMakeFiles/ControlMux.dir/src/ControlMux.o: /opt/ros/fuerte/stacks/openni_camera/manifest.xml
 CMakeFiles/ControlMux.dir/src/ControlMux.o: /opt/ros/fuerte/stacks/openni_launch/manifest.xml
-CMakeFiles/ControlMux.dir/src/ControlMux.o: /home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/manifest.xml
-CMakeFiles/ControlMux.dir/src/ControlMux.o: /home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/manifest.xml
-CMakeFiles/ControlMux.dir/src/ControlMux.o: /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/manifest.xml
-CMakeFiles/ControlMux.dir/src/ControlMux.o: /home/diogo/Documents/DD2425_2013/Project/Theia/generic_teleop-master/teleop_msgs/manifest.xml
+CMakeFiles/ControlMux.dir/src/ControlMux.o: /home/robo/DD2425_2013/Theia/robot_messages/manifest.xml
+CMakeFiles/ControlMux.dir/src/ControlMux.o: /home/robo/DD2425_2013/Theia/camera_trials/manifest.xml
+CMakeFiles/ControlMux.dir/src/ControlMux.o: /home/robo/DD2425_2013/Theia/HandFollow/manifest.xml
+CMakeFiles/ControlMux.dir/src/ControlMux.o: /home/robo/DD2425_2013/Theia/generic_teleop-master/teleop_msgs/manifest.xml
 CMakeFiles/ControlMux.dir/src/ControlMux.o: /opt/ros/fuerte/stacks/dynamic_reconfigure/msg_gen/generated
 CMakeFiles/ControlMux.dir/src/ControlMux.o: /opt/ros/fuerte/stacks/dynamic_reconfigure/srv_gen/generated
 CMakeFiles/ControlMux.dir/src/ControlMux.o: /opt/ros/fuerte/stacks/bond_core/bond/msg_gen/generated
 CMakeFiles/ControlMux.dir/src/ControlMux.o: /opt/ros/fuerte/stacks/nodelet_core/nodelet/srv_gen/generated
 CMakeFiles/ControlMux.dir/src/ControlMux.o: /opt/ros/fuerte/stacks/geometry/tf/msg_gen/generated
 CMakeFiles/ControlMux.dir/src/ControlMux.o: /opt/ros/fuerte/stacks/geometry/tf/srv_gen/generated
-CMakeFiles/ControlMux.dir/src/ControlMux.o: /home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg_gen/generated
-CMakeFiles/ControlMux.dir/src/ControlMux.o: /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/msg_gen/generated
-CMakeFiles/ControlMux.dir/src/ControlMux.o: /home/diogo/Documents/DD2425_2013/Project/Theia/generic_teleop-master/teleop_msgs/msg_gen/generated
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/diogo/Documents/DD2425_2013/Project/Theia/ControlMux/build/CMakeFiles $(CMAKE_PROGRESS_1)
+CMakeFiles/ControlMux.dir/src/ControlMux.o: /home/robo/DD2425_2013/Theia/robot_messages/msg_gen/generated
+CMakeFiles/ControlMux.dir/src/ControlMux.o: /home/robo/DD2425_2013/Theia/HandFollow/msg_gen/generated
+CMakeFiles/ControlMux.dir/src/ControlMux.o: /home/robo/DD2425_2013/Theia/generic_teleop-master/teleop_msgs/msg_gen/generated
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Theia/ControlMux/build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object CMakeFiles/ControlMux.dir/src/ControlMux.o"
-	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -o CMakeFiles/ControlMux.dir/src/ControlMux.o -c /home/diogo/Documents/DD2425_2013/Project/Theia/ControlMux/src/ControlMux.cpp
+	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -o CMakeFiles/ControlMux.dir/src/ControlMux.o -c /home/robo/DD2425_2013/Theia/ControlMux/src/ControlMux.cpp
 
 CMakeFiles/ControlMux.dir/src/ControlMux.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/ControlMux.dir/src/ControlMux.i"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -E /home/diogo/Documents/DD2425_2013/Project/Theia/ControlMux/src/ControlMux.cpp > CMakeFiles/ControlMux.dir/src/ControlMux.i
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -E /home/robo/DD2425_2013/Theia/ControlMux/src/ControlMux.cpp > CMakeFiles/ControlMux.dir/src/ControlMux.i
 
 CMakeFiles/ControlMux.dir/src/ControlMux.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ControlMux.dir/src/ControlMux.s"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -S /home/diogo/Documents/DD2425_2013/Project/Theia/ControlMux/src/ControlMux.cpp -o CMakeFiles/ControlMux.dir/src/ControlMux.s
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -S /home/robo/DD2425_2013/Theia/ControlMux/src/ControlMux.cpp -o CMakeFiles/ControlMux.dir/src/ControlMux.s
 
 CMakeFiles/ControlMux.dir/src/ControlMux.o.requires:
 .PHONY : CMakeFiles/ControlMux.dir/src/ControlMux.o.requires
@@ -146,6 +146,6 @@ CMakeFiles/ControlMux.dir/clean:
 .PHONY : CMakeFiles/ControlMux.dir/clean
 
 CMakeFiles/ControlMux.dir/depend:
-	cd /home/diogo/Documents/DD2425_2013/Project/Theia/ControlMux/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/diogo/Documents/DD2425_2013/Project/Theia/ControlMux /home/diogo/Documents/DD2425_2013/Project/Theia/ControlMux /home/diogo/Documents/DD2425_2013/Project/Theia/ControlMux/build /home/diogo/Documents/DD2425_2013/Project/Theia/ControlMux/build /home/diogo/Documents/DD2425_2013/Project/Theia/ControlMux/build/CMakeFiles/ControlMux.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/robo/DD2425_2013/Theia/ControlMux/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Theia/ControlMux /home/robo/DD2425_2013/Theia/ControlMux /home/robo/DD2425_2013/Theia/ControlMux/build /home/robo/DD2425_2013/Theia/ControlMux/build /home/robo/DD2425_2013/Theia/ControlMux/build/CMakeFiles/ControlMux.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/ControlMux.dir/depend
 

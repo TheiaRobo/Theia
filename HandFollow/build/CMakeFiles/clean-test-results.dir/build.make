@@ -32,10 +32,10 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow
+CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Theia/HandFollow
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/build
+CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Theia/HandFollow/build
 
 # Utility rule file for clean-test-results.
 
@@ -43,7 +43,7 @@ CMAKE_BINARY_DIR = /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/bu
 include CMakeFiles/clean-test-results.dir/progress.make
 
 CMakeFiles/clean-test-results:
-	if ! rm -rf /home/diogo/.ros/test_results/HandFollow; then echo WARNING:\ failed\ to\ remove\ test-results\ directory ; fi
+	if ! rm -rf /home/robo/.ros/test_results/HandFollow; then echo WARNING:\ failed\ to\ remove\ test-results\ directory ; fi
 
 clean-test-results: CMakeFiles/clean-test-results
 clean-test-results: CMakeFiles/clean-test-results.dir/build.make
@@ -58,6 +58,6 @@ CMakeFiles/clean-test-results.dir/clean:
 .PHONY : CMakeFiles/clean-test-results.dir/clean
 
 CMakeFiles/clean-test-results.dir/depend:
-	cd /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/build /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/build /home/diogo/Documents/DD2425_2013/Project/Theia/HandFollow/build/CMakeFiles/clean-test-results.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/robo/DD2425_2013/Theia/HandFollow/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Theia/HandFollow /home/robo/DD2425_2013/Theia/HandFollow /home/robo/DD2425_2013/Theia/HandFollow/build /home/robo/DD2425_2013/Theia/HandFollow/build /home/robo/DD2425_2013/Theia/HandFollow/build/CMakeFiles/clean-test-results.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/clean-test-results.dir/depend
 

@@ -32,10 +32,10 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages
+CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Theia/robot_messages
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/build
+CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Theia/robot_messages/build
 
 # Utility rule file for ROSBUILD_genmsg_lisp.
 
@@ -51,9 +51,9 @@ CMakeFiles/ROSBUILD_genmsg_lisp: ../msg_gen/lisp/_package_coords.lisp
 ../msg_gen/lisp/coords.lisp: /opt/ros/fuerte/share/roslib/bin/gendeps
 ../msg_gen/lisp/coords.lisp: /opt/ros/fuerte/share/std_msgs/msg/Header.msg
 ../msg_gen/lisp/coords.lisp: ../manifest.xml
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/build/CMakeFiles $(CMAKE_PROGRESS_1)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Theia/robot_messages/build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating ../msg_gen/lisp/coords.lisp, ../msg_gen/lisp/_package.lisp, ../msg_gen/lisp/_package_coords.lisp"
-	/opt/ros/fuerte/share/roslisp/rosbuild/scripts/genmsg_lisp.py /home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg/coords.msg
+	/opt/ros/fuerte/share/roslisp/rosbuild/scripts/genmsg_lisp.py /home/robo/DD2425_2013/Theia/robot_messages/msg/coords.msg
 
 ../msg_gen/lisp/_package.lisp: ../msg_gen/lisp/coords.lisp
 
@@ -75,6 +75,6 @@ CMakeFiles/ROSBUILD_genmsg_lisp.dir/clean:
 .PHONY : CMakeFiles/ROSBUILD_genmsg_lisp.dir/clean
 
 CMakeFiles/ROSBUILD_genmsg_lisp.dir/depend:
-	cd /home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages /home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages /home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/build /home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/build /home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/build/CMakeFiles/ROSBUILD_genmsg_lisp.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/robo/DD2425_2013/Theia/robot_messages/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Theia/robot_messages /home/robo/DD2425_2013/Theia/robot_messages /home/robo/DD2425_2013/Theia/robot_messages/build /home/robo/DD2425_2013/Theia/robot_messages/build /home/robo/DD2425_2013/Theia/robot_messages/build/CMakeFiles/ROSBUILD_genmsg_lisp.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/ROSBUILD_genmsg_lisp.dir/depend
 

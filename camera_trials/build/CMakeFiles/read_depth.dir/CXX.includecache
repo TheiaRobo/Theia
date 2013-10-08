@@ -6,11 +6,11 @@
 
 #IncludeRegexTransform: 
 
-/home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/src/read_depth.cpp
+/home/robo/DD2425_2013/Theia/camera_trials/src/read_depth.cpp
 ros/ros.h
-/home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/src/ros/ros.h
+/home/robo/DD2425_2013/Theia/camera_trials/src/ros/ros.h
 stereo_msgs/DisparityImage.h
-/home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/src/stereo_msgs/DisparityImage.h
+/home/robo/DD2425_2013/Theia/camera_trials/src/stereo_msgs/DisparityImage.h
 image_transport/image_transport.h
 -
 cv_bridge/cv_bridge.h
@@ -30,7 +30,7 @@ cmath
 robot_messages/coords.h
 -
 
-/home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg_gen/cpp/include/robot_messages/coords.h
+/home/robo/DD2425_2013/Theia/robot_messages/msg_gen/cpp/include/robot_messages/coords.h
 string
 -
 vector
@@ -40,19 +40,19 @@ map
 ostream
 -
 ros/serialization.h
-/home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg_gen/cpp/include/robot_messages/ros/serialization.h
+/home/robo/DD2425_2013/Theia/robot_messages/msg_gen/cpp/include/robot_messages/ros/serialization.h
 ros/builtin_message_traits.h
-/home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg_gen/cpp/include/robot_messages/ros/builtin_message_traits.h
+/home/robo/DD2425_2013/Theia/robot_messages/msg_gen/cpp/include/robot_messages/ros/builtin_message_traits.h
 ros/message_operations.h
-/home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg_gen/cpp/include/robot_messages/ros/message_operations.h
+/home/robo/DD2425_2013/Theia/robot_messages/msg_gen/cpp/include/robot_messages/ros/message_operations.h
 ros/time.h
-/home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg_gen/cpp/include/robot_messages/ros/time.h
+/home/robo/DD2425_2013/Theia/robot_messages/msg_gen/cpp/include/robot_messages/ros/time.h
 ros/macros.h
-/home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg_gen/cpp/include/robot_messages/ros/macros.h
+/home/robo/DD2425_2013/Theia/robot_messages/msg_gen/cpp/include/robot_messages/ros/macros.h
 ros/assert.h
-/home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg_gen/cpp/include/robot_messages/ros/assert.h
+/home/robo/DD2425_2013/Theia/robot_messages/msg_gen/cpp/include/robot_messages/ros/assert.h
 std_msgs/Header.h
-/home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg_gen/cpp/include/robot_messages/std_msgs/Header.h
+/home/robo/DD2425_2013/Theia/robot_messages/msg_gen/cpp/include/robot_messages/std_msgs/Header.h
 
 /opt/ros/fuerte/include/XmlRpcDecl.h
 ros/macros.h

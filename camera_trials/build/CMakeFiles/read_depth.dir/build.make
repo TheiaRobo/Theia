@@ -32,10 +32,10 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials
+CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Theia/camera_trials
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build
+CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Theia/camera_trials/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/read_depth.dir/depend.make
@@ -87,25 +87,25 @@ CMakeFiles/read_depth.dir/src/read_depth.o: /opt/ros/fuerte/stacks/image_pipelin
 CMakeFiles/read_depth.dir/src/read_depth.o: /opt/ros/fuerte/stacks/image_common/camera_info_manager/manifest.xml
 CMakeFiles/read_depth.dir/src/read_depth.o: /opt/ros/fuerte/stacks/openni_camera/manifest.xml
 CMakeFiles/read_depth.dir/src/read_depth.o: /opt/ros/fuerte/stacks/openni_launch/manifest.xml
-CMakeFiles/read_depth.dir/src/read_depth.o: /home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/manifest.xml
+CMakeFiles/read_depth.dir/src/read_depth.o: /home/robo/DD2425_2013/Theia/robot_messages/manifest.xml
 CMakeFiles/read_depth.dir/src/read_depth.o: /opt/ros/fuerte/stacks/dynamic_reconfigure/msg_gen/generated
 CMakeFiles/read_depth.dir/src/read_depth.o: /opt/ros/fuerte/stacks/dynamic_reconfigure/srv_gen/generated
 CMakeFiles/read_depth.dir/src/read_depth.o: /opt/ros/fuerte/stacks/bond_core/bond/msg_gen/generated
 CMakeFiles/read_depth.dir/src/read_depth.o: /opt/ros/fuerte/stacks/nodelet_core/nodelet/srv_gen/generated
 CMakeFiles/read_depth.dir/src/read_depth.o: /opt/ros/fuerte/stacks/geometry/tf/msg_gen/generated
 CMakeFiles/read_depth.dir/src/read_depth.o: /opt/ros/fuerte/stacks/geometry/tf/srv_gen/generated
-CMakeFiles/read_depth.dir/src/read_depth.o: /home/diogo/Documents/DD2425_2013/Project/Theia/robot_messages/msg_gen/generated
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build/CMakeFiles $(CMAKE_PROGRESS_1)
+CMakeFiles/read_depth.dir/src/read_depth.o: /home/robo/DD2425_2013/Theia/robot_messages/msg_gen/generated
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Theia/camera_trials/build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object CMakeFiles/read_depth.dir/src/read_depth.o"
-	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -o CMakeFiles/read_depth.dir/src/read_depth.o -c /home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/src/read_depth.cpp
+	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -o CMakeFiles/read_depth.dir/src/read_depth.o -c /home/robo/DD2425_2013/Theia/camera_trials/src/read_depth.cpp
 
 CMakeFiles/read_depth.dir/src/read_depth.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/read_depth.dir/src/read_depth.i"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -E /home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/src/read_depth.cpp > CMakeFiles/read_depth.dir/src/read_depth.i
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -E /home/robo/DD2425_2013/Theia/camera_trials/src/read_depth.cpp > CMakeFiles/read_depth.dir/src/read_depth.i
 
 CMakeFiles/read_depth.dir/src/read_depth.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/read_depth.dir/src/read_depth.s"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -S /home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/src/read_depth.cpp -o CMakeFiles/read_depth.dir/src/read_depth.s
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -S /home/robo/DD2425_2013/Theia/camera_trials/src/read_depth.cpp -o CMakeFiles/read_depth.dir/src/read_depth.s
 
 CMakeFiles/read_depth.dir/src/read_depth.o.requires:
 .PHONY : CMakeFiles/read_depth.dir/src/read_depth.o.requires
@@ -141,6 +141,6 @@ CMakeFiles/read_depth.dir/clean:
 .PHONY : CMakeFiles/read_depth.dir/clean
 
 CMakeFiles/read_depth.dir/depend:
-	cd /home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials /home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials /home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build /home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build /home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build/CMakeFiles/read_depth.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/robo/DD2425_2013/Theia/camera_trials/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Theia/camera_trials /home/robo/DD2425_2013/Theia/camera_trials /home/robo/DD2425_2013/Theia/camera_trials/build /home/robo/DD2425_2013/Theia/camera_trials/build /home/robo/DD2425_2013/Theia/camera_trials/build/CMakeFiles/read_depth.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/read_depth.dir/depend
 
