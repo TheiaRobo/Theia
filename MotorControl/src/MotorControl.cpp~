@@ -2,7 +2,7 @@
 #include <HandFollow/vw.h>
 #include <differential_drive/PWM.h>
 
-float Ref1=0, Ref2=0;
+float Ref1=0, Ref2=0; // 
 
 const float L=20,R1=5,R2=5; // values in cm
 

@@ -1,0 +1,66 @@
+ /*
+ * bezier.cpp
+ * --------------------
+ * Copyright : (c) 2013, Germain Haessig <germain.haessig@ens-cachan.fr>
+ * Licence   : BSD3
+ * part of the differential_drive ROS package, for ROBOT13@KTH
+ * 
+ * Send to the arduino board the points for a bezier curve
+ */
+
+#include "ros/ros.h"
+#include "differential_drive/Speed.h"
+#include "Bezier.h"
+#include <math.h>
+
+float x_0 = 0.;
+float y_0 = 0.;
+float theta_0 = 0;
+
+float x_1 = 1;
+float y_1 = 1;
+float theta_1 = 0;
+
+Bezier my_curve;
+
+int main(int argc, char **argv)
+{
+ 
+  ros::init(argc, argv, "speed_instructions");
+
+  ros::NodeHandle n;
+
+  ros::Publisher chatter_pub = n.advertise<differential_drive::Speed>("speed_instructions", 1000);
+
+  ros::Rate loop_rate(10);
+
+	 ROS_INFO("Let's go !");
+	if(!my_curve.set_control_points(x_0,y_0,theta_0,x_1,y_1,theta_1)){}
+	else{ROS_INFO("Computation Error");
+	return 1;	
+	}
+	my_curve.compute_curve(0.2,0.2);
+	int n = sizeof(my_curve.V_l);
+	ROS_INFO("Computation Ended. Create %d speed points. ETA : %f",n,my_curve._eta);
+
+  if (ros::ok())
+  {
+
+    differential_drive::Speed msg;
+
+    msg.W1 = 1;
+    msg.W2 = 2;
+
+    ROS_INFO("Set W1 : %f    W2 : %f", msg.W1,msg.W2);
+
+    chatter_pub.publish(msg);
+
+    ros::spinOnce();
+
+    //loop_rate.sleep();
+
+  }
+
+
+  return 0;
+}

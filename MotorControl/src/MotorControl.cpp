@@ -2,9 +2,9 @@
 #include <HandFollow/vw.h>
 #include <differential_drive/PWM.h>
 
-float Ref1=0, Ref2=0; // 
+float Ref1=0, Ref2=0;
 
-const float L=20,R1=5,R2=5; // values in cm
+const float L=20,R1=5,R2=5; 				// values in cm
 
 
 void RefConverter(const HandFollow::vw::ConstPtr msg){ /* PID Control based on reference values obtained from the vw message */
@@ -14,7 +14,7 @@ void RefConverter(const HandFollow::vw::ConstPtr msg){ /* PID Control based on r
 	linv=msg->v;
 	angv=msg->w;
 	
-	Ref1=(linv+angv*L)/R1; // positive w turns left, ref1 for left wheel.
+	Ref1=(linv+angv*L)/R1; 				// positive w turns left, ref1 for left wheel
 	Ref2=(linv-angv*L)/R2;
 	
 	if (Ref1 >255)
