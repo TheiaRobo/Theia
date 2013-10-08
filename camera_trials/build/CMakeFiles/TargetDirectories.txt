@@ -1,0 +1,16 @@
+/home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build/CMakeFiles/ROSBUILD_genmsg_cpp.dir
+/home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build/CMakeFiles/ROSBUILD_genmsg_lisp.dir
+/home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build/CMakeFiles/ROSBUILD_gensrv_cpp.dir
+/home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build/CMakeFiles/ROSBUILD_gensrv_lisp.dir
+/home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build/CMakeFiles/clean-test-results.dir
+/home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build/CMakeFiles/read_depth.dir
+/home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build/CMakeFiles/rosbuild_precompile.dir
+/home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build/CMakeFiles/rosbuild_premsgsrvgen.dir
+/home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build/CMakeFiles/rospack_genmsg.dir
+/home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build/CMakeFiles/rospack_genmsg_libexe.dir
+/home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build/CMakeFiles/rospack_gensrv.dir
+/home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build/CMakeFiles/test.dir
+/home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build/CMakeFiles/test-future.dir
+/home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build/CMakeFiles/test-results.dir
+/home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build/CMakeFiles/test-results-run.dir
+/home/diogo/Documents/DD2425_2013/Project/Theia/camera_trials/build/CMakeFiles/tests.dir

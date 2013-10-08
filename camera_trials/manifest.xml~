@@ -1,0 +1,17 @@
+<package>
+  <description brief="camera_trials">
+
+     camera_trials
+
+  </description>
+  <author>Diogo Almeida</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/camera_trials</url>
+  <depend package="openni_launch"/>
+  <depend package="sensor_msgs"/>
+  <depend package="stereo_msgs"/>
+
+</package>
+
+
