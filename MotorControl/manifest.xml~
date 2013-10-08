@@ -1,0 +1,16 @@
+<package>
+  <description brief="MotorControl">
+
+     MotorControl
+
+  </description>
+  <author>robo</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/MotorControl</url>
+  <depend package="roscpp"/>
+  <depend package="HandFollow"/>
+
+</package>
+
+
