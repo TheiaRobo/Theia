@@ -52,13 +52,13 @@ ros/assert.h
 std_msgs/Header.h
 ../msg_gen/cpp/include/differential_drive/std_msgs/Header.h
 
-/home/robo/DD2425_2013/Theia/differential_drive/src/openLoop.cpp
+/home/robo/DD2425_2013/Project/differential_drive/src/openLoop.cpp
 ros/ros.h
-/home/robo/DD2425_2013/Theia/differential_drive/src/ros/ros.h
+/home/robo/DD2425_2013/Project/differential_drive/src/ros/ros.h
 differential_drive/Speed.h
-/home/robo/DD2425_2013/Theia/differential_drive/src/differential_drive/Speed.h
+/home/robo/DD2425_2013/Project/differential_drive/src/differential_drive/Speed.h
 differential_drive/Encoders.h
-/home/robo/DD2425_2013/Theia/differential_drive/src/differential_drive/Encoders.h
+/home/robo/DD2425_2013/Project/differential_drive/src/differential_drive/Encoders.h
 iostream
 -
 

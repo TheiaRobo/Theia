@@ -32,10 +32,10 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Theia/differential_drive
+CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Project/differential_drive
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Theia/differential_drive/build
+CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Project/differential_drive/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/mode1.dir/depend.make
@@ -54,17 +54,17 @@ CMakeFiles/mode1.dir/src/mode1.o: /opt/ros/fuerte/share/roslang/manifest.xml
 CMakeFiles/mode1.dir/src/mode1.o: /opt/ros/fuerte/share/rospy/manifest.xml
 CMakeFiles/mode1.dir/src/mode1.o: /opt/ros/fuerte/share/roscpp/manifest.xml
 CMakeFiles/mode1.dir/src/mode1.o: /opt/ros/fuerte/stacks/vision_opencv/opencv2/manifest.xml
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Theia/differential_drive/build/CMakeFiles $(CMAKE_PROGRESS_1)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Project/differential_drive/build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object CMakeFiles/mode1.dir/src/mode1.o"
-	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -o CMakeFiles/mode1.dir/src/mode1.o -c /home/robo/DD2425_2013/Theia/differential_drive/src/mode1.cpp
+	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -o CMakeFiles/mode1.dir/src/mode1.o -c /home/robo/DD2425_2013/Project/differential_drive/src/mode1.cpp
 
 CMakeFiles/mode1.dir/src/mode1.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/mode1.dir/src/mode1.i"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -E /home/robo/DD2425_2013/Theia/differential_drive/src/mode1.cpp > CMakeFiles/mode1.dir/src/mode1.i
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -E /home/robo/DD2425_2013/Project/differential_drive/src/mode1.cpp > CMakeFiles/mode1.dir/src/mode1.i
 
 CMakeFiles/mode1.dir/src/mode1.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/mode1.dir/src/mode1.s"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -S /home/robo/DD2425_2013/Theia/differential_drive/src/mode1.cpp -o CMakeFiles/mode1.dir/src/mode1.s
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -S /home/robo/DD2425_2013/Project/differential_drive/src/mode1.cpp -o CMakeFiles/mode1.dir/src/mode1.s
 
 CMakeFiles/mode1.dir/src/mode1.o.requires:
 .PHONY : CMakeFiles/mode1.dir/src/mode1.o.requires
@@ -100,6 +100,6 @@ CMakeFiles/mode1.dir/clean:
 .PHONY : CMakeFiles/mode1.dir/clean
 
 CMakeFiles/mode1.dir/depend:
-	cd /home/robo/DD2425_2013/Theia/differential_drive/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Theia/differential_drive /home/robo/DD2425_2013/Theia/differential_drive /home/robo/DD2425_2013/Theia/differential_drive/build /home/robo/DD2425_2013/Theia/differential_drive/build /home/robo/DD2425_2013/Theia/differential_drive/build/CMakeFiles/mode1.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/robo/DD2425_2013/Project/differential_drive/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Project/differential_drive /home/robo/DD2425_2013/Project/differential_drive /home/robo/DD2425_2013/Project/differential_drive/build /home/robo/DD2425_2013/Project/differential_drive/build /home/robo/DD2425_2013/Project/differential_drive/build/CMakeFiles/mode1.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/mode1.dir/depend
 

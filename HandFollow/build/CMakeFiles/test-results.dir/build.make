@@ -32,10 +32,10 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Theia/HandFollow
+CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Project/HandFollow
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Theia/HandFollow/build
+CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Project/HandFollow/build
 
 # Utility rule file for test-results.
 
@@ -58,6 +58,6 @@ CMakeFiles/test-results.dir/clean:
 .PHONY : CMakeFiles/test-results.dir/clean
 
 CMakeFiles/test-results.dir/depend:
-	cd /home/robo/DD2425_2013/Theia/HandFollow/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Theia/HandFollow /home/robo/DD2425_2013/Theia/HandFollow /home/robo/DD2425_2013/Theia/HandFollow/build /home/robo/DD2425_2013/Theia/HandFollow/build /home/robo/DD2425_2013/Theia/HandFollow/build/CMakeFiles/test-results.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/robo/DD2425_2013/Project/HandFollow/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Project/HandFollow /home/robo/DD2425_2013/Project/HandFollow /home/robo/DD2425_2013/Project/HandFollow/build /home/robo/DD2425_2013/Project/HandFollow/build /home/robo/DD2425_2013/Project/HandFollow/build/CMakeFiles/test-results.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/test-results.dir/depend
 

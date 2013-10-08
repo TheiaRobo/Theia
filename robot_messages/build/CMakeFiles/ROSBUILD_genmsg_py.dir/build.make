@@ -32,10 +32,10 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Theia/robot_messages
+CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Project/robot_messages
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Theia/robot_messages/build
+CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Project/robot_messages/build
 
 # Utility rule file for ROSBUILD_genmsg_py.
 
@@ -45,18 +45,18 @@ include CMakeFiles/ROSBUILD_genmsg_py.dir/progress.make
 CMakeFiles/ROSBUILD_genmsg_py: ../src/robot_messages/msg/__init__.py
 
 ../src/robot_messages/msg/__init__.py: ../src/robot_messages/msg/_coords.py
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Theia/robot_messages/build/CMakeFiles $(CMAKE_PROGRESS_1)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Project/robot_messages/build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating ../src/robot_messages/msg/__init__.py"
-	/opt/ros/fuerte/share/rospy/rosbuild/scripts/genmsg_py.py --initpy /home/robo/DD2425_2013/Theia/robot_messages/msg/coords.msg
+	/opt/ros/fuerte/share/rospy/rosbuild/scripts/genmsg_py.py --initpy /home/robo/DD2425_2013/Project/robot_messages/msg/coords.msg
 
 ../src/robot_messages/msg/_coords.py: ../msg/coords.msg
 ../src/robot_messages/msg/_coords.py: /opt/ros/fuerte/share/rospy/rosbuild/scripts/genmsg_py.py
 ../src/robot_messages/msg/_coords.py: /opt/ros/fuerte/share/roslib/bin/gendeps
 ../src/robot_messages/msg/_coords.py: /opt/ros/fuerte/share/std_msgs/msg/Header.msg
 ../src/robot_messages/msg/_coords.py: ../manifest.xml
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Theia/robot_messages/build/CMakeFiles $(CMAKE_PROGRESS_2)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Project/robot_messages/build/CMakeFiles $(CMAKE_PROGRESS_2)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating ../src/robot_messages/msg/_coords.py"
-	/opt/ros/fuerte/share/rospy/rosbuild/scripts/genmsg_py.py --noinitpy /home/robo/DD2425_2013/Theia/robot_messages/msg/coords.msg
+	/opt/ros/fuerte/share/rospy/rosbuild/scripts/genmsg_py.py --noinitpy /home/robo/DD2425_2013/Project/robot_messages/msg/coords.msg
 
 ROSBUILD_genmsg_py: CMakeFiles/ROSBUILD_genmsg_py
 ROSBUILD_genmsg_py: ../src/robot_messages/msg/__init__.py
@@ -73,6 +73,6 @@ CMakeFiles/ROSBUILD_genmsg_py.dir/clean:
 .PHONY : CMakeFiles/ROSBUILD_genmsg_py.dir/clean
 
 CMakeFiles/ROSBUILD_genmsg_py.dir/depend:
-	cd /home/robo/DD2425_2013/Theia/robot_messages/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Theia/robot_messages /home/robo/DD2425_2013/Theia/robot_messages /home/robo/DD2425_2013/Theia/robot_messages/build /home/robo/DD2425_2013/Theia/robot_messages/build /home/robo/DD2425_2013/Theia/robot_messages/build/CMakeFiles/ROSBUILD_genmsg_py.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/robo/DD2425_2013/Project/robot_messages/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Project/robot_messages /home/robo/DD2425_2013/Project/robot_messages /home/robo/DD2425_2013/Project/robot_messages/build /home/robo/DD2425_2013/Project/robot_messages/build /home/robo/DD2425_2013/Project/robot_messages/build/CMakeFiles/ROSBUILD_genmsg_py.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/ROSBUILD_genmsg_py.dir/depend
 

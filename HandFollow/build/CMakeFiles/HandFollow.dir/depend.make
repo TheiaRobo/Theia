@@ -4,7 +4,7 @@
 CMakeFiles/HandFollow.dir/src/HandFollow.o: ../msg_gen/cpp/include/HandFollow/PidParams.h
 CMakeFiles/HandFollow.dir/src/HandFollow.o: ../msg_gen/cpp/include/HandFollow/vw.h
 CMakeFiles/HandFollow.dir/src/HandFollow.o: ../src/HandFollow.cpp
-CMakeFiles/HandFollow.dir/src/HandFollow.o: /home/robo/DD2425_2013/Theia/robot_messages/msg_gen/cpp/include/robot_messages/coords.h
+CMakeFiles/HandFollow.dir/src/HandFollow.o: /home/robo/DD2425_2013/Project/robot_messages/msg_gen/cpp/include/robot_messages/coords.h
 CMakeFiles/HandFollow.dir/src/HandFollow.o: /opt/ros/fuerte/include/XmlRpcDecl.h
 CMakeFiles/HandFollow.dir/src/HandFollow.o: /opt/ros/fuerte/include/XmlRpcValue.h
 CMakeFiles/HandFollow.dir/src/HandFollow.o: /opt/ros/fuerte/include/ros/advertise_options.h

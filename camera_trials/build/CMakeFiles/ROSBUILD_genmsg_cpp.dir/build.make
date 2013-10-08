@@ -32,10 +32,10 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Theia/camera_trials
+CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Project/camera_trials
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Theia/camera_trials/build
+CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Project/camera_trials/build
 
 # Utility rule file for ROSBUILD_genmsg_cpp.
 
@@ -57,6 +57,6 @@ CMakeFiles/ROSBUILD_genmsg_cpp.dir/clean:
 .PHONY : CMakeFiles/ROSBUILD_genmsg_cpp.dir/clean
 
 CMakeFiles/ROSBUILD_genmsg_cpp.dir/depend:
-	cd /home/robo/DD2425_2013/Theia/camera_trials/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Theia/camera_trials /home/robo/DD2425_2013/Theia/camera_trials /home/robo/DD2425_2013/Theia/camera_trials/build /home/robo/DD2425_2013/Theia/camera_trials/build /home/robo/DD2425_2013/Theia/camera_trials/build/CMakeFiles/ROSBUILD_genmsg_cpp.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/robo/DD2425_2013/Project/camera_trials/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Project/camera_trials /home/robo/DD2425_2013/Project/camera_trials /home/robo/DD2425_2013/Project/camera_trials/build /home/robo/DD2425_2013/Project/camera_trials/build /home/robo/DD2425_2013/Project/camera_trials/build/CMakeFiles/ROSBUILD_genmsg_cpp.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/ROSBUILD_genmsg_cpp.dir/depend
 

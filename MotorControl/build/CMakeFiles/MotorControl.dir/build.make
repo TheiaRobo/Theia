@@ -32,10 +32,10 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Theia/MotorControl
+CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Project/MotorControl
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Theia/MotorControl/build
+CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Project/MotorControl/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/MotorControl.dir/depend.make
@@ -87,30 +87,30 @@ CMakeFiles/MotorControl.dir/src/MotorControl.o: /opt/ros/fuerte/stacks/image_pip
 CMakeFiles/MotorControl.dir/src/MotorControl.o: /opt/ros/fuerte/stacks/image_common/camera_info_manager/manifest.xml
 CMakeFiles/MotorControl.dir/src/MotorControl.o: /opt/ros/fuerte/stacks/openni_camera/manifest.xml
 CMakeFiles/MotorControl.dir/src/MotorControl.o: /opt/ros/fuerte/stacks/openni_launch/manifest.xml
-CMakeFiles/MotorControl.dir/src/MotorControl.o: /home/robo/DD2425_2013/Theia/robot_messages/manifest.xml
-CMakeFiles/MotorControl.dir/src/MotorControl.o: /home/robo/DD2425_2013/Theia/camera_trials/manifest.xml
-CMakeFiles/MotorControl.dir/src/MotorControl.o: /home/robo/DD2425_2013/Theia/HandFollow/manifest.xml
-CMakeFiles/MotorControl.dir/src/MotorControl.o: /home/robo/DD2425_2013/differential_drive/manifest.xml
+CMakeFiles/MotorControl.dir/src/MotorControl.o: /home/robo/DD2425_2013/Project/robot_messages/manifest.xml
+CMakeFiles/MotorControl.dir/src/MotorControl.o: /home/robo/DD2425_2013/Project/camera_trials/manifest.xml
+CMakeFiles/MotorControl.dir/src/MotorControl.o: /home/robo/DD2425_2013/Project/HandFollow/manifest.xml
+CMakeFiles/MotorControl.dir/src/MotorControl.o: /home/robo/DD2425_2013/Project/differential_drive/manifest.xml
 CMakeFiles/MotorControl.dir/src/MotorControl.o: /opt/ros/fuerte/stacks/dynamic_reconfigure/msg_gen/generated
 CMakeFiles/MotorControl.dir/src/MotorControl.o: /opt/ros/fuerte/stacks/dynamic_reconfigure/srv_gen/generated
 CMakeFiles/MotorControl.dir/src/MotorControl.o: /opt/ros/fuerte/stacks/bond_core/bond/msg_gen/generated
 CMakeFiles/MotorControl.dir/src/MotorControl.o: /opt/ros/fuerte/stacks/nodelet_core/nodelet/srv_gen/generated
 CMakeFiles/MotorControl.dir/src/MotorControl.o: /opt/ros/fuerte/stacks/geometry/tf/msg_gen/generated
 CMakeFiles/MotorControl.dir/src/MotorControl.o: /opt/ros/fuerte/stacks/geometry/tf/srv_gen/generated
-CMakeFiles/MotorControl.dir/src/MotorControl.o: /home/robo/DD2425_2013/Theia/robot_messages/msg_gen/generated
-CMakeFiles/MotorControl.dir/src/MotorControl.o: /home/robo/DD2425_2013/Theia/HandFollow/msg_gen/generated
-CMakeFiles/MotorControl.dir/src/MotorControl.o: /home/robo/DD2425_2013/differential_drive/msg_gen/generated
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Theia/MotorControl/build/CMakeFiles $(CMAKE_PROGRESS_1)
+CMakeFiles/MotorControl.dir/src/MotorControl.o: /home/robo/DD2425_2013/Project/robot_messages/msg_gen/generated
+CMakeFiles/MotorControl.dir/src/MotorControl.o: /home/robo/DD2425_2013/Project/HandFollow/msg_gen/generated
+CMakeFiles/MotorControl.dir/src/MotorControl.o: /home/robo/DD2425_2013/Project/differential_drive/msg_gen/generated
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Project/MotorControl/build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object CMakeFiles/MotorControl.dir/src/MotorControl.o"
-	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -o CMakeFiles/MotorControl.dir/src/MotorControl.o -c /home/robo/DD2425_2013/Theia/MotorControl/src/MotorControl.cpp
+	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -o CMakeFiles/MotorControl.dir/src/MotorControl.o -c /home/robo/DD2425_2013/Project/MotorControl/src/MotorControl.cpp
 
 CMakeFiles/MotorControl.dir/src/MotorControl.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/MotorControl.dir/src/MotorControl.i"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -E /home/robo/DD2425_2013/Theia/MotorControl/src/MotorControl.cpp > CMakeFiles/MotorControl.dir/src/MotorControl.i
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -E /home/robo/DD2425_2013/Project/MotorControl/src/MotorControl.cpp > CMakeFiles/MotorControl.dir/src/MotorControl.i
 
 CMakeFiles/MotorControl.dir/src/MotorControl.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/MotorControl.dir/src/MotorControl.s"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -S /home/robo/DD2425_2013/Theia/MotorControl/src/MotorControl.cpp -o CMakeFiles/MotorControl.dir/src/MotorControl.s
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -S /home/robo/DD2425_2013/Project/MotorControl/src/MotorControl.cpp -o CMakeFiles/MotorControl.dir/src/MotorControl.s
 
 CMakeFiles/MotorControl.dir/src/MotorControl.o.requires:
 .PHONY : CMakeFiles/MotorControl.dir/src/MotorControl.o.requires
@@ -146,6 +146,6 @@ CMakeFiles/MotorControl.dir/clean:
 .PHONY : CMakeFiles/MotorControl.dir/clean
 
 CMakeFiles/MotorControl.dir/depend:
-	cd /home/robo/DD2425_2013/Theia/MotorControl/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Theia/MotorControl /home/robo/DD2425_2013/Theia/MotorControl /home/robo/DD2425_2013/Theia/MotorControl/build /home/robo/DD2425_2013/Theia/MotorControl/build /home/robo/DD2425_2013/Theia/MotorControl/build/CMakeFiles/MotorControl.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/robo/DD2425_2013/Project/MotorControl/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Project/MotorControl /home/robo/DD2425_2013/Project/MotorControl /home/robo/DD2425_2013/Project/MotorControl/build /home/robo/DD2425_2013/Project/MotorControl/build /home/robo/DD2425_2013/Project/MotorControl/build/CMakeFiles/MotorControl.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/MotorControl.dir/depend
 

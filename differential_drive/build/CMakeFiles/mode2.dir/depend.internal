@@ -7,7 +7,7 @@ CMakeFiles/mode2.dir/src/mode2.o
  ../msg_gen/cpp/include/differential_drive/Odometry.h
  ../msg_gen/cpp/include/differential_drive/Sharp.h
  ../msg_gen/cpp/include/differential_drive/Speed.h
- /home/robo/DD2425_2013/Theia/differential_drive/src/mode2.cpp
+ /home/robo/DD2425_2013/Project/differential_drive/src/mode2.cpp
  /opt/ros/fuerte/include/XmlRpcDecl.h
  /opt/ros/fuerte/include/XmlRpcValue.h
  /opt/ros/fuerte/include/ros/advertise_options.h

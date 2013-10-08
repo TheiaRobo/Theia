@@ -32,10 +32,10 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Theia/differential_drive
+CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Project/differential_drive
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Theia/differential_drive/build
+CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Project/differential_drive/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/bezier_traj.dir/depend.make
@@ -54,17 +54,17 @@ CMakeFiles/bezier_traj.dir/src/bezier_traj.o: /opt/ros/fuerte/share/roslang/mani
 CMakeFiles/bezier_traj.dir/src/bezier_traj.o: /opt/ros/fuerte/share/rospy/manifest.xml
 CMakeFiles/bezier_traj.dir/src/bezier_traj.o: /opt/ros/fuerte/share/roscpp/manifest.xml
 CMakeFiles/bezier_traj.dir/src/bezier_traj.o: /opt/ros/fuerte/stacks/vision_opencv/opencv2/manifest.xml
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Theia/differential_drive/build/CMakeFiles $(CMAKE_PROGRESS_1)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Project/differential_drive/build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object CMakeFiles/bezier_traj.dir/src/bezier_traj.o"
-	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -o CMakeFiles/bezier_traj.dir/src/bezier_traj.o -c /home/robo/DD2425_2013/Theia/differential_drive/src/bezier_traj.cpp
+	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -o CMakeFiles/bezier_traj.dir/src/bezier_traj.o -c /home/robo/DD2425_2013/Project/differential_drive/src/bezier_traj.cpp
 
 CMakeFiles/bezier_traj.dir/src/bezier_traj.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/bezier_traj.dir/src/bezier_traj.i"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -E /home/robo/DD2425_2013/Theia/differential_drive/src/bezier_traj.cpp > CMakeFiles/bezier_traj.dir/src/bezier_traj.i
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -E /home/robo/DD2425_2013/Project/differential_drive/src/bezier_traj.cpp > CMakeFiles/bezier_traj.dir/src/bezier_traj.i
 
 CMakeFiles/bezier_traj.dir/src/bezier_traj.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/bezier_traj.dir/src/bezier_traj.s"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -S /home/robo/DD2425_2013/Theia/differential_drive/src/bezier_traj.cpp -o CMakeFiles/bezier_traj.dir/src/bezier_traj.s
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -S /home/robo/DD2425_2013/Project/differential_drive/src/bezier_traj.cpp -o CMakeFiles/bezier_traj.dir/src/bezier_traj.s
 
 CMakeFiles/bezier_traj.dir/src/bezier_traj.o.requires:
 .PHONY : CMakeFiles/bezier_traj.dir/src/bezier_traj.o.requires
@@ -83,17 +83,17 @@ CMakeFiles/bezier_traj.dir/src/Bezier.o: /opt/ros/fuerte/share/roslang/manifest.
 CMakeFiles/bezier_traj.dir/src/Bezier.o: /opt/ros/fuerte/share/rospy/manifest.xml
 CMakeFiles/bezier_traj.dir/src/Bezier.o: /opt/ros/fuerte/share/roscpp/manifest.xml
 CMakeFiles/bezier_traj.dir/src/Bezier.o: /opt/ros/fuerte/stacks/vision_opencv/opencv2/manifest.xml
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Theia/differential_drive/build/CMakeFiles $(CMAKE_PROGRESS_2)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Project/differential_drive/build/CMakeFiles $(CMAKE_PROGRESS_2)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object CMakeFiles/bezier_traj.dir/src/Bezier.o"
-	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -o CMakeFiles/bezier_traj.dir/src/Bezier.o -c /home/robo/DD2425_2013/Theia/differential_drive/src/Bezier.cpp
+	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -o CMakeFiles/bezier_traj.dir/src/Bezier.o -c /home/robo/DD2425_2013/Project/differential_drive/src/Bezier.cpp
 
 CMakeFiles/bezier_traj.dir/src/Bezier.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/bezier_traj.dir/src/Bezier.i"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -E /home/robo/DD2425_2013/Theia/differential_drive/src/Bezier.cpp > CMakeFiles/bezier_traj.dir/src/Bezier.i
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -E /home/robo/DD2425_2013/Project/differential_drive/src/Bezier.cpp > CMakeFiles/bezier_traj.dir/src/Bezier.i
 
 CMakeFiles/bezier_traj.dir/src/Bezier.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/bezier_traj.dir/src/Bezier.s"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -S /home/robo/DD2425_2013/Theia/differential_drive/src/Bezier.cpp -o CMakeFiles/bezier_traj.dir/src/Bezier.s
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -S /home/robo/DD2425_2013/Project/differential_drive/src/Bezier.cpp -o CMakeFiles/bezier_traj.dir/src/Bezier.s
 
 CMakeFiles/bezier_traj.dir/src/Bezier.o.requires:
 .PHONY : CMakeFiles/bezier_traj.dir/src/Bezier.o.requires
@@ -132,6 +132,6 @@ CMakeFiles/bezier_traj.dir/clean:
 .PHONY : CMakeFiles/bezier_traj.dir/clean
 
 CMakeFiles/bezier_traj.dir/depend:
-	cd /home/robo/DD2425_2013/Theia/differential_drive/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Theia/differential_drive /home/robo/DD2425_2013/Theia/differential_drive /home/robo/DD2425_2013/Theia/differential_drive/build /home/robo/DD2425_2013/Theia/differential_drive/build /home/robo/DD2425_2013/Theia/differential_drive/build/CMakeFiles/bezier_traj.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/robo/DD2425_2013/Project/differential_drive/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Project/differential_drive /home/robo/DD2425_2013/Project/differential_drive /home/robo/DD2425_2013/Project/differential_drive/build /home/robo/DD2425_2013/Project/differential_drive/build /home/robo/DD2425_2013/Project/differential_drive/build/CMakeFiles/bezier_traj.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/bezier_traj.dir/depend
 

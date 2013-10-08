@@ -53,6 +53,9 @@ void Teleop_up(const teleop_msgs::State::ConstPtr msg){
 		}
 	}
 	
+	prev_key[0]=value[0];
+	prev_key[1]=value[1];
+	
 	if(v>V_MAX)
 		v=V_MAX;
 	else

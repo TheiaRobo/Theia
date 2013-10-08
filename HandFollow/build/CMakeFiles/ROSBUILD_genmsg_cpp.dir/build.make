@@ -32,10 +32,10 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Theia/HandFollow
+CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Project/HandFollow
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Theia/HandFollow/build
+CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Project/HandFollow/build
 
 # Utility rule file for ROSBUILD_genmsg_cpp.
 
@@ -87,18 +87,18 @@ CMakeFiles/ROSBUILD_genmsg_cpp: ../msg_gen/cpp/include/HandFollow/vw.h
 ../msg_gen/cpp/include/HandFollow/PidParams.h: /opt/ros/fuerte/stacks/image_common/camera_info_manager/manifest.xml
 ../msg_gen/cpp/include/HandFollow/PidParams.h: /opt/ros/fuerte/stacks/openni_camera/manifest.xml
 ../msg_gen/cpp/include/HandFollow/PidParams.h: /opt/ros/fuerte/stacks/openni_launch/manifest.xml
-../msg_gen/cpp/include/HandFollow/PidParams.h: /home/robo/DD2425_2013/Theia/robot_messages/manifest.xml
-../msg_gen/cpp/include/HandFollow/PidParams.h: /home/robo/DD2425_2013/Theia/camera_trials/manifest.xml
+../msg_gen/cpp/include/HandFollow/PidParams.h: /home/robo/DD2425_2013/Project/robot_messages/manifest.xml
+../msg_gen/cpp/include/HandFollow/PidParams.h: /home/robo/DD2425_2013/Project/camera_trials/manifest.xml
 ../msg_gen/cpp/include/HandFollow/PidParams.h: /opt/ros/fuerte/stacks/dynamic_reconfigure/msg_gen/generated
 ../msg_gen/cpp/include/HandFollow/PidParams.h: /opt/ros/fuerte/stacks/dynamic_reconfigure/srv_gen/generated
 ../msg_gen/cpp/include/HandFollow/PidParams.h: /opt/ros/fuerte/stacks/bond_core/bond/msg_gen/generated
 ../msg_gen/cpp/include/HandFollow/PidParams.h: /opt/ros/fuerte/stacks/nodelet_core/nodelet/srv_gen/generated
 ../msg_gen/cpp/include/HandFollow/PidParams.h: /opt/ros/fuerte/stacks/geometry/tf/msg_gen/generated
 ../msg_gen/cpp/include/HandFollow/PidParams.h: /opt/ros/fuerte/stacks/geometry/tf/srv_gen/generated
-../msg_gen/cpp/include/HandFollow/PidParams.h: /home/robo/DD2425_2013/Theia/robot_messages/msg_gen/generated
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Theia/HandFollow/build/CMakeFiles $(CMAKE_PROGRESS_1)
+../msg_gen/cpp/include/HandFollow/PidParams.h: /home/robo/DD2425_2013/Project/robot_messages/msg_gen/generated
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Project/HandFollow/build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating ../msg_gen/cpp/include/HandFollow/PidParams.h"
-	/opt/ros/fuerte/share/roscpp/rosbuild/scripts/genmsg_cpp.py /home/robo/DD2425_2013/Theia/HandFollow/msg/PidParams.msg
+	/opt/ros/fuerte/share/roscpp/rosbuild/scripts/genmsg_cpp.py /home/robo/DD2425_2013/Project/HandFollow/msg/PidParams.msg
 
 ../msg_gen/cpp/include/HandFollow/vw.h: ../msg/vw.msg
 ../msg_gen/cpp/include/HandFollow/vw.h: /opt/ros/fuerte/share/roscpp/rosbuild/scripts/genmsg_cpp.py
@@ -143,18 +143,18 @@ CMakeFiles/ROSBUILD_genmsg_cpp: ../msg_gen/cpp/include/HandFollow/vw.h
 ../msg_gen/cpp/include/HandFollow/vw.h: /opt/ros/fuerte/stacks/image_common/camera_info_manager/manifest.xml
 ../msg_gen/cpp/include/HandFollow/vw.h: /opt/ros/fuerte/stacks/openni_camera/manifest.xml
 ../msg_gen/cpp/include/HandFollow/vw.h: /opt/ros/fuerte/stacks/openni_launch/manifest.xml
-../msg_gen/cpp/include/HandFollow/vw.h: /home/robo/DD2425_2013/Theia/robot_messages/manifest.xml
-../msg_gen/cpp/include/HandFollow/vw.h: /home/robo/DD2425_2013/Theia/camera_trials/manifest.xml
+../msg_gen/cpp/include/HandFollow/vw.h: /home/robo/DD2425_2013/Project/robot_messages/manifest.xml
+../msg_gen/cpp/include/HandFollow/vw.h: /home/robo/DD2425_2013/Project/camera_trials/manifest.xml
 ../msg_gen/cpp/include/HandFollow/vw.h: /opt/ros/fuerte/stacks/dynamic_reconfigure/msg_gen/generated
 ../msg_gen/cpp/include/HandFollow/vw.h: /opt/ros/fuerte/stacks/dynamic_reconfigure/srv_gen/generated
 ../msg_gen/cpp/include/HandFollow/vw.h: /opt/ros/fuerte/stacks/bond_core/bond/msg_gen/generated
 ../msg_gen/cpp/include/HandFollow/vw.h: /opt/ros/fuerte/stacks/nodelet_core/nodelet/srv_gen/generated
 ../msg_gen/cpp/include/HandFollow/vw.h: /opt/ros/fuerte/stacks/geometry/tf/msg_gen/generated
 ../msg_gen/cpp/include/HandFollow/vw.h: /opt/ros/fuerte/stacks/geometry/tf/srv_gen/generated
-../msg_gen/cpp/include/HandFollow/vw.h: /home/robo/DD2425_2013/Theia/robot_messages/msg_gen/generated
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Theia/HandFollow/build/CMakeFiles $(CMAKE_PROGRESS_2)
+../msg_gen/cpp/include/HandFollow/vw.h: /home/robo/DD2425_2013/Project/robot_messages/msg_gen/generated
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/Project/HandFollow/build/CMakeFiles $(CMAKE_PROGRESS_2)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating ../msg_gen/cpp/include/HandFollow/vw.h"
-	/opt/ros/fuerte/share/roscpp/rosbuild/scripts/genmsg_cpp.py /home/robo/DD2425_2013/Theia/HandFollow/msg/vw.msg
+	/opt/ros/fuerte/share/roscpp/rosbuild/scripts/genmsg_cpp.py /home/robo/DD2425_2013/Project/HandFollow/msg/vw.msg
 
 ROSBUILD_genmsg_cpp: CMakeFiles/ROSBUILD_genmsg_cpp
 ROSBUILD_genmsg_cpp: ../msg_gen/cpp/include/HandFollow/PidParams.h
@@ -171,6 +171,6 @@ CMakeFiles/ROSBUILD_genmsg_cpp.dir/clean:
 .PHONY : CMakeFiles/ROSBUILD_genmsg_cpp.dir/clean
 
 CMakeFiles/ROSBUILD_genmsg_cpp.dir/depend:
-	cd /home/robo/DD2425_2013/Theia/HandFollow/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Theia/HandFollow /home/robo/DD2425_2013/Theia/HandFollow /home/robo/DD2425_2013/Theia/HandFollow/build /home/robo/DD2425_2013/Theia/HandFollow/build /home/robo/DD2425_2013/Theia/HandFollow/build/CMakeFiles/ROSBUILD_genmsg_cpp.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/robo/DD2425_2013/Project/HandFollow/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Project/HandFollow /home/robo/DD2425_2013/Project/HandFollow /home/robo/DD2425_2013/Project/HandFollow/build /home/robo/DD2425_2013/Project/HandFollow/build /home/robo/DD2425_2013/Project/HandFollow/build/CMakeFiles/ROSBUILD_genmsg_cpp.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/ROSBUILD_genmsg_cpp.dir/depend
 

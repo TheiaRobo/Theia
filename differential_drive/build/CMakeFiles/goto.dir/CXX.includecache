@@ -28,11 +28,11 @@ ros/macros.h
 ros/assert.h
 ../msg_gen/cpp/include/differential_drive/ros/assert.h
 
-/home/robo/DD2425_2013/Theia/differential_drive/src/goto.cpp
+/home/robo/DD2425_2013/Project/differential_drive/src/goto.cpp
 ros/ros.h
-/home/robo/DD2425_2013/Theia/differential_drive/src/ros/ros.h
+/home/robo/DD2425_2013/Project/differential_drive/src/ros/ros.h
 differential_drive/Servomotors.h
-/home/robo/DD2425_2013/Theia/differential_drive/src/differential_drive/Servomotors.h
+/home/robo/DD2425_2013/Project/differential_drive/src/differential_drive/Servomotors.h
 iostream
 -
 

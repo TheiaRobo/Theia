@@ -30,13 +30,13 @@ ros/assert.h
 std_msgs/Header.h
 ../msg_gen/cpp/include/differential_drive/std_msgs/Header.h
 
-/home/robo/DD2425_2013/Theia/differential_drive/src/Bezier.cpp
+/home/robo/DD2425_2013/Project/differential_drive/src/Bezier.cpp
 Bezier.h
-/home/robo/DD2425_2013/Theia/differential_drive/src/Bezier.h
+/home/robo/DD2425_2013/Project/differential_drive/src/Bezier.h
 math.h
 -
 
-/home/robo/DD2425_2013/Theia/differential_drive/src/Bezier.h
+/home/robo/DD2425_2013/Project/differential_drive/src/Bezier.h
 stdio.h
 -
 stdlib.h
@@ -46,19 +46,19 @@ math.h
 vector
 -
 
-/home/robo/DD2425_2013/Theia/differential_drive/src/bezier_traj.cpp
+/home/robo/DD2425_2013/Project/differential_drive/src/bezier_traj.cpp
 ros/ros.h
-/home/robo/DD2425_2013/Theia/differential_drive/src/ros/ros.h
+/home/robo/DD2425_2013/Project/differential_drive/src/ros/ros.h
 differential_drive/Speed.h
-/home/robo/DD2425_2013/Theia/differential_drive/src/differential_drive/Speed.h
+/home/robo/DD2425_2013/Project/differential_drive/src/differential_drive/Speed.h
 Bezier.h
-/home/robo/DD2425_2013/Theia/differential_drive/src/Bezier.h
+/home/robo/DD2425_2013/Project/differential_drive/src/Bezier.h
 dimension.h
-/home/robo/DD2425_2013/Theia/differential_drive/src/dimension.h
+/home/robo/DD2425_2013/Project/differential_drive/src/dimension.h
 math.h
 -
 
-/home/robo/DD2425_2013/Theia/differential_drive/src/dimension.h
+/home/robo/DD2425_2013/Project/differential_drive/src/dimension.h
 
 /opt/ros/fuerte/include/XmlRpcDecl.h
 ros/macros.h

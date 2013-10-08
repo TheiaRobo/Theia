@@ -32,10 +32,10 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Theia/MotorControl
+CMAKE_SOURCE_DIR = /home/robo/DD2425_2013/Project/MotorControl
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Theia/MotorControl/build
+CMAKE_BINARY_DIR = /home/robo/DD2425_2013/Project/MotorControl/build
 
 # Utility rule file for tests.
 
@@ -57,6 +57,6 @@ CMakeFiles/tests.dir/clean:
 .PHONY : CMakeFiles/tests.dir/clean
 
 CMakeFiles/tests.dir/depend:
-	cd /home/robo/DD2425_2013/Theia/MotorControl/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Theia/MotorControl /home/robo/DD2425_2013/Theia/MotorControl /home/robo/DD2425_2013/Theia/MotorControl/build /home/robo/DD2425_2013/Theia/MotorControl/build /home/robo/DD2425_2013/Theia/MotorControl/build/CMakeFiles/tests.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/robo/DD2425_2013/Project/MotorControl/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/DD2425_2013/Project/MotorControl /home/robo/DD2425_2013/Project/MotorControl /home/robo/DD2425_2013/Project/MotorControl/build /home/robo/DD2425_2013/Project/MotorControl/build /home/robo/DD2425_2013/Project/MotorControl/build/CMakeFiles/tests.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/tests.dir/depend
 
