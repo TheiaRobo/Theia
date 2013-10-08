@@ -1,0 +1,14 @@
+<package>
+  <description brief="phidgets_plotting_scripts">
+
+     phidgets_plotting_scripts
+
+  </description>
+  <author>robo</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/phidgets_plotting_scripts</url>
+
+</package>
+
+
