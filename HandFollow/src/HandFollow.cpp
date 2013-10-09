@@ -10,24 +10,15 @@ const float z_desired=40;
 const float x_center=240;
 float p_x=1, p_z=1; // Controler parameters
 
-int sign(float num){
-	
-	if(num>0)
-		return 1;
-	if(num<0)
-		return -1;
-		
-	return 0;
-}
 
 float discretize(float num){ /* outputs a 'smooth value' for the system */
 
-	for(int i=1;i<10;i++){
-		if(abs(num)<i*10)
-			return (i-1)*10;
-	}
 	
-	return 0;
+	if(num<10 || num > -10)
+		return 0;
+	
+	
+	return num;
 }
 
 void change_params(const HandFollow::PidParams::ConstPtr msg){
