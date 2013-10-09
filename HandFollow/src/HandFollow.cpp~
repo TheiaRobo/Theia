@@ -42,7 +42,7 @@ void high_level_controller(const robot_messages::coords::ConstPtr msg){ /* Outpu
 	error_x=x_center-x;
 	error_z=z-z_desired;
 	
-	v=p_z*error_z; // +200 should be temporary. We need to work out the units!!!!!!
+	v=p_z*error_z;
 	w=p_x*error_x;
 	
 	vw_msg.v=discretize(v);
