@@ -7,8 +7,13 @@
 
 ros::Publisher pub;
 const float z_desired=60;
-const float x_center=240;
-float p_x=0.25, p_z=0.5; // Controler parameters
+const float x_center=320;
+
+/* Will hopefully perform better if just outputs pre-defined values */
+const float VCONST=500;
+const float WCONST=15; 
+
+float p_x=0.3, p_z=50; // Controler parameters
 
 
 float discretize(float num){ /* "ADC" */
@@ -25,7 +30,7 @@ void change_params(const HandFollow::PidParams::ConstPtr msg){
 	p_x=msg->p_x;
 	p_z=msg->p_z;
 	
-	ROS_INFO("Parameters changed as follows\np_z= %.2f\np_x= %.2f\n",p_z,p_x);
+	ROS_INFO("Parameters changed as follows:\np_z= %.2f\np_x= %.2f\n",p_z,p_x);
 	
 }
 
@@ -45,8 +50,29 @@ void high_level_controller(const robot_messages::coords::ConstPtr msg){ /* Outpu
 	v=p_z*error_z;
 	w=p_x*error_x;
 	
-	vw_msg.v=0//discretize(v);
-	vw_msg.w=discretize(w);
+	if(v>VCONST){
+		v=VCONST;
+	}else{
+		if(v<-VCONST){
+			v=-VCONST;
+		}else{
+			v=0;
+		}
+	}
+			
+	if(w>WCONST){
+		w=WCONST;
+	}else{
+		if(w<-WCONST){
+			w=-WCONST;
+		}else{
+			w=0;
+		}
+	}
+	
+	
+	vw_msg.v=v;
+	vw_msg.w=w;
 	
 	pub.publish(vw_msg);
 	
