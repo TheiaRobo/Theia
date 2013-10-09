@@ -45,7 +45,7 @@ void high_level_controller(const robot_messages::coords::ConstPtr msg){ /* Outpu
 	v=p_z*error_z;
 	w=p_x*error_x;
 	
-	vw_msg.v=v;
+	vw_msg.v=discretize(v);
 	vw_msg.w=discretize(w);
 	
 	pub.publish(vw_msg);

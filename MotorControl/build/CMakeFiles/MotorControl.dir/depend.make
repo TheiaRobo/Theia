@@ -3,6 +3,7 @@
 
 CMakeFiles/MotorControl.dir/src/MotorControl.o: /home/robo/DD2425_2013/Project/HandFollow/msg_gen/cpp/include/HandFollow/vw.h
 CMakeFiles/MotorControl.dir/src/MotorControl.o: ../src/MotorControl.cpp
+CMakeFiles/MotorControl.dir/src/MotorControl.o: /home/robo/DD2425_2013/Project/differential_drive/msg_gen/cpp/include/differential_drive/Encoders.h
 CMakeFiles/MotorControl.dir/src/MotorControl.o: /home/robo/DD2425_2013/Project/differential_drive/msg_gen/cpp/include/differential_drive/PWM.h
 CMakeFiles/MotorControl.dir/src/MotorControl.o: /opt/ros/fuerte/include/XmlRpcDecl.h
 CMakeFiles/MotorControl.dir/src/MotorControl.o: /opt/ros/fuerte/include/XmlRpcValue.h
@@ -59,4 +60,5 @@ CMakeFiles/MotorControl.dir/src/MotorControl.o: /opt/ros/fuerte/include/ros/wall
 CMakeFiles/MotorControl.dir/src/MotorControl.o: /opt/ros/fuerte/include/ros/wall_timer_options.h
 CMakeFiles/MotorControl.dir/src/MotorControl.o: /opt/ros/fuerte/include/rosconsole/macros_generated.h
 CMakeFiles/MotorControl.dir/src/MotorControl.o: /opt/ros/fuerte/include/std_msgs/Header.h
+CMakeFiles/MotorControl.dir/src/MotorControl.o: /opt/ros/fuerte/include/std_msgs/Int32.h
 

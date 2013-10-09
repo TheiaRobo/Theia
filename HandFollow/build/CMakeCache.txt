@@ -324,6 +324,7 @@ CMAKE_UNAME:INTERNAL=/bin/uname
 CMAKE_USE_RELATIVE_PATHS-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_VERBOSE_MAKEFILE
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
+CoreController_CMAKE:INTERNAL=/opt/ros/fuerte/share/rospy/rosbuild/rospy.cmake;/opt/ros/fuerte/share/roscpp/rosbuild/roscpp.cmake
 //Details about finding PythonInterp
 FIND_PACKAGE_MESSAGE_DETAILS_PythonInterp:INTERNAL=[/usr/bin/python][v2.7.3()]
 HandFollow_CFLAGS_OTHER:INTERNAL=-DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX

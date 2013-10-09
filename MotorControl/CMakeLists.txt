@@ -28,4 +28,8 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME}
-rosbuild_add_executable(MotorControl src/MotorControl.cpp)
+rosbuild_add_executable(MotorControl_node src/MotorControl_node.cpp)
+rosbuild_add_executable(Filter_node src/Filter_node.cpp)
+rosbuild_add_executable(FakeMotor_node src/FakeMotor_node.cpp)
+
+
