@@ -6,17 +6,16 @@
 #include <robot_messages/coords.h>
 
 ros::Publisher pub;
-const float z_desired=40;
+const float z_desired=60;
 const float x_center=240;
-float p_x=1, p_z=1; // Controler parameters
+float p_x=0.25, p_z=0.5; // Controler parameters
 
 
-float discretize(float num){ /* outputs a 'smooth value' for the system */
-
+float discretize(float num){ /* "ADC" */
 	
-	if(num<10 || num > -10)
+	
+	if(num<5 && num>-5)
 		return 0;
-	
 	
 	return num;
 }
@@ -46,7 +45,7 @@ void high_level_controller(const robot_messages::coords::ConstPtr msg){ /* Outpu
 	v=p_z*error_z;
 	w=p_x*error_x;
 	
-	vw_msg.v=discretize(v);
+	vw_msg.v=v;
 	vw_msg.w=discretize(w);
 	
 	pub.publish(vw_msg);
@@ -69,7 +68,7 @@ int main(int argc, char **argv)
 	
 	pub=n.advertise<HandFollow::vw>("/HandFollow/vw",1);
 	coords=n.subscribe("/read_depth/xyz",1,high_level_controller);
-	params=n.subscribe("/HandFollow/params",1,change_params);
+	params=n.subscribe("/HandFollow/PidParams",1,change_params);
 	
 	while(ros::ok()){
 
