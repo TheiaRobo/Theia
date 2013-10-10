@@ -1,0 +1,17 @@
+<package>
+  <description brief="control">
+
+     control
+
+  </description>
+  <author>Alessandro Motta</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/control</url>
+  <depend package="control_hand"/>
+  <depend package="control_mux"/>
+  <depend package="teleop_msgs"/>
+  <depend package="teleop_source_keyboard"/>
+</package>
+
+

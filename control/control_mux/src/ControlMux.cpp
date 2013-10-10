@@ -1,7 +1,7 @@
 #include "ros/ros.h"
 #include <stdlib.h>
 #include <cmath>
-#include <HandFollow/vw.h>
+#include <control_hand/vw.h>
 #include <robot_messages/coords.h>
 #include <teleop_msgs/State.h>
 
@@ -14,7 +14,7 @@ const float V_MAX=400.0;
 const float W_MAX=15.0;
 
 
-void HandFollow_up(const HandFollow::vw::ConstPtr msg){
+void HandFollow_up(const control_hand::vw::ConstPtr msg){
 	
 	if(!is_teleop){	// Teleoperation overrides the controller
 		v=msg->v;
@@ -81,13 +81,13 @@ int main(int argc, char **argv)
 	ros::Subscriber Hand_sub;
 	ros::Subscriber Teleop_sub;
 	ros::Publisher pub;
-	HandFollow::vw msg;
+	control_hand::vw msg;
 	
 	ros::Rate loop_rate(30);
 
 	ROS_INFO("Started the ControlMux node");	
 	
-	pub=n.advertise<HandFollow::vw>("/ControlMux/vw",1);
+	pub=n.advertise<control_hand::vw>("/ControlMux/vw",1);
 	Hand_sub=n.subscribe("/HandFollow/vw",1,HandFollow_up);
 	Teleop_sub=n.subscribe("/teleop_source_node/teleop",1,Teleop_up);
 	

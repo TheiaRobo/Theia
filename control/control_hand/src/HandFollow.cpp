@@ -1,8 +1,8 @@
 #include "ros/ros.h"
 #include <stdlib.h>
 #include <cmath>
-#include <HandFollow/vw.h>
-#include <HandFollow/PidParams.h>
+#include <control_hand/vw.h>
+#include <control_hand/PidParams.h>
 #include <robot_messages/coords.h>
 
 ros::Publisher pub;
@@ -25,7 +25,7 @@ float discretize(float num){ /* "ADC" */
 	return num;
 }
 
-void change_params(const HandFollow::PidParams::ConstPtr msg){
+void change_params(const control_hand::PidParams::ConstPtr msg){
 	
 	p_x=msg->p_x;
 	p_z=msg->p_z;
@@ -41,7 +41,7 @@ void high_level_controller(const robot_messages::coords::ConstPtr msg){ /* Outpu
 	float x=msg->x;
 	float z=msg->z;
 	float v,w;
-	HandFollow::vw vw_msg;
+	control_hand::vw vw_msg;
 	
 	
 	error_x=x_center-x;
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
 
 	ROS_INFO("Started the HandFollow node");	
 	
-	pub=n.advertise<HandFollow::vw>("/HandFollow/vw",1);
+	pub=n.advertise<control_hand::vw>("/HandFollow/vw",1);
 	coords=n.subscribe("/read_depth/xyz",1,high_level_controller);
 	params=n.subscribe("/HandFollow/PidParams",1,change_params);
 	

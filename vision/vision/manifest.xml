@@ -1,13 +1,13 @@
 <package>
-  <description brief="HandFollow">
+  <description brief="vision">
 
-     HandFollow
+     vision
 
   </description>
-  <author>Diogo Almeida</author>
+  <author>Alessandro Motta</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/HandFollow</url>
+  <url>http://ros.org/wiki/vision</url>
   <depend package="vision_trial"/>
 
 </package>

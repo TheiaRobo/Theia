@@ -1,0 +1,16 @@
+<package>
+  <description brief="driver">
+
+     driver
+
+  </description>
+  <author>Alessandro Motta</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/driver</url>
+  <depend package="differential_drive"/>
+  <depend package="rosserial_python"/>
+
+</package>
+
+

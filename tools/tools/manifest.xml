@@ -1,0 +1,16 @@
+<package>
+  <description brief="tools">
+
+     tools
+
+  </description>
+  <author>Alessandro Motta</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/tools</url>
+  <depend package="imu_filter_madgwick"/>
+  <depend package="phidgets_plotting_scripts"/>
+
+</package>
+
+

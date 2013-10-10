@@ -8,7 +8,7 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/ControlMux</url>
-  <depend package="HandFollow"/>
+  <depend package="control_hand"/>
   <depend package="teleop_msgs"/>
 
 </package>

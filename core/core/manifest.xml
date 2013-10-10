@@ -1,0 +1,15 @@
+<package>
+  <description brief="core">
+
+     core
+
+  </description>
+  <author>Alessandro Motta</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/core</url>
+  <depend package="core_control_motor"/>
+
+</package>
+
+

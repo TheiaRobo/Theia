@@ -1,6 +1,6 @@
 #include <ros/ros.h> // needs rosccp dep in the Manifest
 #include <std_msgs/Int32.h>
-#include <HandFollow/vw.h> // needs HandFollow dep in the Manifest. Allows to use the vw msg defined in the HandFollow package
+#include <control_hand/vw.h> // needs HandFollow dep in the Manifest. Allows to use the vw msg defined in the HandFollow package
 #include <differential_drive/PWM.h> // needs differential_drive in the Manifest
 #include <differential_drive/Encoders.h>
 #include <cmath> // Has some cpp math functions than can be used for the PID controller
@@ -47,7 +47,7 @@ void receive_encoder(const Encoders::ConstPtr &msg1)
 }
 
 /* This function is called when the node receives a message from the /ControlMux/vw topic and converts the v and w values into the references for each motor. These references should be in m/s or cm/s or equivalent */
-void RefConverter(const HandFollow::vw::ConstPtr &msg){ 	
+void RefConverter(const control_hand::vw::ConstPtr &msg){ 	
 
 	float angv, linv;
 	
