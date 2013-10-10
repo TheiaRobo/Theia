@@ -43,8 +43,8 @@ int main(int argc, char **argv)
 	ros::Time t_start = ros::Time::now();
 
 	while(ros::ok()){
-		filtered_msg.delta_encoder1 = 1;
-		filtered_msg.delta_encoder2 = 1;
+		//filtered_msg.delta_encoder1 = 1;
+		//filtered_msg.delta_encoder2 = 1;
 		filtered_msg.timestamp = int((ros::Time::now()-t_start).toSec()*1000.0);
 /*		printf("Timestamp:%d\n", filtered_msg.timestamp);
 		printf("right:%d\n", int(filtered_msg.delta_encoder1));

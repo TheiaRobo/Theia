@@ -39,8 +39,8 @@ differential_drive::PWM pwm_msg;
 void receive_encoder(const Encoders::ConstPtr &msg1)
 {
 	//static ros::Time t_start1 = ros::Time::now();
-	right = msg1->delta_encoder1;
-	left = msg1->delta_encoder2;
+	right = msg1->delta_encoder2;
+	left = msg1->delta_encoder1;
 	timestamp = msg1->timestamp;
 	printf("%d:got encoder L:%d , false R:%d\n",timestamp,left,right);
 

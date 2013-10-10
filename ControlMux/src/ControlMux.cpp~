@@ -10,8 +10,8 @@ float w=0.0;
 float prev_key[2]={0,0};
 int is_teleop=0;
 
-const float V_MAX=20.0;
-const float W_MAX=10.0;
+const float V_MAX=400.0;
+const float W_MAX=25.0;
 
 
 void HandFollow_up(const HandFollow::vw::ConstPtr msg){

@@ -10,8 +10,8 @@ const float z_desired=60;
 const float x_center=320;
 
 /* Will hopefully perform better if just outputs pre-defined values */
-const float VCONST=500;
-const float WCONST=15; 
+const float VCONST=300;
+const float WCONST=10; 
 
 float p_x=0.3, p_z=50; // Controler parameters
 
@@ -47,6 +47,9 @@ void high_level_controller(const robot_messages::coords::ConstPtr msg){ /* Outpu
 	error_x=x_center-x;
 	error_z=z-z_desired;
 	
+	if(error_z>100 || z<40)
+		error_z=0; //ignore far away/too close objects
+	
 	v=p_z*error_z;
 	w=p_x*error_x;
 	
@@ -62,9 +65,11 @@ void high_level_controller(const robot_messages::coords::ConstPtr msg){ /* Outpu
 			
 	if(w>WCONST){
 		w=WCONST;
+		v=0;
 	}else{
 		if(w<-WCONST){
 			w=-WCONST;
+			v=0;
 		}else{
 			w=0;
 		}

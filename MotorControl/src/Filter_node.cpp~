@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 
 	ros::init(argc, argv, "Filter_node");
 	ros::NodeHandle n;
-	sub2 = n.subscribe("/motors/encoders", 100, filter_encoders_value);
+	sub2 = n.subscribe("/motion/Encoders", 100, filter_encoders_value);
 	filter_enc_pub = n.advertise<Encoders>("/motors/filtered_encoders"	, 100000);
 	ros::spinOnce();
 	ros::Rate loop_rate(100);
