@@ -1,0 +1,19 @@
+<package>
+  <description brief="theia">
+
+     theia
+
+  </description>
+  <author>Alessandro Motta</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/theia</url>
+  <depend package="control"/>
+  <depend package="core"/>
+  <depend package="libs"/>
+  <depend package="tools"/>
+  <depend package="vision"/>
+
+</package>
+
+
