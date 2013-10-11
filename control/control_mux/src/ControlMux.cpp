@@ -10,7 +10,7 @@ float w=0.0;
 float prev_key[2]={0,0};
 int is_teleop=0;
 
-const float V_MAX=20.0;
+const float V_MAX=40.0;
 const float W_MAX=1;
 
 
@@ -56,17 +56,17 @@ void Teleop_up(const teleop_msgs::State::ConstPtr msg){
 	prev_key[0]=value[0];
 	prev_key[1]=value[1];
 	
-	if(v>V_MAX)
-		v=V_MAX;
+	if(v>2*V_MAX)
+		v=2*V_MAX;
 	else
-		if(v<-V_MAX)
-			v=-V_MAX;
+		if(v<-2*V_MAX)
+			v=-2*V_MAX;
 			
-	if(w>W_MAX)
-		w=W_MAX;
+	if(w>2*W_MAX)
+		w=2*W_MAX;
 	else
-		if(w<-W_MAX)
-			w=-W_MAX;
+		if(w<-2*W_MAX)
+			w=-2*W_MAX;
 			
 		
 

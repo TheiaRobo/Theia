@@ -18,7 +18,7 @@ const float L=23/2,R1=4.8,R2=4.8; 	// length between the wheels(L) and diameter 
 
 /* PID controller values */
 
-float P1=10.0,P2=10.0,I1=100.0,I2=100.0,D1=0.0,D2=0.0; // This values should be allowed to change after receiving a debug msg
+float P1=7.0,P2=7.0,I1=100.0,I2=100.0,D1=20.0,D2=20.0; // This values should be allowed to change after receiving a debug msg
 
 float v_left=0;
 float v_right=0;
@@ -86,6 +86,7 @@ int PID_control(float P,float I,float D,float * integrator_sum, float * differen
 	(*integrator_sum)+=error*0.01;
 	
 	//differentiator_val =(error-previous error)/dt; // D Part
+	(*differentiator_val)=(error-(*differentiator_val))*100;
 	
 	P_part=P*error;
 	I_part=I*(*integrator_sum);

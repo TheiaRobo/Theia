@@ -13,7 +13,7 @@ const float x_center=320;
 const float VCONST=20;
 const float WCONST=1; 
 
-float p_x=0.02, p_z=2; // Controler parameters
+float p_x=0.005, p_z=2; // Controler parameters
 
 
 float discretize(float num){ /* "ADC" */
@@ -69,7 +69,7 @@ void high_level_controller(const robot_messages::coords::ConstPtr msg){ /* Outpu
 		if(w<-WCONST){
 			w=-WCONST;
 		}else{
-			w=0;
+			w=w;
 		}
 	}
 	
