@@ -10,10 +10,10 @@ const float z_desired=60;
 const float x_center=320;
 
 /* Will hopefully perform better if just outputs pre-defined values */
-const float VCONST=300;
-const float WCONST=10; 
+const float VCONST=20;
+const float WCONST=1; 
 
-float p_x=0.3, p_z=50; // Controler parameters
+float p_x=0.02, p_z=2; // Controler parameters
 
 
 float discretize(float num){ /* "ADC" */
