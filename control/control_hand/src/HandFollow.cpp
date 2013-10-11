@@ -49,7 +49,7 @@ void high_level_controller(const robot_messages::coords::ConstPtr msg){ /* Outpu
 	
 	if(error_z>100 || z<40)
 		error_z=0; //ignore far away/too close objects
-	
+
 	v=p_z*error_z;
 	w=p_x*error_x;
 	
@@ -65,11 +65,9 @@ void high_level_controller(const robot_messages::coords::ConstPtr msg){ /* Outpu
 			
 	if(w>WCONST){
 		w=WCONST;
-		v=0;
 	}else{
 		if(w<-WCONST){
 			w=-WCONST;
-			v=0;
 		}else{
 			w=0;
 		}

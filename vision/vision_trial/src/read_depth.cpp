@@ -39,10 +39,10 @@ float * closest(cv::Mat * I){ // identifies the patch that has the largest dispa
 	
 	cv::GaussianBlur(*I,blurred,size,20,20); // blurring the image before processing will (hopefully) reduce noise's effects
 	
-	for(i=39;i<blurred.rows-40;i++){
+	for(i=110;i<blurred.rows-120;i++){
 		p=blurred.ptr<uchar>(i);
 		
-		for(j=39;j<blurred.cols-40;j++){
+		for(j=199;j<blurred.cols-200;j++){
 			if(p[j]>max){
 				max=p[j];
 				center.x=j;
