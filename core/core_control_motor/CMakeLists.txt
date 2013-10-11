@@ -30,3 +30,4 @@ rosbuild_genmsg()
 #target_link_libraries(example ${PROJECT_NAME}
 rosbuild_add_executable(MotorControl_node src/MotorControl_node.cpp)
 rosbuild_add_executable(Filter_node src/Filter_node.cpp)
+rosbuild_add_executable(core_control_vel_conv src/Velocity_converter_node.cpp)

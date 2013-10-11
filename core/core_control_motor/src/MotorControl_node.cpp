@@ -4,7 +4,8 @@
 #include <differential_drive/PWM.h> // needs differential_drive in the Manifest
 #include <differential_drive/Encoders.h>
 #include <cmath> // Has some cpp math functions than can be used for the PID controller
-
+#include <core_control_motor/motorvel.h>
+#include <core_control_motor/pid.h>
 #include <string.h>
 //#include <geometry_msgs/Twist.h>
 #include <signal.h>
@@ -13,37 +14,49 @@
 using namespace differential_drive;
 float Ref1=0, Ref2=0;
 
-const float L=23,R1=4.8,R2=4.8; 	// length between the wheels(L) and diameter of the the wheels (R), values in cm!
+const float L=23/2,R1=4.8,R2=4.8; 	// length between the wheels(L) and diameter of the the wheels (R), values in cm!
 
 /* PID controller values */
 
-float P1=1.0,P2=1.0,I1=0.0,I2=0.0,D1=0.0,D2=0.0; // This values should be allowed to change after receiving a debug msg
-float cum1=0.0,cum2=0.0,diff1=0.0,diff2=0.0;
+float P1=12.0,P2=12.0,I1=0.0,I2=0.0,D1=0.0,D2=0.0; // This values should be allowed to change after receiving a debug msg
 
-int left;
-int right;
+float v_left=0;
+float v_right=0;
 int timestamp;
 
 // Functions initialization
 //void receive_encoder(const Encoders::ConstPtr &msg1);
 
-ros::Subscriber vw_sub; 			
+
 ros::Publisher pwm_pub;
-ros::Subscriber	enc_sub;
+
 	
 /* this message will store the PWM values to be sent to the Arduino. It should be updated on the PID function and sent on the main loop*/
 differential_drive::PWM pwm_msg;
 //differential_drive::Encoders msg1; 
 
 
-void receive_encoder(const Encoders::ConstPtr &msg1)
+void receive_encoder(const core_control_motor::motorvel::ConstPtr msg)
 {
-	//static ros::Time t_start1 = ros::Time::now();
-	right = msg1->delta_encoder2;
-	left = msg1->delta_encoder1;
-	timestamp = msg1->timestamp;
-	printf("%d:got encoder L:%d , false R:%d\n",timestamp,left,right);
+	
+	v_left = msg->vel1;
+	v_right = msg->vel2;
 
+
+
+}
+
+void update_params(const core_control_motor::pid::ConstPtr msg){
+	
+	P1=msg->p1;
+	P2=msg->p2;
+	I1=msg->i1;
+	I2=msg->i2;
+	D1=msg->d1;
+	D2=msg->d2;
+	
+	ROS_INFO("New PID params:\nP1: %.2f; P2: %.2f\nI1: %.2f; I2: %.2f\nD1: %.2f; D2: %.2f\n",P1,P2,I1,I2,D1,D2);
+	
 }
 
 /* This function is called when the node receives a message from the /ControlMux/vw topic and converts the v and w values into the references for each motor. These references should be in m/s or cm/s or equivalent */
@@ -54,37 +67,56 @@ void RefConverter(const control_hand::vw::ConstPtr &msg){
 	linv=msg->v;
 	angv=msg->w;
 	
-	/* Reference values obtained from the equations for the linear and angular velocity */
-	Ref1=(linv-angv*L)/R1; 	
+	/* Reference values obtained from the equations for the linear and angular velocity. They are the spinning speed of the wheel */
+	Ref1=(linv-angv*L)/R1;	
 	Ref2=(linv+angv*L)/R2;
-	
-	/* This code should be temporary, since this function is supposed to leave the References as a m/s (or equivalent) value. Conversion to PWM for the output should be done only after all the calculations of the PID algorithm */	
-	if (Ref1 >255)
-		Ref1=255;
-		
-	if (Ref1 <-255)
-		Ref1=-255;
-		
-	if (Ref2 >255)
-		Ref2=255;
-		
-	if (Ref2 <-255)
-		Ref2=-255;
+
+	ROS_INFO("REF1: %.4f\nREF2: %.4f\n",Ref1,Ref2);
 		
 }
 
 /* The PID algorithm goes here */	
-int PID_control(float P,float I,float D,float integrator_sum, float differentiator_val,float Ref,float vel){
-	float error=Ref-vel;  		// P Part
+int PID_control(float P,float I,float D,float * integrator_sum, float * differentiator_val,float Ref,float vel){
+	
+	float error=Ref-vel;  		
+	float P_part=0,I_part=0,D_part=0, total=0;
+	
+	
 	//integrator_sum  +=(error*dt);	// I Part
+	(*integrator_sum)+=error*0.01;
+	
 	//differentiator_val =(error-previous error)/dt; // D Part
-	return round((P*error));//+ (I*Integrator)+(D*Derivative);
+	
+	P_part=P*error;
+	I_part=I*(*integrator_sum);
+	
+	if(Ref==0){
+		I_part=0; /* Will assume that the wheels will not turn when the input value is 0 */
+		*integrator_sum=0;
+	 }
+	
+	total=P_part+I_part+D_part;
+	
+	if(total>255) // If this occurs, either the reference is irrealistic, or the I part is messing up
+		total=255;
+	if(total<-255)
+		total=-255;
+	
+	return round(total);//+ (I*Integrator)+(D*Derivative);
 }
 	
 
+
 int main(int argc, char ** argv){
+
 	ros::init(argc,argv, "MotorControl_node"); //initialise ros and the arguments
 	ros::NodeHandle n;			// Node handler 
+	ros::Subscriber vw_sub; 		
+	ros::Subscriber	enc_sub;
+	ros::Subscriber param_sub;	
+	
+
+	float cum1=0.0,cum2=0.0,diff1=0.0,diff2=0.0;
 
 	
 	/* Loop rate of 100Hz to comply with the encoders update frequency */
@@ -93,13 +125,14 @@ int main(int argc, char ** argv){
 	
 	vw_sub = n.subscribe("/ControlMux/vw",1,RefConverter);
 	pwm_pub = n.advertise<differential_drive::PWM>("/motion/PWM",1);
-	enc_sub = n.subscribe("/motors/filtered_encoders", 1000, receive_encoder);
+	enc_sub = n.subscribe("/core_control_filter/filtered_velocity", 1000, receive_encoder);
+	param_sub=n.subscribe("/core_control_motor/pid",1,update_params);
 	
 	/* Main loop */
 	while (ros::ok()){
 	
-		pwm_msg.PWM1=PID_control(P1,I1,D1,cum1,diff1,Ref1,0);
-		pwm_msg.PWM2=PID_control(P2,I2,D2,cum2,diff2,Ref2,0);
+		pwm_msg.PWM1=PID_control(P1,I1,D1,&cum1,&diff1,Ref1,v_left);
+		pwm_msg.PWM2=PID_control(P2,I2,D2,&cum2,&diff2,Ref2,v_right);
 		pwm_msg.header.stamp=ros::Time::now();
 		pwm_pub.publish(pwm_msg);
 	
