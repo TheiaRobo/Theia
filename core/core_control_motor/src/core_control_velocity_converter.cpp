@@ -15,13 +15,13 @@ const float freq=100.0;
 
 core_control_motor::motorvel convert_msg;
 
-void convert_encoders_value(const Encoders::ConstPtr &msg)
+void convert_encoders_value(const Encoders::ConstPtr &msg) /* Converts delta_encoder into rad/s */
 {
-	double ticks_to_speed=-2*PI/360;
+	double ticks_to_rad=-2*PI/360;
 	
 		
-	convert_msg.vel1 = msg->delta_encoder1*ticks_to_speed*freq;
-	convert_msg.vel2 = msg->delta_encoder2*ticks_to_speed*freq;
+	convert_msg.vel1 = msg->delta_encoder1*ticks_to_rad*freq;
+	convert_msg.vel2 = msg->delta_encoder2*ticks_to_rad*freq;
 
 
 }
@@ -40,6 +40,7 @@ int main(int argc, char **argv)
 	ros::Rate loop_rate(freq);
 	ros::Time t_start = ros::Time::now();
 	
+	ROS_INFO("Started the core_control_converter node\n");
 	
 
 	while(ros::ok()){

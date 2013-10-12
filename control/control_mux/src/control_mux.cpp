@@ -1,8 +1,7 @@
 #include "ros/ros.h"
 #include <stdlib.h>
 #include <cmath>
-#include <control_hand/vw.h>
-#include <robot_messages/coords.h>
+#include <core_control_motor/vw.h>
 #include <teleop_msgs/State.h>
 
 float v=0.0;
@@ -14,7 +13,7 @@ const float V_MAX=40.0;
 const float W_MAX=1;
 
 
-void HandFollow_up(const control_hand::vw::ConstPtr msg){
+void HandFollow_up(const core_control_motor::vw::ConstPtr msg){
 	
 	if(!is_teleop){	// Teleoperation overrides the controller
 		v=msg->v;
@@ -56,17 +55,17 @@ void Teleop_up(const teleop_msgs::State::ConstPtr msg){
 	prev_key[0]=value[0];
 	prev_key[1]=value[1];
 	
-	if(v>2*V_MAX)
-		v=2*V_MAX;
+	if(v>V_MAX)
+		v=V_MAX;
 	else
-		if(v<-2*V_MAX)
-			v=-2*V_MAX;
+		if(v<-V_MAX)
+			v=-V_MAX;
 			
-	if(w>2*W_MAX)
-		w=2*W_MAX;
+	if(w>W_MAX)
+		w=W_MAX;
 	else
-		if(w<-2*W_MAX)
-			w=-2*W_MAX;
+		if(w<-W_MAX)
+			w=-W_MAX;
 			
 		
 
@@ -76,19 +75,19 @@ void Teleop_up(const teleop_msgs::State::ConstPtr msg){
 
 int main(int argc, char **argv)
 {
-	ros::init(argc, argv, "ControlMux");
+	ros::init(argc, argv, "control_mux");
 	ros::NodeHandle n;
 	ros::Subscriber Hand_sub;
 	ros::Subscriber Teleop_sub;
 	ros::Publisher pub;
-	control_hand::vw msg;
+	core_control_motor::vw msg;
 	
 	ros::Rate loop_rate(30);
 
-	ROS_INFO("Started the ControlMux node");	
+	ROS_INFO("Started the control_mux node");	
 	
-	pub=n.advertise<control_hand::vw>("/ControlMux/vw",1);
-	Hand_sub=n.subscribe("/HandFollow/vw",1,HandFollow_up);
+	pub=n.advertise<core_control_motor::vw>("/control_mux/vw",1);
+	Hand_sub=n.subscribe("/control_hand/vw",1,HandFollow_up);
 	Teleop_sub=n.subscribe("/teleop_source_node/teleop",1,Teleop_up);
 	
 	

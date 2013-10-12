@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/control</url>
   <depend package="control_hand"/>
   <depend package="control_mux"/>
+  <depend package="core_control_motor"/>
   <depend package="teleop_msgs"/>
   <depend package="teleop_source_keyboard"/>
 </package>

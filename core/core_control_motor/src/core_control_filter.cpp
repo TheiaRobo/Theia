@@ -33,6 +33,8 @@ int main(int argc, char **argv)
 	ros::Rate loop_rate(100);
 	ros::Time t_start = ros::Time::now();
 
+	ROS_INFO("Started the core_control_filter node\n");
+
 	while(ros::ok()){
 
 		filtered_msg.timestamp = int((ros::Time::now()-t_start).toSec()*1000.0);

@@ -9,7 +9,6 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/MotorControl</url>
   <depend package="roscpp"/>
-  <depend package="control_hand"/>
   <depend package="differential_drive"/>
   
 

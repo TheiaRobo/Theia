@@ -8,6 +8,8 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/HandFollow</url>
+  <depend package="roscpp"/>
+  <depend package="core_control_motor"/>
   <depend package="vision_trial"/>
 
 </package>

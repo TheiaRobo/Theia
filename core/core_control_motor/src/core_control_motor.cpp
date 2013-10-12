@@ -1,6 +1,6 @@
 #include <ros/ros.h> // needs rosccp dep in the Manifest
 #include <std_msgs/Int32.h>
-#include <control_hand/vw.h> // needs HandFollow dep in the Manifest. Allows to use the vw msg defined in the HandFollow package
+#include <core_control_motor/vw.h> 
 #include <differential_drive/PWM.h> // needs differential_drive in the Manifest
 #include <differential_drive/Encoders.h>
 #include <cmath> // Has some cpp math functions than can be used for the PID controller
@@ -24,16 +24,12 @@ float v_left=0;
 float v_right=0;
 int timestamp;
 
-// Functions initialization
-//void receive_encoder(const Encoders::ConstPtr &msg1);
-
 
 ros::Publisher pwm_pub;
 
 	
 /* this message will store the PWM values to be sent to the Arduino. It should be updated on the PID function and sent on the main loop*/
 differential_drive::PWM pwm_msg;
-//differential_drive::Encoders msg1; 
 
 
 void receive_encoder(const core_control_motor::motorvel::ConstPtr msg)
@@ -60,7 +56,7 @@ void update_params(const core_control_motor::pid::ConstPtr msg){
 }
 
 /* This function is called when the node receives a message from the /ControlMux/vw topic and converts the v and w values into the references for each motor. These references should be in m/s or cm/s or equivalent */
-void RefConverter(const control_hand::vw::ConstPtr &msg){ 	
+void RefConverter(const core_control_motor::vw::ConstPtr &msg){ 	
 
 	float angv, linv;
 	
@@ -70,8 +66,9 @@ void RefConverter(const control_hand::vw::ConstPtr &msg){
 	/* Reference values obtained from the equations for the linear and angular velocity. They are the spinning speed of the wheel */
 	Ref1=(linv-angv*L)/R1;	
 	Ref2=(linv+angv*L)/R2;
-
-	ROS_INFO("REF1: %.4f\nREF2: %.4f\n",Ref1,Ref2);
+	
+	// Debug message. Useful when performing PID tunning
+	//ROS_INFO("REF1: %.4f\nREF2: %.4f\n",Ref1,Ref2);
 		
 }
 
@@ -110,7 +107,7 @@ int PID_control(float P,float I,float D,float * integrator_sum, float * differen
 
 int main(int argc, char ** argv){
 
-	ros::init(argc,argv, "MotorControl_node"); //initialise ros and the arguments
+	ros::init(argc,argv, "core_control_motor"); //initialise ros and the arguments
 	ros::NodeHandle n;			// Node handler 
 	ros::Subscriber vw_sub; 		
 	ros::Subscriber	enc_sub;
@@ -122,9 +119,9 @@ int main(int argc, char ** argv){
 	
 	/* Loop rate of 100Hz to comply with the encoders update frequency */
 	ros::Rate loop_rate(100);
-	ROS_INFO("Started the Motor Control Node");
+	ROS_INFO("Started the core_control_motor Node");
 	
-	vw_sub = n.subscribe("/ControlMux/vw",1,RefConverter);
+	vw_sub = n.subscribe("/control_mux/vw",1,RefConverter);
 	pwm_pub = n.advertise<differential_drive::PWM>("/motion/PWM",1);
 	enc_sub = n.subscribe("/core_control_filter/filtered_velocity", 1000, receive_encoder);
 	param_sub=n.subscribe("/core_control_motor/pid",1,update_params);

@@ -1,8 +1,8 @@
 #include "ros/ros.h"
 #include <stdlib.h>
 #include <cmath>
-#include <control_hand/vw.h>
-#include <control_hand/PidParams.h>
+#include <core_control_motor/vw.h>
+#include <control_hand/control_hand_pid.h>
 #include <robot_messages/coords.h>
 
 ros::Publisher pub;
@@ -16,16 +16,8 @@ const float WCONST=1;
 float p_x=0.005, p_z=2; // Controler parameters
 
 
-float discretize(float num){ /* "ADC" */
-	
-	
-	if(num<5 && num>-5)
-		return 0;
-	
-	return num;
-}
 
-void change_params(const control_hand::PidParams::ConstPtr msg){
+void change_params(const control_hand::control_hand_pid::ConstPtr msg){
 	
 	p_x=msg->p_x;
 	p_z=msg->p_z;
@@ -41,7 +33,7 @@ void high_level_controller(const robot_messages::coords::ConstPtr msg){ /* Outpu
 	float x=msg->x;
 	float z=msg->z;
 	float v,w;
-	control_hand::vw vw_msg;
+	core_control_motor::vw vw_msg;
 	
 	
 	error_x=x_center-x;
@@ -85,7 +77,7 @@ void high_level_controller(const robot_messages::coords::ConstPtr msg){ /* Outpu
 
 int main(int argc, char **argv)
 {
-	ros::init(argc, argv, "HandFollow");
+	ros::init(argc, argv, "control_hand");
 	ros::NodeHandle n;
 	ros::Subscriber coords;
 	ros::Subscriber params;
@@ -93,11 +85,11 @@ int main(int argc, char **argv)
 	
 	ros::Rate loop_rate(30);
 
-	ROS_INFO("Started the HandFollow node");	
+	ROS_INFO("Started the control_hand node");	
 	
-	pub=n.advertise<control_hand::vw>("/HandFollow/vw",1);
+	pub=n.advertise<core_control_motor::vw>("/control_hand/vw",1);
 	coords=n.subscribe("/read_depth/xyz",1,high_level_controller);
-	params=n.subscribe("/HandFollow/PidParams",1,change_params);
+	params=n.subscribe("/control_hand/PidParams",1,change_params);
 	
 	while(ros::ok()){
 
