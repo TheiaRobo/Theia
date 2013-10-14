@@ -1,0 +1,9 @@
+<launch>
+	<group ns="control">
+		<node
+			pkg="control_hand"
+			type="control_hand"
+			name="hand"
+		/>
+	</group>
+</launch>

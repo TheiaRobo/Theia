@@ -1,0 +1,14 @@
+<launch>
+	<!--
+		launch OpenNI
+	-->
+	<include file="$(find openni_launch)/launch/openni.launch"/>
+
+	<group ns="vision">
+		<node
+			pkg="vision_trial"
+			type="read_depth"
+			name="depth"
+		/>
+	</group>
+</launch>
