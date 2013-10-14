@@ -1,0 +1,13 @@
+<launch>
+	<group ns="core">
+		<group ns="control">
+			<group ns="odometry">
+				<node
+					pkg="core_control_odometry"
+					type="core_control_odometry"
+					name="odometry"
+				/>
+			</group>
+		</group>
+	</group>
+</launch>
