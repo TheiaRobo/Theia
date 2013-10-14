@@ -1,0 +1,18 @@
+<package>
+  <description brief="core_control_odometry">
+
+     core_control_odometry
+
+  </description>
+  <author>robo</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/core_control_odometry</url>
+  <depend package="roscpp"/>
+  <depend package="core_control_motor"/>
+  <depend package="visualization_msgs"/>
+
+
+</package>
+
+

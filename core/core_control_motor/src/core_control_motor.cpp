@@ -14,7 +14,7 @@
 using namespace differential_drive;
 float Ref1=0, Ref2=0;
 
-const float L=23/2,R1=4.8,R2=4.8; 	// length between the wheels(L) and diameter of the the wheels (R), values in cm!
+const float L=23.0/2,R1=4.8,R2=4.8; 	// length between the wheels(L) and diameter of the the wheels (R), values in cm!
 
 /* PID controller values */
 
