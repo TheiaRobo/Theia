@@ -1,0 +1,3 @@
+<launch>
+	<include file="$(find core_control_motor)/launch/all.launch"/>
+</launch>

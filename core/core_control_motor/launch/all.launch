@@ -1,0 +1,42 @@
+<!--
+	Theia core_control_motor launch file
+-->
+<launch>
+	<!--
+		launch rosserial
+		this establishes a connection to the Arduino
+	-->
+	<group ns="libs">
+		<node
+			pkg="rosserial_python"
+			type="serial_node.py"
+			args="/dev/ttyACM0"
+			name="rosserial"
+		/>
+	</group>
+
+	<!--
+		launch motor control
+	-->
+	<group ns="core">
+		<group ns="control">
+			<group ns="motor">
+				<node
+					pkg="core_control_motor"
+					type="core_control_filter"
+					name="filter"
+				/>
+				<node
+					pkg="core_control_motor"
+					type="core_control_motor"
+					name="motor"
+				/>
+				<node
+					pkg="core_control_motor"
+					type="core_control_velocity_converter"
+					name="velocity_converter"
+				/>
+			</group>
+		</group>
+	</group>
+</launch>

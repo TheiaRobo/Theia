@@ -1,0 +1,5 @@
+<launch>
+	<include file="$(find control)/launch/all.launch"/>
+	<include file="$(find core)/launch/all.launch"/>
+	<include file="$(find vision)/launch/all.launch"/>
+</launch>

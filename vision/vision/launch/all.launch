@@ -1,0 +1,3 @@
+<launch>
+	<include file="$(find vision_trial)/launch/all.launch"/>
+</launch>
