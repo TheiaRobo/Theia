@@ -1,0 +1,17 @@
+<package>
+  <description brief="vision_plane">
+
+     vision_plane
+
+  </description>
+  <author>Alessandro Motta</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/vision_plane</url>
+  <depend package="roscpp"/>
+  <depend package="pcl"/>
+  <depend package="pcl_ros"/>
+
+</package>
+
+
