@@ -1,3 +1,4 @@
 <launch>
 	<include file="$(find core_control_motor)/launch/all.launch"/>
+	<include file="$(find core_control_odometry)/launch/all.launch"/>
 </launch>
