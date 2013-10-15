@@ -1,8 +1,8 @@
 #include <ros/ros.h> 
 #include <std_msgs/Int32.h>
 #include <core_control_motor/motorvel.h>
-#include <core_control_odometry/odometry.h>
-#include <visualization_msgs/Marker.h>
+#include <tf/transform_broadcaster.h>
+#include <nav_msgs/Odometry.h>
 #include <cmath>
 #include <string.h>
 #include <signal.h>
@@ -11,18 +11,21 @@
 
 const float freq=100;
 float x=0.0,y=0.0,theta=0.0;
-const float L=23.0/2,R1=4.8,R2=4.8; // Values in cm
+const float L=21.35/2,R1=5.0,R2=5.0; // Values in cm
 
 ros::Publisher odo_pub;
-ros::Publisher marker_pub;
+
 
 void update_odometry(const core_control_motor::motorvel::ConstPtr msg){
 	
 	float delta_s=0.0;
 	float delta_theta=0.0;
 	float baseline=2*L;
-	core_control_odometry::odometry odo_msg;
-	uint32_t shape;
+	geometry_msgs::Quaternion odom_quat;
+	geometry_msgs::TransformStamped odom_trans;
+	tf::TransformBroadcaster odom_broadcaster;
+	nav_msgs::Odometry odom;
+	
 	
 	delta_s=(msg->vel1*R1+msg->vel2*R2)/(2*freq); //Travelled distance estimate for the vehicle
 	delta_theta=(msg->vel2*R2-msg->vel1*R1)/(baseline*freq); // Estimated angle made by the vehicle
@@ -33,14 +36,42 @@ void update_odometry(const core_control_motor::motorvel::ConstPtr msg){
 	y+=delta_s*sin(theta+delta_theta/2);
 	theta+=delta_theta;
 	
-	odo_msg.header.stamp=ros::Time::now();
-	odo_msg.x=x;
-	odo_msg.y=y;
-	odo_msg.theta=theta;
+	//since all odometry is 6DOF we'll need a quaternion created from yaw
+	odom_quat = tf::createQuaternionMsgFromYaw(theta);
 	
-	shape=visualization_msgs::Marker::ARROW;
+	//first, we'll publish the transform over tf
+	odom_trans.header.stamp = ros::Time::now();
+	odom_trans.header.frame_id = "odometry";
+	odom_trans.child_frame_id = "base_link";
 	
-	odo_pub.publish(odo_msg);
+	odom_trans.transform.translation.x = x;
+	odom_trans.transform.translation.y = y;
+	odom_trans.transform.translation.z = 0.0;
+	odom_trans.transform.rotation = odom_quat;
+	
+	//send the transform
+	odom_broadcaster.sendTransform(odom_trans);
+	
+	//next, we'll publish the odometry message over ROS
+	odom.header.stamp=ros::Time::now();
+	odom.header.frame_id= "odometry";
+	
+	//set the position
+	odom.pose.pose.position.x=x/100;
+	odom.pose.pose.position.y=y/100;
+	odom.pose.pose.position.z=0.0;
+	odom.pose.pose.orientation=odom_quat;
+	
+	//set velocity
+	
+	odom.child_frame_id = "base_link";
+	// here we can introduce the velocity estimates
+	odom.twist.twist.linear.x = 0; 
+	odom.twist.twist.linear.y = 0;
+	odom.twist.twist.angular.z = delta_theta;
+	
+	
+	odo_pub.publish(odom);
 
 
 }
@@ -54,8 +85,7 @@ int main(int argc, char ** argv){
 	ros::Subscriber encoder_sub;
 	
 	encoder_sub = n.subscribe("/core_control_filter/filtered_velocity",10,update_odometry);
-	odo_pub = n.advertise<core_control_odometry::odometry>("/core_control_odometry/odometry",10);
-	marker_pub = n.advertise<visualization_msgs::Marker>("/core_control_odometry/marker", 1);
+	odo_pub = n.advertise<nav_msgs::Odometry>("/core_control_odometry/odometry", 10);
 	
 	ROS_INFO("Started the core_control_odometry node");
 	
