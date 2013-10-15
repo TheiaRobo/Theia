@@ -14,11 +14,11 @@
 using namespace differential_drive;
 float Ref1=0, Ref2=0;
 
-const float L=23.0/2,R1=4.8,R2=4.8; 	// length between the wheels(L) and diameter of the the wheels (R), values in cm!
+const float L=21.35/2,R1=5,R2=5; 	// length between the wheels(L) and diameter of the the wheels (R), values in cm!
 
 /* PID controller values */
 
-float P1=7.0,P2=7.0,I1=100.0,I2=100.0,D1=20.0,D2=20.0; // This values should be allowed to change after receiving a debug msg
+float P1=12.0,P2=12.0,I1=100.0,I2=100.0,D1=0.0,D2=0.0; // This values should be allowed to change after receiving a debug msg
 
 float v_left=0;
 float v_right=0;
@@ -73,7 +73,7 @@ void RefConverter(const core_control_motor::vw::ConstPtr &msg){
 }
 
 /* The PID algorithm goes here */	
-int PID_control(float P,float I,float D,float * integrator_sum, float * differentiator_val,float Ref,float vel){
+int PID_control(float P,float I,float D,float * integrator_sum, float * previous_error,float Ref,float vel){
 	
 	float error=Ref-vel;  		
 	float P_part=0,I_part=0,D_part=0, total=0;
@@ -83,10 +83,14 @@ int PID_control(float P,float I,float D,float * integrator_sum, float * differen
 	(*integrator_sum)+=error*0.01;
 	
 	//differentiator_val =(error-previous error)/dt; // D Part
-	(*differentiator_val)=(error-(*differentiator_val))*100;
+	D_part=(error-(*previous_error))*100;
+	*previous_error=error;
+	
+	ROS_INFO("DIFF VAL: %.2f\n",D_part);
 	
 	P_part=P*error;
 	I_part=I*(*integrator_sum);
+	D_part=D*D_part;
 	
 	/*if(Ref==0){
 		I_part=0; /* Will assume that the wheels will not turn when the input value is 0 *//*
@@ -114,7 +118,7 @@ int main(int argc, char ** argv){
 	ros::Subscriber param_sub;	
 	
 
-	float cum1=0.0,cum2=0.0,diff1=0.0,diff2=0.0;
+	float cum1=0.0,cum2=0.0,prev_error1=0.0,prev_error2=0.0;
 
 	
 	/* Loop rate of 100Hz to comply with the encoders update frequency */
@@ -129,8 +133,8 @@ int main(int argc, char ** argv){
 	/* Main loop */
 	while (ros::ok()){
 	
-		pwm_msg.PWM1=PID_control(P1,I1,D1,&cum1,&diff1,Ref1,v_left);
-		pwm_msg.PWM2=PID_control(P2,I2,D2,&cum2,&diff2,Ref2,v_right);
+		pwm_msg.PWM1=PID_control(P1,I1,D1,&cum1,&prev_error1,Ref1,v_left);
+		pwm_msg.PWM2=PID_control(P2,I2,D2,&cum2,&prev_error2,Ref2,v_right);
 		pwm_msg.header.stamp=ros::Time::now();
 		pwm_pub.publish(pwm_msg);
 	
