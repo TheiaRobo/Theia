@@ -5,16 +5,12 @@
 // PCL includes
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl/filters/voxel_grid.h>
 
 #define TOPIC_IN "/camera/depth_registered/points"
 
 
 ros::Subscriber cloudSub;
-
-
-void downScaleCloud(){
-
-}
 
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr& cloud){
     // leaf size of voxel grid (in meters)
@@ -23,7 +19,11 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr& cloud){
     /**
     * sample down point cloud
     */
-    pcl::PointCloud<pcl::PointXYZ> cloud();
+    sensor_msgs::PointCloud2 filtered;
+    pcl::VoxelGrid<sensor_msgs::PointCloud2> grid;
+    grid.setInputCloud(cloud);
+    grid.setLeafSize(leafSize, leafSize, leafSize);
+    grid.filter(filtered);
 }
 
 int main (int argc, char ** argv){
