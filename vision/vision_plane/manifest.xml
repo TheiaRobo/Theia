@@ -9,6 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/vision_plane</url>
   <depend package="roscpp"/>
+  <depend package="sensor_msgs"/>
   <depend package="pcl"/>
   <depend package="pcl_ros"/>
 
