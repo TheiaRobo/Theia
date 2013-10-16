@@ -1,0 +1,16 @@
+<package>
+  <description brief="core_sensors">
+
+     core_sensors
+
+  </description>
+  <author>robo</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/core_sensors</url>
+  <depend package="roscpp"/>
+  <depend package="differential_drive"/>
+
+</package>
+
+
