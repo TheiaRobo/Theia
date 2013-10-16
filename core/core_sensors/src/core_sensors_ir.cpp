@@ -12,15 +12,65 @@
 #include <cstring>
 #include <stdlib.h>
 #include <stdio.h>
+#include <core_sensors/ir.h>
+
+
+
+
+ros::Publisher dist_pub;
+long num;
+
+
+/*	convert
+*
+*	This function should be able to convert from raw sensor measurement to a
+*	distance value in cm from the sensor to the obstacle. For this we need to
+*	convert from the sensor curve to cm
+*/
+float convert(int raw){
+
+	return (float) raw*1.0;	
+	
+}
 
 void get_distance(const differential_drive::AnalogC::ConstPtr msg){
+	core_sensors::ir dist_msg;
+	
+	switch(num){
+		case 1:
+			dist_msg.dist=convert(msg->ch1);
+			break;
+		case 2:
+			dist_msg.dist=convert(msg->ch2);
+			break;
+		case 3:
+			dist_msg.dist=convert(msg->ch3);
+			break;
+		case 4:
+			dist_msg.dist=convert(msg->ch4);
+			break;
+		case 5:
+			dist_msg.dist=convert(msg->ch5);
+			break;
+		case 6:
+			dist_msg.dist=convert(msg->ch6);
+			break;
+		case 7:
+			dist_msg.dist=convert(msg->ch7);
+			break;
+		case 8:
+			dist_msg.dist=convert(msg->ch8);
+			break;
+	}
+	
+	dist_pub.publish(dist_msg);
 
 }
 
 int main(int argc, char ** argv){
 
-	long num;
-	char node_name[25]="core_sensors_ir_",node_num[20];
+
+	char node_name[25]="core_sensors_ir_",node_num[20],topic_name[25]="/core_sensors/ir_";
 	
 	
 	if(argc < 2){
@@ -36,6 +86,7 @@ int main(int argc, char ** argv){
 	
 	sprintf(node_num,"%li",num);
 	strcat(node_name,node_num);
+	strcat(topic_name,node_num);
 	
 	ros::init(argc,argv,node_name);
 	ros::NodeHandle n;			
@@ -46,6 +97,7 @@ int main(int argc, char ** argv){
 	ROS_INFO("Started the %s Node",node_name);
 	
 	analog_sub = n.subscribe("/sensors/ADC",1,get_distance);
+	dist_pub = n.advertise<core_sensors::ir>(topic_name,1);
 
 	
 	/* Main loop */
