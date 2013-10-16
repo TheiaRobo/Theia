@@ -84,15 +84,15 @@ void update_odometry(const core_control_motor::motorvel::ConstPtr msg){
 
 int main(int argc, char ** argv){
 
-	ros::init(argc,argv, "core_control_odometry"); 
+	ros::init(argc,argv, "core_sensors_odometry"); 
 	ros::NodeHandle n;	
 	ros::Rate loop_rate(freq);
 	ros::Subscriber encoder_sub;
 	
 	encoder_sub = n.subscribe("/core_control_filter/filtered_velocity",10,update_odometry);
-	odo_pub = n.advertise<nav_msgs::Odometry>("/core_control_odometry/odometry", 10);
+	odo_pub = n.advertise<nav_msgs::Odometry>("/core_sensors_odometry/odometry", 10);
 	
-	ROS_INFO("Started the core_control_odometry node");
+	ROS_INFO("Started the core_sensors_odometry node");
 	
 	
 	/* Main loop */
