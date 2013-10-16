@@ -16,6 +16,7 @@
 #include <pcl/ros/conversions.h>
 
 #define TOPIC_IN "/camera/depth_registered/points"
+#define TOPIC_OUT "/vision/plane"
 
 /**
 * type definition
@@ -26,6 +27,7 @@ typedef pcl::PointCloud<TheiaPoint> TheiaCloud;
 typedef TheiaCloud::Ptr TheiaCloudPtr;
 
 ros::Subscriber cloudSub;
+ros::Publisher planePub;
 
 /**
 * We scale down the cloud.
@@ -84,26 +86,33 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
     // leaf size of voxel grid (in meters)
     static const double leafSize = 0.01;
 
-    ROS_INFO("Cloud callback\n");
-    ROS_INFO("- Extract cloud from ROS message\n");
+    ROS_INFO("Cloud callback");
+    ROS_INFO("- Extract cloud from ROS message");
 
     // extract cloud
     TheiaCloudPtr cloudPtr(new TheiaCloud());
     pcl::fromROSMsg(*rosMsgPtr, *cloudPtr);
 
-    ROS_INFO("- Scale cloud\n");
+    ROS_INFO("- Scale cloud");
 
     // scale cloud
     TheiaCloudPtr scaledCloudPtr(new TheiaCloud());
     scaleCloud(cloudPtr, scaledCloudPtr, leafSize);
 
-    ROS_INFO("- Find planes in cloud\n");
+    ROS_INFO("- Find planes in cloud");
 
     // find planes
     TheiaCloudPtr planeCloudPtr(new TheiaCloud());
     findPlanes(scaledCloudPtr, planeCloudPtr);
 
-    ROS_INFO("- End\n");
+    ROS_INFO("- Send message");
+
+    // send ROS message with plane
+    sensor_msgs::PointCloud2 outMsg;
+    pcl::toROSMsg(*planeCloudPtr, outMsg);
+    planePub.publish(outMsg);
+
+    ROS_INFO("- End");
 }
 
 int main (int argc, char ** argv){
@@ -111,8 +120,9 @@ int main (int argc, char ** argv){
     ros::init(argc, argv, "vision_plane");
     ros::NodeHandle node;
 
-    // register handler for point clouds
+    // setup input and output topics
     cloudSub = node.subscribe(TOPIC_IN, 1, cloudCallback);
+    planePub = node.advertise<sensor_msgs::PointCloud2>(TOPIC_OUT, 1);
 
     // run main loop
     ros::spin();
