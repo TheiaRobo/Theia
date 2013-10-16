@@ -9,7 +9,7 @@ float w=0.0;
 float prev_key[2]={0,0};
 int is_teleop=0;
 
-const float V_MAX=40.0;
+const float V_MAX=10.0;
 const float W_MAX=1;
 
 

@@ -21,20 +21,25 @@ void update_odometry(const core_control_motor::motorvel::ConstPtr msg){
 	float delta_s=0.0;
 	float delta_theta=0.0;
 	float baseline=2*L;
+	float dist1=0.0,dist2=0.0;
 	geometry_msgs::Quaternion odom_quat;
 	geometry_msgs::TransformStamped odom_trans;
 	tf::TransformBroadcaster odom_broadcaster;
 	nav_msgs::Odometry odom;
 	
+	dist1=msg->vel1*R1/freq; //Distance travelled by left wheel
+	dist2=msg->vel2*R2/freq;
 	
-	delta_s=(msg->vel1*R1+msg->vel2*R2)/(2*freq); //Travelled distance estimate for the vehicle
-	delta_theta=(msg->vel2*R2-msg->vel1*R1)/(baseline*freq); // Estimated angle made by the vehicle
+	delta_s=(dist1+dist2)/2; //Travelled distance estimate for the vehicle
+	delta_theta=(dist2-dist1)/baseline; // Estimated angle made by the vehicle
 	
 	
 	// Following the odometry estimate from the book...
 	x+=delta_s*cos(theta+delta_theta/2);
 	y+=delta_s*sin(theta+delta_theta/2);
 	theta+=delta_theta;
+	
+	ROS_INFO("theta: %.4f",theta);
 	
 	//since all odometry is 6DOF we'll need a quaternion created from yaw
 	odom_quat = tf::createQuaternionMsgFromYaw(theta);
@@ -57,7 +62,7 @@ void update_odometry(const core_control_motor::motorvel::ConstPtr msg){
 	odom.header.frame_id= "odometry";
 	
 	//set the position
-	odom.pose.pose.position.x=x/100;
+	odom.pose.pose.position.x=x/100; // so that one unit here is treated as cm
 	odom.pose.pose.position.y=y/100;
 	odom.pose.pose.position.z=0.0;
 	odom.pose.pose.orientation=odom_quat;
