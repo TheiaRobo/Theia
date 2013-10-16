@@ -31,9 +31,9 @@ ros::Subscriber cloudSub;
 ros::Publisher planePub;
 
 void cropCloud(TheiaCloudPtr in, TheiaCloudPtr out){
-    static const double maxDistX = 1.5;
-    static const double maxDistY = 1.5;
-    static const double maxDistZ = 1.5;
+    static double maxDistX = 1.5;
+    static double maxDistY = 1.5;
+    static double maxDistZ = 1.5;
 
     Eigen::Vector4f maxPoint;
     maxPoint[0] = maxDistX;
@@ -50,7 +50,10 @@ void cropCloud(TheiaCloudPtr in, TheiaCloudPtr out){
 * We scale down the cloud.
 * This should improve performance for future operations
 */
-void scaleCloud(TheiaCloudPtr in, TheiaCloudPtr out, double leafSize){
+void scaleCloud(TheiaCloudPtr in, TheiaCloudPtr out){
+    // config
+    static double leafSize = 0.02;
+
     pcl::VoxelGrid<TheiaPoint> grid;
     grid.setLeafSize(leafSize, leafSize, leafSize);
 
@@ -67,9 +70,9 @@ void scaleCloud(TheiaCloudPtr in, TheiaCloudPtr out, double leafSize){
 */
 void findPlanes(TheiaCloudPtr in, TheiaCloudPtr out){
     // config
-    static const int numbIterations = 1000;
-    static const double distanceThreshold = 0.01;
-    static const bool optimizeCoefficients = true;
+    static int numbIterations = 1000;
+    static double distanceThreshold = 0.01;
+    static bool optimizeCoefficients = true;
 
     // create the segmentation object
     pcl::SACSegmentation<TheiaPoint> seg;
@@ -101,9 +104,6 @@ void findPlanes(TheiaCloudPtr in, TheiaCloudPtr out){
 }
 
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
-    // leaf size of voxel grid (in meters)
-    static const double leafSize = 0.01;
-
     ROS_INFO("Cloud callback");
 
     /**
@@ -125,14 +125,24 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
     cloudPtr.reset();
 
     /**
+    * Change resolution
+    */
+    ROS_INFO("- Rescale cloud");
+
+    TheiaCloudPtr scaledCloudPtr(new TheiaCloud());
+    scaleCloud(croppedCloudPtr, scaledCloudPtr);
+
+    croppedCloudPtr.reset();
+
+    /**
     * Find planes in cloud
     */
     ROS_INFO("- Find planes");
 
     TheiaCloudPtr planeCloudPtr(new TheiaCloud());
-    findPlanes(croppedCloudPtr, planeCloudPtr);
+    findPlanes(scaledCloudPtr, planeCloudPtr);
 
-    croppedCloudPtr.reset();
+    scaledCloudPtr.reset();
 
     /**
     * Send output message
@@ -144,7 +154,6 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
 
     planePub.publish(outMsg);
     planeCloudPtr.reset();
-
 
     ROS_INFO("- End");
 }
