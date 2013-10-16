@@ -4,9 +4,6 @@
 
 // PCL includes
 #include <pcl/ModelCoefficients.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/filters/crop_box.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/sample_consensus/method_types.h>
@@ -16,6 +13,9 @@
 // PCL ROS interface
 #include <pcl/ros/conversions.h>
 
+// Theia includes
+#include <vision/cloud.h>
+
 #define TOPIC_IN "/camera/depth_registered/points"
 #define TOPIC_OUT "/vision/plane"
 
@@ -23,28 +23,17 @@
 * type definition
 * for convenience
 */
-typedef pcl::PointXYZ TheiaPoint;
-typedef pcl::PointCloud<TheiaPoint> TheiaCloud;
-typedef TheiaCloud::Ptr TheiaCloudPtr;
-
 ros::Subscriber cloudSub;
 ros::Publisher planePub;
 
-void cropCloud(TheiaCloudPtr in, TheiaCloudPtr out){
-    static double maxDistX = 1.5;
-    static double maxDistY = 1.5;
-    static double maxDistZ = 1.5;
-
-    Eigen::Vector4f maxPoint;
-    maxPoint[0] = maxDistX;
-    maxPoint[1] = maxDistY;
-    maxPoint[2] = maxDistZ;
-
-    pcl::CropBox<TheiaPoint> crop;
-    crop.setMax(maxPoint);
-    crop.setInputCloud(in);
-    crop.filter(*out);
-}
+/**
+* Configuration options
+*/
+static double cropMinDist[3];
+static double cropMaxDist[3];
+static int planeNumbIterations;
+static double planeDistanceThreshold;
+static bool planeOptimize;
 
 /**
 * We scale down the cloud.
@@ -69,18 +58,13 @@ void scaleCloud(TheiaCloudPtr in, TheiaCloudPtr out){
 * http://www.pointclouds.org/documentation/tutorials/extract_indices.php
 */
 void findPlanes(TheiaCloudPtr in, TheiaCloudPtr out){
-    // config
-    static int numbIterations = 1000;
-    static double distanceThreshold = 0.01;
-    static bool optimizeCoefficients = true;
-
     // create the segmentation object
     pcl::SACSegmentation<TheiaPoint> seg;
     seg.setModelType(pcl::SACMODEL_PLANE);
     seg.setMethodType(pcl::SAC_RANSAC);
-    seg.setMaxIterations(numbIterations);
-    seg.setDistanceThreshold(distanceThreshold);
-    seg.setOptimizeCoefficients(optimizeCoefficients);
+    seg.setMaxIterations(planeNumbIterations);
+    seg.setDistanceThreshold(planeDistanceThreshold);
+    seg.setOptimizeCoefficients(planeOptimize);
 
     /**
     * Finds
@@ -120,7 +104,12 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
     ROS_INFO("- Crop cloud");
 
     TheiaCloudPtr croppedCloudPtr(new TheiaCloud());
-    cropCloud(cloudPtr, croppedCloudPtr);
+    visionCloudCrop(cloudPtr, croppedCloudPtr, cropMinDist, cropMaxDist);
+
+    sensor_msgs::PointCloud2 outMsg;
+    pcl::toROSMsg(*croppedCloudPtr, outMsg);
+
+    planePub.publish(outMsg);
 
     cloudPtr.reset();
 
@@ -149,8 +138,8 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
     */
     ROS_INFO("- Send message");
 
-    sensor_msgs::PointCloud2 outMsg;
-    pcl::toROSMsg(*planeCloudPtr, outMsg);
+    // sensor_msgs::PointCloud2 outMsg;
+    // pcl::toROSMsg(*planeCloudPtr, outMsg);
 
     planePub.publish(outMsg);
     planeCloudPtr.reset();
@@ -158,7 +147,23 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
     ROS_INFO("- End");
 }
 
+void initConfig(){
+    cropMinDist[0] = -5;
+    cropMinDist[1] = -5;
+    cropMinDist[2] = -5;
+
+    cropMaxDist[0] = +5;
+    cropMaxDist[1] = +5;
+    cropMaxDist[2] = +5;
+
+    planeNumbIterations = 1000;
+    planeDistanceThreshold = 0.01;
+    planeOptimize = true;
+}
+
 int main (int argc, char ** argv){
+    initConfig();
+
     // init ROS
     ros::init(argc, argv, "vision_plane");
     ros::NodeHandle node;
