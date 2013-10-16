@@ -6,6 +6,7 @@
 #include <pcl/ModelCoefficients.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl/filters/crop_box.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/sample_consensus/method_types.h>
@@ -29,14 +30,31 @@ typedef TheiaCloud::Ptr TheiaCloudPtr;
 ros::Subscriber cloudSub;
 ros::Publisher planePub;
 
+void cropCloud(TheiaCloudPtr in, TheiaCloudPtr out){
+    static const double maxDistX = 1.5;
+    static const double maxDistY = 1.5;
+    static const double maxDistZ = 1.5;
+
+    Eigen::Vector4f maxPoint;
+    maxPoint[0] = maxDistX;
+    maxPoint[1] = maxDistY;
+    maxPoint[2] = maxDistZ;
+
+    pcl::CropBox<TheiaPoint> crop;
+    crop.setMax(maxPoint);
+    crop.setInputCloud(in);
+    crop.filter(*out);
+}
+
 /**
 * We scale down the cloud.
 * This should improve performance for future operations
 */
 void scaleCloud(TheiaCloudPtr in, TheiaCloudPtr out, double leafSize){
     pcl::VoxelGrid<TheiaPoint> grid;
-    grid.setInputCloud(in);
     grid.setLeafSize(leafSize, leafSize, leafSize);
+
+    grid.setInputCloud(in);
     grid.filter(*out);
 }
 
@@ -87,30 +105,46 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
     static const double leafSize = 0.01;
 
     ROS_INFO("Cloud callback");
+
+    /**
+    * Extract cloud from message
+    */
     ROS_INFO("- Extract cloud from ROS message");
 
-    // extract cloud
     TheiaCloudPtr cloudPtr(new TheiaCloud());
     pcl::fromROSMsg(*rosMsgPtr, *cloudPtr);
 
-    ROS_INFO("- Scale cloud");
+    /**
+    * Crop cloud
+    */
+    ROS_INFO("- Crop cloud");
 
-    // scale cloud
-    TheiaCloudPtr scaledCloudPtr(new TheiaCloud());
-    scaleCloud(cloudPtr, scaledCloudPtr, leafSize);
+    TheiaCloudPtr croppedCloudPtr(new TheiaCloud());
+    cropCloud(cloudPtr, croppedCloudPtr);
 
-    ROS_INFO("- Find planes in cloud");
+    cloudPtr.reset();
 
-    // find planes
+    /**
+    * Find planes in cloud
+    */
+    ROS_INFO("- Find planes");
+
     TheiaCloudPtr planeCloudPtr(new TheiaCloud());
-    findPlanes(scaledCloudPtr, planeCloudPtr);
+    findPlanes(croppedCloudPtr, planeCloudPtr);
 
+    croppedCloudPtr.reset();
+
+    /**
+    * Send output message
+    */
     ROS_INFO("- Send message");
 
-    // send ROS message with plane
     sensor_msgs::PointCloud2 outMsg;
     pcl::toROSMsg(*planeCloudPtr, outMsg);
+
     planePub.publish(outMsg);
+    planeCloudPtr.reset();
+
 
     ROS_INFO("- End");
 }
