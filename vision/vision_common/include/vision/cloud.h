@@ -19,25 +19,29 @@ typedef TheiaCloud::Ptr TheiaCloudPtr;
 bool visionCloudCrop(
 	TheiaCloudPtr in,
 	TheiaCloudPtr out,
-	double min[3],
-	double max[3]
+	double cuboid[3][2]
 ){
 	/**
 	* Preparation
 	*/
-	Eigen::Vector3f translationVect;
+	Eigen::Vector4f minDistanceVect;
 	Eigen::Vector4f maxDistanceVect;
 
 	for(int i = 0; i < 3; i++){
-		translationVect[i] = (max[i] + min[i]) / 2;
-		maxDistanceVect[i] = (max[i] - min[i]) / 2;
+		if(cuboid[i][0] > cuboid[i][1]){
+			minDistanceVect[i] = cuboid[i][1];
+			maxDistanceVect[i] = cuboid[i][0];
+		}else{
+			minDistanceVect[i] = cuboid[i][0];
+			maxDistanceVect[i] = cuboid[i][1];
+		}
 	}
 
 	/**
 	* Setup crop box
 	*/
     pcl::CropBox<TheiaPoint> crop;
-    crop.setTranslation(translationVect);
+    crop.setMin(minDistanceVect);
     crop.setMax(maxDistanceVect);
     crop.setInputCloud(in);
 
