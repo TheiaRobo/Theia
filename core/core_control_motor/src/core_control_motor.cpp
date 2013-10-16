@@ -19,7 +19,7 @@ const float L=21.35/2,R1=5,R2=5; 	// length between the wheels(L) and diameter o
 /* PID controller values */
 
 //float P1=12.0,P2=12.0,I1=100.0,I2=100.0,D1=0.0,D2=0.0; // This values should be allowed to change after receiving a debug msg
-float P1=5.0,P2=5.0,I1=50.0,I2=50.0,D1=0.0,D2=0.0;
+float P1=13.0,P2=13.0,I1=130.0,I2=130.0,D1=0.0,D2=0.0;
 float v_left=0;
 float v_right=0;
 int timestamp;
@@ -92,10 +92,10 @@ int PID_control(float P,float I,float D,float * integrator_sum, float * previous
 	I_part=I*(*integrator_sum);
 	D_part=D*D_part;
 	
-	/*if(Ref==0){
-		I_part=0; /* Will assume that the wheels will not turn when the input value is 0 *//*
+	if(Ref==0){
+		I_part=0; /* Will assume that the wheels will not turn when the input value is 0 */
 		*integrator_sum=0;
-	 }*/
+	 }
 	
 	total=P_part+I_part+D_part;
 	
