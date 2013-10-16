@@ -18,8 +18,8 @@ const float L=21.35/2,R1=5,R2=5; 	// length between the wheels(L) and diameter o
 
 /* PID controller values */
 
-float P1=12.0,P2=12.0,I1=100.0,I2=100.0,D1=0.0,D2=0.0; // This values should be allowed to change after receiving a debug msg
-
+//float P1=12.0,P2=12.0,I1=100.0,I2=100.0,D1=0.0,D2=0.0; // This values should be allowed to change after receiving a debug msg
+float P1=5.0,P2=5.0,I1=50.0,I2=50.0,D1=0.0,D2=0.0;
 float v_left=0;
 float v_right=0;
 int timestamp;
