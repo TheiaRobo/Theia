@@ -9,7 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/core</url>
   <depend package="core_control_motor"/>
-  <depend package="core_control_odometry"/>
+  <depend package="core_sensors"/>
 
 </package>
 
