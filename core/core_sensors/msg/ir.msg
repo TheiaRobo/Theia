@@ -1,2 +1,2 @@
 Header header
-float32 dist
+float32[8] dist
