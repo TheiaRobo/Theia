@@ -29,10 +29,10 @@ long num;
 */
 float convert(int raw){
 
-	double p[6]={-3.92*pow(10,-7),5.03*pow(10,-5),-2.51*pow(10,-3),6.20*pow(10,-2),-7.94*pow(10,-1),5.05};
+	double p[6]={-1.4*pow(10,-11),2.47*pow(10,-8),-1.7*pow(10,-5),5.78*pow(10,-3),-1.01*pow(10,0),85.2};
 
-	return (double) p[0]*pow(raw,5)+p[1]*pow(raw,4)+p[2]*pow(raw,3)+p[3]*pow(raw,2)+p[4]*pow(raw,1)+p[5]*pow(raw,0);	
-	
+	return (double) p[0]*pow(raw,5)+p[1]*pow(raw,4)+p[2]*pow(raw,3)+p[3]*pow(raw,2)+p[4]*pow(raw,1)+p[5]*pow(raw,0);
+
 }
 
 void get_distance(const differential_drive::AnalogC::ConstPtr msg){
