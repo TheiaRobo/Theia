@@ -11,12 +11,18 @@
 
 const float freq=100;
 float x=0.0,y=0.0,theta=0.0;
-const float L=21.35/2,R1=5.0,R2=5.0; // Values in cm
+double L=21.35/2,R1=5.0,R2=5.0; // Values in cm
 
 ros::Publisher odo_pub;
 
 
 void update_odometry(const core_control_motor::motorvel::ConstPtr msg){
+	
+	// Get params from server
+	ros::param::getCached("core/L",L);
+	ros::param::getCached("core/R1",R1);
+	ros::param::getCached("core/R2",R2);	
+	
 	
 	float delta_s=0.0;
 	float delta_theta=0.0;

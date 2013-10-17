@@ -12,16 +12,16 @@
 #include <termios.h>
 
 using namespace differential_drive;
-float Ref1=0, Ref2=0;
+double Ref1=0, Ref2=0;
 
-const float L=21.35/2,R1=5,R2=5; 	// length between the wheels(L) and diameter of the the wheels (R), values in cm!
+double L=21.35/2,R1=5,R2=5; 	// length between the wheels(L) and diameter of the the wheels (R), values in cm!
 
 /* PID controller values */
 
-float P1=6.0,P2=6.0,I1=100.0,I2=100.0,D1=0.0,D2=0.0; // This values should be allowed to change after receiving a debug msg
+double P1=6.0,P2=6.0,I1=100.0,I2=100.0,D1=0.0,D2=0.0; // This values should be allowed to change after receiving a debug msg
 
-float v_left=0;
-float v_right=0;
+double v_left=0;
+double v_right=0;
 int timestamp;
 
 
@@ -58,10 +58,15 @@ void update_params(const core_control_motor::pid::ConstPtr msg){
 /* This function is called when the node receives a message from the /ControlMux/vw topic and converts the v and w values into the references for each motor. These references should be in m/s or cm/s or equivalent */
 void RefConverter(const core_control_motor::vw::ConstPtr &msg){ 	
 
-	float angv, linv;
+	double angv, linv;
 	
 	linv=msg->v;
 	angv=msg->w;
+	
+	// Get params from server
+	ros::param::getCached("core/L",L);
+	ros::param::getCached("core/R1",R1);
+	ros::param::getCached("core/R2",R2);	
 	
 	/* Reference values obtained from the equations for the linear and angular velocity. They are the spinning speed of the wheel */
 	Ref1=(linv-angv*L)/R1;	
@@ -73,10 +78,10 @@ void RefConverter(const core_control_motor::vw::ConstPtr &msg){
 }
 
 /* The PID algorithm goes here */	
-int PID_control(float P,float I,float D,float * integrator_sum, float * previous_error,float Ref,float vel){
+int PID_control(double P,double I,double D,double * integrator_sum, double * previous_error,double Ref,double vel){
 	
-	float error=Ref-vel;  		
-	float P_part=0,I_part=0,D_part=0, total=0;
+	double error=Ref-vel;  		
+	double P_part=0,I_part=0,D_part=0, total=0;
 	
 	
 	//integrator_sum  +=(error*dt);	// I Part
@@ -118,7 +123,7 @@ int main(int argc, char ** argv){
 	ros::Subscriber param_sub;	
 	
 
-	float cum1=0.0,cum2=0.0,prev_error1=0.0,prev_error2=0.0;
+	double cum1=0.0,cum2=0.0,prev_error1=0.0,prev_error2=0.0;
 
 	
 	/* Loop rate of 100Hz to comply with the encoders update frequency */
