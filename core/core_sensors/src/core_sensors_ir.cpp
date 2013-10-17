@@ -1,10 +1,9 @@
 /*	core_sensors_ir node
 *	
-*	This node should be called as follows: $rosrun core_sensors core_sensors_ir ir_num
-*	This allow us to use the callibration values for each ir (they differ a bit on their curves)
+*	This node provides readings for every callibration IR in the robot
+*
 *
 */
-
 
 #include <ros/ros.h>
 #include <differential_drive/AnalogC.h>
@@ -13,8 +12,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <core_sensors/ir.h>
-
-
 
 
 ros::Publisher dist_pub;
@@ -38,68 +35,32 @@ float convert(int raw){
 void get_distance(const differential_drive::AnalogC::ConstPtr msg){
 	core_sensors::ir dist_msg;
 	
-	switch(num){
-		case 1:
-			dist_msg.dist=convert(msg->ch1);
-			break;
-		case 2:
-			dist_msg.dist=convert(msg->ch2);
-			break;
-		case 3:
-			dist_msg.dist=convert(msg->ch3);
-			break;
-		case 4:
-			dist_msg.dist=convert(msg->ch4);
-			break;
-		case 5:
-			dist_msg.dist=convert(msg->ch5);
-			break;
-		case 6:
-			dist_msg.dist=convert(msg->ch6);
-			break;
-		case 7:
-			dist_msg.dist=convert(msg->ch7);
-			break;
-		case 8:
-			dist_msg.dist=convert(msg->ch8);
-			break;
-	}
+	dist_msg.dist[0]=convert(msg->ch1);
+	dist_msg.dist[1]=convert(msg->ch2);
+	dist_msg.dist[2]=convert(msg->ch3);
+	dist_msg.dist[3]=convert(msg->ch4);
+	dist_msg.dist[4]=convert(msg->ch5);
+	dist_msg.dist[5]=convert(msg->ch6);
+	dist_msg.dist[6]=convert(msg->ch7);
+	dist_msg.dist[7]=convert(msg->ch8);
+
 	
 	dist_pub.publish(dist_msg);
 
 }
 
 int main(int argc, char ** argv){
-
-
-	char node_name[25]="core_sensors_ir_",node_num[20],topic_name[25]="/core_sensors/ir_";
 	
-	
-	if(argc < 2){
-		ROS_ERROR("Usage: rosrun core_sensors core_sensors_ir ir_num");
-		exit(0);
-	}
-	
-	
-	if((num=strtol(argv[1],NULL,0))==0){
-		ROS_ERROR("ir_num must be an integer");
-		exit(0);
-	}
-	
-	sprintf(node_num,"%li",num);
-	strcat(node_name,node_num);
-	strcat(topic_name,node_num);
-	
-	ros::init(argc,argv,node_name);
+	ros::init(argc,argv,"core_sensors_ir");
 	ros::NodeHandle n;			
 	ros::Subscriber analog_sub; 		
 	ros::Rate loop_rate(100);
 	
 	
-	ROS_INFO("Started the %s Node",node_name);
+	ROS_INFO("Started the core_sensors_ir Node");
 	
 	analog_sub = n.subscribe("/sensors/ADC",1,get_distance);
-	dist_pub = n.advertise<core_sensors::ir>(topic_name,1);
+	dist_pub = n.advertise<core_sensors::ir>("/core_sensors_ir/ir",1);
 
 	
 	/* Main loop */
