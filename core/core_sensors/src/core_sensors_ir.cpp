@@ -29,7 +29,9 @@ long num;
 */
 float convert(int raw){
 
-	return (float) raw*1.0;	
+	double p[6]={-3.92*pow(10,-7),5.03*pow(10,-5),-2.51*pow(10,-3),6.20*pow(10,-2),-7.94*pow(10,-1),5.05};
+
+	return (double) p[0]*pow(raw,5)+p[1]*pow(raw,4)+p[2]*pow(raw,3)+p[3]*pow(raw,2)+p[4]*pow(raw,1)+p[5]*pow(raw,0);	
 	
 }
 
