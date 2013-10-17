@@ -1,3 +1,6 @@
+#include <cmath>
+#include <vector>
+
 // ROS includes
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
@@ -21,21 +24,32 @@
 #define TOPIC_OUT "/vision/plane"
 
 /**
-* type definition
-* for convenience
+* Type definitions
+*/
+typedef struct {
+    double normal[3];
+    double centroid[3];
+    double area;
+} Plane_t;
+
+/**
+* Global variables
 */
 ros::Subscriber cloudSub;
 ros::Publisher planePub;
 
 /**
 * Configuration options
+*
+* TODO:
+* - Replace by cached parameters
 */
 int planeNumbIterations;
 double planeDistanceThreshold;
 bool planeOptimize;
 
 /**
-* We crop the cloud.
+* Cropping the cloud
 * The config values are taken from the parameter server
 */
 void cropCloud(TheiaCloudPtr in, TheiaCloudPtr out){
@@ -47,16 +61,11 @@ void cropCloud(TheiaCloudPtr in, TheiaCloudPtr out){
     ros::param::getCached("~config/crop/minZ", centroid[2][0]);
     ros::param::getCached("~config/crop/maxZ", centroid[2][1]);
 
-    for(int i = 0; i < 3; i++){
-        for(int j = 0; j < 2; j++){
-            printf("centroid[%d][%d] = %lf\n", i, j, centroid[i][j]);    
-        }
-    }
     visionCloudCrop(in, out, centroid);
 }
 
 /**
-* We scale down the cloud.
+* Scaling down the cloud
 * This should improve performance for future operations
 */
 void scaleCloud(TheiaCloudPtr in, TheiaCloudPtr out){
@@ -78,6 +87,22 @@ void scaleCloud(TheiaCloudPtr in, TheiaCloudPtr out){
 * http://www.pointclouds.org/documentation/tutorials/extract_indices.php
 */
 void findPlanes(TheiaCloudPtr in, TheiaCloudPtr out){
+    double minPercentage;
+    ros::param::getCached("~config/plane/percentage", minPercentage);
+
+    std::vector<Plane_t> planeVect;
+
+    /**
+    * RANSAC needs at least three points
+    */
+    int origCloudSize = in->points.size();
+
+    if(origCloudSize < 3){
+        ROS_INFO("Input cloud for findPlanes is too small");
+        ROS_INFO("Check cropping and rescaling parameters");
+        return;
+    }
+
     // create the segmentation object
     pcl::SACSegmentation<TheiaPoint> seg;
     seg.setModelType(pcl::SACMODEL_PLANE);
@@ -86,25 +111,93 @@ void findPlanes(TheiaCloudPtr in, TheiaCloudPtr out){
     seg.setDistanceThreshold(planeDistanceThreshold);
     seg.setOptimizeCoefficients(planeOptimize);
 
-    /**
-    * Finds
-    * - Indices of points in plane
-    * - Parameters of plane
-    */
+    // contains the indices of points in plane
     pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
+
+    // contains the parameters for the hessian normal equation
     pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
 
-    seg.setInputCloud(in);
-    seg.segment(*inliers, *coefficients);
+    // points remaining after removing plane
+    TheiaCloudPtr remainingCloudPtr(new TheiaCloud());
 
-    /**
-    * Extract plane from cloud
-    */
-    pcl::ExtractIndices<TheiaPoint> extract;
-    extract.setNegative(false);
-    extract.setIndices(inliers);
-    extract.setInputCloud(in);
-    extract.filter(*out);
+    do{
+        seg.setInputCloud(in);
+        seg.segment(*inliers, *coefficients);
+
+        /**
+        * Stop the search for planes when the found plane
+        * is too small (in terms of points).
+        */
+        int numbInliers = inliers->indices.size();
+
+        if(
+            numbInliers == 0
+            || numbInliers < minPercentage * origCloudSize
+        ){
+            break;
+        }
+
+        Plane_t plane;
+        
+        /**
+        * Find normal
+        */
+        plane.normal[0] = coefficients->values[0];
+        plane.normal[1] = coefficients->values[1];
+        plane.normal[2] = coefficients->values[2];
+
+        /**
+        * Find centroid
+        */
+        Eigen::Vector4f centroid;
+        pcl::compute3DCentroid(*in, *inliers, centroid);
+
+        plane.centroid[0] = centroid[0];
+        plane.centroid[1] = centroid[1];
+        plane.centroid[2] = centroid[2];
+
+        /**
+        * Find area
+        */
+        Eigen::Vector4f minVect;
+        Eigen::Vector4f maxVect;
+        pcl::getMinMax3D(*in, *inliers, minVect, maxVect);
+
+        Eigen::Vector4f diffVect;
+        for(int i = 0; i < 3; i++){
+            diffVect[i] = maxVect[i] - minVect[i];
+        }
+
+        double planeHeight = diffVect[2];
+        double planeBaseline = sqrt(
+            diffVect[0] * diffVect[0] + diffVect[1] * diffVect[1]
+        );
+
+        plane.area = planeHeight * planeBaseline;
+
+        /**
+        * Finish plane
+        */
+        planeVect.push_back(plane);
+
+        /**
+        * Remove plane from input cloud
+        */
+        pcl::ExtractIndices<TheiaPoint> extract;
+        extract.setInputCloud(in);
+        extract.setIndices(inliers);
+
+        extract.setNegative(true);
+        extract.filter(*remainingCloudPtr);
+
+        /**
+        * Continue search 
+        * But only use remaining point cloud
+        */
+        in->swap(*remainingCloudPtr);
+    }while(true);
+
+    ROS_INFO("%d planes were found", planeVect.size());
 }
 
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
@@ -125,11 +218,6 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
 
     TheiaCloudPtr croppedCloudPtr(new TheiaCloud());
     cropCloud(cloudPtr, croppedCloudPtr);
-
-    sensor_msgs::PointCloud2 outMsg;
-    pcl::toROSMsg(*croppedCloudPtr, outMsg);
-
-    planePub.publish(outMsg);
 
     cloudPtr.reset();
 
@@ -158,8 +246,8 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
     */
     ROS_INFO("- Send message");
 
-    // sensor_msgs::PointCloud2 outMsg;
-    // pcl::toROSMsg(*planeCloudPtr, outMsg);
+    sensor_msgs::PointCloud2 outMsg;
+    pcl::toROSMsg(*planeCloudPtr, outMsg);
 
     planePub.publish(outMsg);
     planeCloudPtr.reset();
