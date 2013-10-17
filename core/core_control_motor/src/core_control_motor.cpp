@@ -14,7 +14,7 @@
 using namespace differential_drive;
 double Ref1=0, Ref2=0;
 
-double L=21.35/2,R1=5,R2=5; 	// length between the wheels(L) and diameter of the the wheels (R), values in cm!
+double L=0.0,R1=0.0,R2=0.0; 	// length between the wheels(L) and diameter of the the wheels (R), values in cm!
 
 /* PID controller values */
 
@@ -68,6 +68,7 @@ void RefConverter(const core_control_motor::vw::ConstPtr &msg){
 	ros::param::getCached("core/R1",R1);
 	ros::param::getCached("core/R2",R2);	
 	
+	
 	/* Reference values obtained from the equations for the linear and angular velocity. They are the spinning speed of the wheel */
 	Ref1=(linv-angv*L)/R1;	
 	Ref2=(linv+angv*L)/R2;
@@ -90,8 +91,6 @@ int PID_control(double P,double I,double D,double * integrator_sum, double * pre
 	//differentiator_val =(error-previous error)/dt; // D Part
 	D_part=(error-(*previous_error))*100;
 	*previous_error=error;
-	
-	ROS_INFO("DIFF VAL: %.2f\n",D_part);
 	
 	P_part=P*error;
 	I_part=I*(*integrator_sum);
