@@ -1,0 +1,22 @@
+<!--
+	Theia core_sensors launch file
+-->
+<launch>
+	<!--
+		launch core sensors
+	-->
+	<group ns="core">
+		<group ns="sensors">
+			<node
+				pkg="core_sensors"
+				type="core_sensors_ir"
+				name="ir"
+			/>
+			<node
+				pkg="core_sensors"
+				type="core_sensors_odometry"
+				name="odometry"
+			/>
+		</group>
+	</group>
+</launch>
