@@ -1,4 +1,5 @@
 <launch>
-	<include file="$(find control_hand)/launch/all.launch"/>
+	<include file="$(find control_motion)/launch/all.launch"/>
+	<include file="$(find control_logic)/launch/all.launch"/>
 	<include file="$(find control_mux)/launch/all.launch"/>
 </launch>

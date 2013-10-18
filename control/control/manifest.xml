@@ -8,7 +8,8 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/control</url>
-  <depend package="control_hand"/>
+  <depend package="control_logic"/>
+  <depend package="control_motion"/>
   <depend package="control_mux"/>
   <depend package="core_control_motor"/>
   <depend package="teleop_msgs"/>

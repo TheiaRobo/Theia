@@ -1,0 +1,18 @@
+<package>
+  <description brief="control_motion">
+
+     control_motion
+
+  </description>
+  <author>robo</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/control_motion</url>
+  <depend package="roscpp"/>
+  <depend package="core_control_motor"/>
+  <depend package="core_sensors"/>
+  <depend package="control_logic"/>
+
+</package>
+
+
