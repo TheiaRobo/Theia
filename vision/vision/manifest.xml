@@ -8,6 +8,8 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/vision</url>
+  <depend package="vision_common"/>
+  <depend package="vision_plane"/>
   <depend package="vision_trial"/>
 
 </package>
