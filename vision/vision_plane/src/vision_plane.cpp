@@ -3,6 +3,7 @@
 
 // ROS includes
 #include <ros/ros.h>
+#include <std_msgs/Float64.h>
 #include <sensor_msgs/PointCloud2.h>
 
 // PCL includes
@@ -21,7 +22,9 @@
 
 #define NODE_NAME "vision_plane"
 #define TOPIC_IN "/camera/depth_registered/points"
-#define TOPIC_OUT "/vision/plane"
+#define TOPIC_OUT "/vision/plane/angle"
+#define TOPIC_DEBUG_CROPPED_OUT "/vision/plane/debug/cropped"
+#define TOPIC_DEBUG_PLANE_OUT "/vision/plane/debug/plane"
 
 /**
 * Type definitions
@@ -36,7 +39,9 @@ typedef struct {
 * Global variables
 */
 ros::Subscriber cloudSub;
-ros::Publisher planePub;
+ros::Publisher debugCroppedPub;
+ros::Publisher debugPlanePub;
+ros::Publisher anglePub;
 
 /**
 * Configuration options
@@ -86,11 +91,12 @@ void scaleCloud(TheiaCloudPtr in, TheiaCloudPtr out){
 * Heavily inspired by
 * http://www.pointclouds.org/documentation/tutorials/extract_indices.php
 */
-void findPlanes(TheiaCloudPtr in, TheiaCloudPtr out){
+void findPlanes(TheiaCloudPtr in, std::vector<Plane_t> & planeVect){
     double minPercentage;
     ros::param::getCached("~config/plane/percentage", minPercentage);
 
-    std::vector<Plane_t> planeVect;
+    // for debugging
+    TheiaCloudPtr allPlanesCloudPtr(new TheiaCloud());
 
     /**
     * RANSAC needs at least three points
@@ -116,9 +122,6 @@ void findPlanes(TheiaCloudPtr in, TheiaCloudPtr out){
 
     // contains the parameters for the hessian normal equation
     pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
-
-    // points remaining after removing plane
-    TheiaCloudPtr remainingCloudPtr(new TheiaCloud());
 
     do{
         seg.setInputCloud(in);
@@ -168,9 +171,9 @@ void findPlanes(TheiaCloudPtr in, TheiaCloudPtr out){
             diffVect[i] = maxVect[i] - minVect[i];
         }
 
-        double planeHeight = diffVect[2];
+        double planeHeight = diffVect[1];
         double planeBaseline = sqrt(
-            diffVect[0] * diffVect[0] + diffVect[1] * diffVect[1]
+            diffVect[0] * diffVect[0] + diffVect[2] * diffVect[2]
         );
 
         plane.area = planeHeight * planeBaseline;
@@ -180,13 +183,25 @@ void findPlanes(TheiaCloudPtr in, TheiaCloudPtr out){
         */
         planeVect.push_back(plane);
 
-        /**
-        * Remove plane from input cloud
-        */
         pcl::ExtractIndices<TheiaPoint> extract;
         extract.setInputCloud(in);
         extract.setIndices(inliers);
 
+        /**
+        * Get point cloud from plane
+        */
+        TheiaCloudPtr planeCloudPtr(new TheiaCloud());
+        extract.setNegative(false);
+        extract.filter(*planeCloudPtr);
+
+        allPlanesCloudPtr->operator+=(*planeCloudPtr);
+
+        planeCloudPtr.reset();
+
+        /**
+        * Remove plane from input cloud
+        */
+        TheiaCloudPtr remainingCloudPtr(new TheiaCloud());
         extract.setNegative(true);
         extract.filter(*remainingCloudPtr);
 
@@ -197,7 +212,44 @@ void findPlanes(TheiaCloudPtr in, TheiaCloudPtr out){
         in->swap(*remainingCloudPtr);
     }while(true);
 
-    ROS_INFO("%d planes were found", planeVect.size());
+    // debug
+    visionCloudDebug(allPlanesCloudPtr, debugPlanePub);
+}
+
+/**
+* This function takes a a vector of planes
+* and calculates an angle for it.
+*/
+double planeVectToAngle(std::vector<Plane_t> & planeVect){
+    double totalArea = 0;
+    double totalAngle = 0;
+    for(int i = 0; i < planeVect.size(); i++){
+        double planeNormalX = planeVect[i].normal[0];
+        double planeNormalZ = planeVect[i].normal[2];
+        double angle = atan2(planeNormalZ, planeNormalX);
+
+        if(angle < 0){
+            angle = angle + 2 * M_PI;
+        }
+
+        // forward transform
+        angle = angle + M_PI / 4;
+
+        int quadrant = (int) (angle / (M_PI / 2));
+        angle = angle - quadrant * (M_PI / 2);
+
+        // backwards transform
+        angle = angle - M_PI / 4;
+
+        double planeArea = planeVect[i].area;
+        totalArea += planeArea;
+        totalAngle += angle * planeArea;
+
+        ROS_INFO("Plane #%d, Angle %f", i, angle);
+    }
+
+    double averageAngle = totalAngle / totalArea;
+    return averageAngle;
 }
 
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
@@ -219,6 +271,9 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
     TheiaCloudPtr croppedCloudPtr(new TheiaCloud());
     cropCloud(cloudPtr, croppedCloudPtr);
 
+    // debug
+    visionCloudDebug(croppedCloudPtr, debugCroppedPub);
+
     cloudPtr.reset();
 
     /**
@@ -236,21 +291,29 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
     */
     ROS_INFO("- Find planes");
 
-    TheiaCloudPtr planeCloudPtr(new TheiaCloud());
-    findPlanes(scaledCloudPtr, planeCloudPtr);
+    std::vector<Plane_t> planeVect;
+    findPlanes(scaledCloudPtr, planeVect);
 
     scaledCloudPtr.reset();
+
+    if(planeVect.empty()){
+        return;
+    }
+
+    /**
+    * Estimate angle to wall
+    */
+    double angle = planeVectToAngle(planeVect);
 
     /**
     * Send output message
     */
     ROS_INFO("- Send message");
+    
+    std_msgs::Float64 outMsg;
+    outMsg.data = 180 / M_PI * angle;
 
-    sensor_msgs::PointCloud2 outMsg;
-    pcl::toROSMsg(*planeCloudPtr, outMsg);
-
-    planePub.publish(outMsg);
-    planeCloudPtr.reset();
+    anglePub.publish(outMsg);
 
     ROS_INFO("- End");
 }
@@ -268,9 +331,23 @@ int main (int argc, char ** argv){
     ros::init(argc, argv, NODE_NAME);
     ros::NodeHandle node;
 
-    // setup input and output topics
+    /**
+    * Subscribers
+    */
     cloudSub = node.subscribe(TOPIC_IN, 1, cloudCallback);
-    planePub = node.advertise<sensor_msgs::PointCloud2>(TOPIC_OUT, 1);
+
+    /**
+    * Publishers
+    */
+    debugCroppedPub = node.advertise<sensor_msgs::PointCloud2>(
+        TOPIC_DEBUG_CROPPED_OUT, 1
+    );
+
+    debugPlanePub = node.advertise<sensor_msgs::PointCloud2>(
+        TOPIC_DEBUG_PLANE_OUT, 1
+    );
+
+    anglePub = node.advertise<std_msgs::Float64>(TOPIC_OUT, 1);
 
     // run main loop
     ros::spin();

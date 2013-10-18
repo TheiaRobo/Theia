@@ -1,6 +1,13 @@
 #ifndef VISION_COMMON_CLOUD
 #define VISION_COMMON_CLOUD
 
+// ROS includes
+#include <ros/ros.h>
+
+// message
+#include <sensor_msgs/PointCloud2.h>
+
+// PCL includes
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/crop_box.h>
@@ -16,11 +23,7 @@ typedef TheiaCloud::Ptr TheiaCloudPtr;
 * visionCloudCrop
 * This function allows to easily remove boring points from the cloud.
 */
-bool visionCloudCrop(
-	TheiaCloudPtr in,
-	TheiaCloudPtr out,
-	double cuboid[3][2]
-){
+bool visionCloudCrop(TheiaCloudPtr in, TheiaCloudPtr out, double cuboid[3][2]){
 	/**
 	* Preparation
 	*/
@@ -48,6 +51,24 @@ bool visionCloudCrop(
     crop.filter(*out);
     
 	return true;
+}
+
+void visionCloudDebug(
+	TheiaCloudPtr cloudPtr,
+	ros::Publisher & publisher
+){
+	if(!publisher.getNumSubscribers()) return;
+
+	// create message from cloud
+	sensor_msgs::PointCloud2 cloudMessage;
+	pcl::toROSMsg(*cloudPtr, cloudMessage);
+
+	/**
+	* TODO
+	*/
+	cloudMessage.header.frame_id = "/camera_depth_optical_frame";
+
+	publisher.publish(cloudMessage);
 }
 
 #endif

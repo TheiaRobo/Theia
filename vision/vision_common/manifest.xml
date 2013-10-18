@@ -8,6 +8,8 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/vision_common</url>
+  <depend package="roscpp"/>
+  <depend package="sensor_msgs"/>
   <depend package="pcl"/>
   <export>
   	<cpp cflags="-I${prefix}/include"/>
