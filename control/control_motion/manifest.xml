@@ -12,6 +12,7 @@
   <depend package="core_control_motor"/>
   <depend package="core_sensors"/>
   <depend package="control_logic"/>
+  <depend package="nav_msgs"/>
 
 </package>
 

@@ -11,6 +11,7 @@ int is_teleop=0;
 
 double V_MAX=10.0;
 double W_MAX=1;
+double freq=10.0;
 
 
 void HandFollow_up(const core_control_motor::vw::ConstPtr msg){
@@ -85,12 +86,12 @@ int main(int argc, char **argv)
 	ros::Publisher pub;
 	core_control_motor::vw msg;
 	
-	ros::Rate loop_rate(30);
+	ros::Rate loop_rate(freq);
 
 	ROS_INFO("Started the control_mux node");	
 	
 	pub=n.advertise<core_control_motor::vw>("/control_mux/vw",1);
-	Hand_sub=n.subscribe("/control_hand/vw",1,HandFollow_up);
+	Hand_sub=n.subscribe("/control_motion/vw",1,HandFollow_up);
 	Teleop_sub=n.subscribe("/teleop_source_node/teleop",1,Teleop_up);
 	
 	
