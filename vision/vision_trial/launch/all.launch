@@ -1,9 +1,4 @@
 <launch>
-	<!--
-		launch OpenNI
-	-->
-	<include file="$(find openni_launch)/launch/openni.launch"/>
-
 	<group ns="vision">
 	</group>
 </launch>
