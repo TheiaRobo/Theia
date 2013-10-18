@@ -3,6 +3,7 @@
 #include <core_control_motor/vw.h>
 #include <nav_msgs/Odometry.h>
 #include <core_sensors/ir.h>
+#include <control_logic/MotionCommand.h>
 
 double freq=10.0;
 
@@ -26,6 +27,10 @@ int main(int argc, char ** argv){
 	ros::Publisher vw_pub;
 	ros::Rate loop_rate(freq);
 	
+        ros::ServiceClient brain = n.serviceClient<control_logic::MotionCommand>("control_logic/motion_command");
+        control_logic::MotionCommand srv;
+        srv.request.A = true;
+
 	vw_pub = n.advertise<core_control_motor::vw>("/control_motion/vw",1);
 	odo_sub = n.subscribe("/core_sensors/odometry",1,odo_proc);
 	ir_sub = n.subscribe("/core_sensors/ir",1,ir_proc);
@@ -34,6 +39,13 @@ int main(int argc, char ** argv){
 	
 	while(ros::ok()){
 		
+          if(brain.call(srv)){
+            ROS_INFO("service successful!!!");
+          } else {
+            ROS_INFO("service failed");
+            return 1;
+          }
+ 
 		loop_rate.sleep();
 		ros::spinOnce();
 	}
