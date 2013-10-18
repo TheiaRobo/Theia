@@ -4,13 +4,13 @@
 #include <core_control_motor/vw.h>
 #include <teleop_msgs/State.h>
 
-float v=0.0;
-float w=0.0;
-float prev_key[2]={0,0};
+double v=0.0;
+double w=0.0;
+double prev_key[2]={0,0};
 int is_teleop=0;
 
-const float V_MAX=10.0;
-const float W_MAX=1;
+double V_MAX=10.0;
+double W_MAX=1;
 
 
 void HandFollow_up(const core_control_motor::vw::ConstPtr msg){
@@ -25,10 +25,13 @@ void HandFollow_up(const core_control_motor::vw::ConstPtr msg){
 /* Teleoperation Update: will generate a linear or angular velocity, based on keyboard commands. Front: constant v>0 value. Back: constant v<0 value. Left: constant w>0 value. Right: constant w>0 value*/
 void Teleop_up(const teleop_msgs::State::ConstPtr msg){
 
-	float value[2]={0,0};
+	double value[2]={0,0};
 	
 	value[0]=msg->axes[0].value;
 	value[1]=msg->axes[1].value;
+	
+	ros::param::getCached("/control_mux/V_MAX",V_MAX);
+	ros::param::getCached("/control_mux/W_MAX",W_MAX);
 	
 	if(value[0]>prev_key[0]){ // new key press
 		v+=V_MAX;

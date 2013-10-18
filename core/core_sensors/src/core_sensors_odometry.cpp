@@ -9,19 +9,25 @@
 #include <termios.h>
 
 
-const float freq=100;
-float x=0.0,y=0.0,theta=0.0;
-const float L=21.35/2,R1=5.0,R2=5.0; // Values in cm
+const double freq=100;
+double x=0.0,y=0.0,theta=0.0;
+double L=0.0,R1=0.0,R2=0.0; // Values in cm
 
 ros::Publisher odo_pub;
 
 
 void update_odometry(const core_control_motor::motorvel::ConstPtr msg){
 	
-	float delta_s=0.0;
-	float delta_theta=0.0;
-	float baseline=2*L;
-	float dist1=0.0,dist2=0.0;
+	// Get params from server
+	ros::param::getCached("core/L",L);
+	ros::param::getCached("core/R1",R1);
+	ros::param::getCached("core/R2",R2);	
+	
+	
+	double delta_s=0.0;
+	double delta_theta=0.0;
+	double baseline=2*L;
+	double dist1=0.0,dist2=0.0;
 	geometry_msgs::Quaternion odom_quat;
 	geometry_msgs::TransformStamped odom_trans;
 	tf::TransformBroadcaster odom_broadcaster;
