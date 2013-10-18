@@ -1,0 +1,9 @@
+<launch>
+	<group ns="vision">
+		<node
+			pkg="vision_object"
+			type="vision_object"
+			name="object"
+		/>
+	</group>
+</launch>
