@@ -4,17 +4,32 @@
 #include <nav_msgs/Odometry.h>
 #include <core_sensors/ir.h>
 #include <control_logic/MotionCommand.h>
+#include <tf/transform_datatypes.h>
 
 double freq=10.0;
-
+double x=0.0,y=0.0,theta=0.0; // Position estimate given by the odometry
+double ir_readings[8];
 
 /* Function that should update the odometry values obtained from the core*/
 void odo_proc(nav_msgs::Odometry::ConstPtr odo_msg){
+	tf::Pose pose;
+	tf::poseMsgToTF(odo_msg->pose.pose,pose);
+	
+	x=odo_msg->pose.pose.position.x;
+	y=odo_msg->pose.pose.position.y;
+	theta=tf::getYaw(pose.getRotation());
+	
+	//Debug
+	ROS_INFO("Got Pose: (x,y,theta)=(%.2f,%.2f,%.2f)",x,y,theta);
+	
 
 }
 
 /* Function that should update the IR values obtained from the core*/
 void ir_proc(core_sensors::ir::ConstPtr ir_msg){
+
+	for(int i=0; i<8; i++)
+		ir_readings[i]=ir_msg->dist[i];
 
 }
 
@@ -34,6 +49,10 @@ int main(int argc, char ** argv){
 	vw_pub = n.advertise<core_control_motor::vw>("/control_motion/vw",1);
 	odo_sub = n.subscribe("/core_sensors/odometry",1,odo_proc);
 	ir_sub = n.subscribe("/core_sensors/ir",1,ir_proc);
+	
+	// initialize ir_readings vector
+	for(int i=0;i<8;i++)
+		ir_readings[i]=0.0;
 	
 	
 	
