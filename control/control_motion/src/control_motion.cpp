@@ -24,6 +24,12 @@ double freq=10.0;
 double x=0.0,y=0.0,theta=0.0; // Position estimate given by the odometry
 double ir_readings[8];
 
+// Control parameters
+double k_forward=1.0;
+double std_velocity=15.0;
+double heading_thres=0.01;
+double dist_thres=20.0;
+
 ros::Publisher vw_pub;
 ros::ServiceClient ask_logic;
 
@@ -55,6 +61,23 @@ void ir_proc(core_sensors::ir::ConstPtr ir_msg){
 	
 	//Debug
 	ROS_INFO("Got ir 1: %.2f\nGot ir 2: %.2f",ir_readings[0],ir_readings[1]);
+
+}
+
+
+/** is_close: Checks if any short range ir detects an obstacle
+*
+*	Will assume obstacle if the ir reading is below a certain threshold
+*
+**/
+int is_close(){
+
+	for(int i=0; i<6; i++){
+		if(ir_readings[i]<dist_thres)
+			return 1;
+	}
+	
+	return 0;
 
 }
 
@@ -96,6 +119,46 @@ int none(ros::Rate loop_rate){
 *
 **/
 int forward(ros::Rate loop_rate){
+	
+	double initial_theta=theta;
+	double heading_error=0.0;
+	int obstacle=0;
+	
+	
+	while(ros::ok()){ // Will keep moving forward until sensors report obstacle
+		
+		obstacle = is_close();
+		
+		// Debug
+		obstacle=0;
+		
+		if(obstacle==1){
+			control_message.v=0;
+			control_message.w=0;
+			vw_pub.publish(control_message);
+			return 0;
+		}
+		
+		
+		heading_error=initial_theta-theta;
+		
+		//Debug
+		//ROS_INFO("initial_theta: %.2f\ntheta: %.2f\nheading_error: %.2f",initial_theta,theta,heading_error);
+		
+		// Some small threshold to account for noise
+		if(abs(heading_error)<heading_thres)
+			heading_error=0.0;
+		
+		control_message.v=std_velocity;
+		control_message.w=k_forward*heading_error;
+		
+		vw_pub.publish(control_message);
+		
+		loop_rate.sleep();
+		ros::spinOnce();
+	}
+		
+	
 
 }
 
@@ -131,7 +194,7 @@ int main(int argc, char ** argv){
 	
         ask_logic = n.serviceClient<control_logic::MotionCommand>("control_logic/motion_command");
         
-        int behaviour=0; //0 - None; 1 - Forward; 2 - Rotate xº; 3 - Forward with wall
+        int behaviour=1; //0 - None; 1 - Forward; 2 - Rotate xº; 3 - Forward with wall
         
 
 	vw_pub = n.advertise<core_control_motor::vw>("/control_motion/vw",1);
