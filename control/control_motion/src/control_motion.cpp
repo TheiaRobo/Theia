@@ -1,6 +1,6 @@
 /** control_motion: Mid level controller responsible for the movement of the robot as a whole.
 *
-*	Default behaviours: 'Forward', 'Rotate xº', 'Forward with wall', 'None'
+*	Default behaviors: 'Forward', 'Rotate xº', 'Forward with wall', 'None'
 *
 *	None: Send (v,w)=(0,0) command to the core and asks for instructions to the control_logic node
 *
@@ -23,9 +23,11 @@
 double freq=10.0;
 double x=0.0,y=0.0,theta=0.0; // Position estimate given by the odometry
 double ir_readings[8];
+double heading_ref=0.0; // reference for the rotate xº behavior
 
 // Control parameters
 double k_forward=1.0;
+double k_rotate=1.0;
 double std_velocity=15.0;
 double heading_thres=0.01;
 double dist_thres=20.0;
@@ -81,7 +83,7 @@ int is_close(){
 
 }
 
-/** none: Implements the 'None' behaviour
+/** none: Implements the 'None' behavior
 *
 *	Sends a stopping message to the core and asks for instructions to the logic node
 *
@@ -96,7 +98,7 @@ int none(ros::Rate loop_rate){
 	srv.request.A=true;
 	
 	
-	/* Because a behaviour may stay in loop while doing its thing */
+	/* Because a behavior may stay in loop while doing its thing */
 	loop_rate.sleep();
 	ros::spinOnce();
 	
@@ -113,7 +115,7 @@ int none(ros::Rate loop_rate){
 
 }
 
-/** forward: Implements the 'Forward' behaviour
+/** forward: Implements the 'Forward' behavior
 *
 *	Sends a (v>0,w=k*error) message to the core, with the error being based on the odometry
 *
@@ -162,24 +164,47 @@ int forward(ros::Rate loop_rate){
 
 }
 
-/** rotate: Implements the 'Rotate xº' behaviour
+/** rotate: Implements the 'Rotate xº' behavior
 *
 *	Sends a (v=0,w=k*error) message to the core, with the error being based on the odometry
 *
 **/
 
 int rotate(ros::Rate loop_rate){
+	double initial_theta=theta;
+	double heading_error=0.0;
+	
+	while(ros::ok()){
+		
+		heading_error=initial_theta-theta;
+		
+		// action completed
+		if(abs(heading_error)<heading_thres){
+			return 0;
+		}
+			
+		control_message.v=0.0;
+		control_message.w=k_rotate*heading_error;
+		
+		vw_pub.publish(control_message);	
+	
+		loop_rate.sleep();
+		ros::spinOnce();
+	
+	}
+	
 
 }
 
 
-/** forward_wall: Implements the 'Forward with wall' behaviour
+/** forward_wall: Implements the 'Forward with wall' behavior
 *
 *	Sends a (v>0, w=k*error) message to the core, with the error being based on the ir readings
 *
 **/
 int forward_wall(ros::Rate loop_rate){
-
+	
+	return 0;
 }
 
 
@@ -194,7 +219,7 @@ int main(int argc, char ** argv){
 	
         ask_logic = n.serviceClient<control_logic::MotionCommand>("control_logic/motion_command");
         
-        int behaviour=1; //0 - None; 1 - Forward; 2 - Rotate xº; 3 - Forward with wall
+        int behaviour=2; //0 - None; 1 - Forward; 2 - Rotate xº; 3 - Forward with wall
         
 
 	vw_pub = n.advertise<core_control_motor::vw>("/control_motion/vw",1);
@@ -227,16 +252,6 @@ int main(int argc, char ** argv){
 				behaviour = forward_wall(loop_rate);
 				break;
 		}
-	
-	
-	
-		
-          /*if(brain.call(srv)){
-            ROS_INFO("service successful!!!");
-          } else {
-            ROS_INFO("service failed");
-            return 1;
-          }*/
  
 	}
 	
