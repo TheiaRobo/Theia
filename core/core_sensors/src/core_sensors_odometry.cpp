@@ -11,7 +11,7 @@
 
 const double freq=100;
 double x=0.0,y=0.0,theta=0.0;
-double L=0.0,R1=0.0,R2=0.0; // Values in cm
+double L=21.35,R1=5.0,R2=5.0; // Values in cm
 
 ros::Publisher odo_pub;
 

@@ -92,6 +92,8 @@ void update_params(const control_motion::params::ConstPtr msg){
 	heading_thres=msg->heading_thres;
 	dist_thres=msg->dist_thres;
 	
+	ROS_INFO("New params: k_forward: %.2f\nk_rotate: %.2f\nstd_velocity: %.2f\nheading_thres: %.2f\ndist_thres: %.2f",k_forward,k_rotate,std_velocity,heading_thres,dist_thres);
+	
 }
 
 /** none: Implements the 'None' behavior
@@ -119,7 +121,7 @@ int none(ros::Rate loop_rate){
             return 0; // Temporary. Will get instruction from control_logic
             
         } else {
-            ROS_INFO("Asked for instructions, no answer received");
+ 
             return 0;
         }
 
@@ -141,9 +143,6 @@ int forward(ros::Rate loop_rate){
 	while(ros::ok()){ // Will keep moving forward until sensors report obstacle
 		
 		obstacle = is_close();
-		
-		// Debug
-		obstacle=0;
 		
 		if(obstacle==1){
 			control_message.v=0;
