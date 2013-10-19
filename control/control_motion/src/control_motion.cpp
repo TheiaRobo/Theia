@@ -19,6 +19,7 @@
 #include <core_sensors/ir.h>
 #include <control_logic/MotionCommand.h>
 #include <tf/transform_datatypes.h>
+#include <control_motion/params.h>
 
 double freq=10.0;
 double x=0.0,y=0.0,theta=0.0; // Position estimate given by the odometry
@@ -81,6 +82,16 @@ int is_close(){
 	
 	return 0;
 
+}
+
+void update_params(const control_motion::params::ConstPtr msg){
+	
+	k_forward=msg->k_forward;
+	k_rotate=msg->k_rotate;
+	std_velocity=msg->std_velocity;
+	heading_thres=msg->heading_thres;
+	dist_thres=msg->dist_thres;
+	
 }
 
 /** none: Implements the 'None' behavior
@@ -216,6 +227,7 @@ int main(int argc, char ** argv){
 	
 	ros::Subscriber	odo_sub;
 	ros::Subscriber ir_sub;	
+	ros::Subscriber params_sub;
 	
         ask_logic = n.serviceClient<control_logic::MotionCommand>("control_logic/motion_command");
         
@@ -225,6 +237,7 @@ int main(int argc, char ** argv){
 	vw_pub = n.advertise<core_control_motor::vw>("/control_motion/vw",1);
 	odo_sub = n.subscribe("/core_sensors/odometry",1,odo_proc);
 	ir_sub = n.subscribe("/core_sensors/ir",1,ir_proc);
+	params_sub = n.subscribe("/control_motion/params",1,update_params);
 	
 	ROS_INFO("Started the control_motion node");
 	
