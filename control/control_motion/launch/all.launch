@@ -1,9 +1,7 @@
 <launch>
-	<group ns="control">
-		<node
-			pkg="control_motion"
-			type="control_motion"
-			name="motion"
-		/>
-	</group>
+	<node
+		pkg="control_motion"
+		type="control_motion"
+		name="motion"
+	/>
 </launch>

@@ -1,9 +1,7 @@
 <launch>
-	<group ns="control">
-		<node
-			pkg="control_logic"
-			type="control_logic"
-			name="logic"
-		/>
-	</group>
+	<node
+		pkg="control_logic"
+		type="control_logic"
+		name="logic"
+	/>
 </launch>

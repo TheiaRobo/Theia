@@ -4,10 +4,10 @@
 bool think(control_logic::MotionCommand::Request &req, control_logic::MotionCommand::Response &res){
   
   if(req.A == true){
-    res.B == true;
+    res.B = true;
     ROS_INFO("service from control_motion recieved");
   } else {
-    res.B == false;
+    res.B = false;
   }
 
   return true;
