@@ -1,3 +1,3 @@
 Header header
-float32 v
-float32 w
+float64 v
+float64 w

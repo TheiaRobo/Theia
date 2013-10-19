@@ -14,7 +14,7 @@
 using namespace differential_drive;
 double Ref1=0, Ref2=0;
 
-double L=0.0,R1=0.0,R2=0.0; 	// length between the wheels(L) and diameter of the the wheels (R), values in cm!
+double L=21.35/2,R1=5.0,R2=5.0; 	// length between the wheels(L) and diameter of the the wheels (R), values in cm!
 
 /* PID controller values */
 
@@ -58,15 +58,13 @@ void update_params(const core_control_motor::pid::ConstPtr msg){
 /* This function is called when the node receives a message from the /ControlMux/vw topic and converts the v and w values into the references for each motor. These references should be in m/s or cm/s or equivalent */
 void RefConverter(const core_control_motor::vw::ConstPtr &msg){ 	
 
-	double angv, linv;
+	double angv=0.0, linv=0.0;
 	
 	linv=msg->v;
 	angv=msg->w;
 	
-	// Get params from server
-	ros::param::getCached("core/L",L);
-	ros::param::getCached("core/R1",R1);
-	ros::param::getCached("core/R2",R2);	
+	
+		
 	
 	
 	/* Reference values obtained from the equations for the linear and angular velocity. They are the spinning speed of the wheel */
@@ -74,7 +72,7 @@ void RefConverter(const core_control_motor::vw::ConstPtr &msg){
 	Ref2=(linv+angv*L)/R2;
 	
 	// Debug message. Useful when performing PID tunning
-	//ROS_INFO("REF1: %.4f\nREF2: %.4f\n",Ref1,Ref2);
+	ROS_INFO("REF1: %.4f\nREF2: %.4f\n",Ref1,Ref2);
 		
 }
 
@@ -136,6 +134,11 @@ int main(int argc, char ** argv){
 	
 	/* Main loop */
 	while (ros::ok()){
+	
+		// Get params from server
+		ros::param::getCached("core/L",L);
+		ros::param::getCached("core/R1",R1);
+		ros::param::getCached("core/R2",R2);
 	
 		pwm_msg.PWM1=PID_control(P1,I1,D1,&cum1,&prev_error1,Ref1,v_left);
 		pwm_msg.PWM2=PID_control(P2,I2,D2,&cum2,&prev_error2,Ref2,v_right);

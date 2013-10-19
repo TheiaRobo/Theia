@@ -1,3 +1,3 @@
 int32 timestamp
-float32 vel1
-float32 vel2
+float64 vel1
+float64 vel2
