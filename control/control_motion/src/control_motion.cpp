@@ -1,3 +1,17 @@
+/** control_motion: Mid level controller responsible for the movement of the robot as a whole.
+*
+*	Default behaviours: 'Forward', 'Rotate xº', 'Forward with wall', 'None'
+*
+*	None: Send (v,w)=(0,0) command to the core and asks for instructions to the control_logic node
+*
+*	Forward: Makes the system move forwards, keeping the current heading. Goes to None when sensor readings indicate nearby obstacle.
+*
+*	Rotate xº: Rotates x rads on spot. x>0 means a left turn. Goes to None when the heading is with the desired value, with an error tolerance.
+*
+*	Forward with wall: Goes forward, trying to keep parallel to the closest wall. Goes to none when sensor readings report no walls to the sides. Goes to Forward when one of the lateral sensors on the wall's side detects a significant change in estimated distance (meaning the robot is on the wall's limit, for instance).
+**/
+
+
 #include "ros/ros.h"
 #include <cmath>
 #include <core_control_motor/vw.h>
@@ -30,6 +44,9 @@ void ir_proc(core_sensors::ir::ConstPtr ir_msg){
 
 	for(int i=0; i<8; i++)
 		ir_readings[i]=ir_msg->dist[i];
+	
+	//Debug
+	ROS_INFO("Got ir 1: %.2f\nGot ir 2: %.2f",ir_readings[0],ir_readings[1]);
 
 }
 
@@ -50,6 +67,8 @@ int main(int argc, char ** argv){
 	odo_sub = n.subscribe("/core_sensors/odometry",1,odo_proc);
 	ir_sub = n.subscribe("/core_sensors/ir",1,ir_proc);
 	
+	ROS_INFO("Started the control_motion node");
+	
 	// initialize ir_readings vector
 	for(int i=0;i<8;i++)
 		ir_readings[i]=0.0;
@@ -58,12 +77,12 @@ int main(int argc, char ** argv){
 	
 	while(ros::ok()){
 		
-          if(brain.call(srv)){
+          /*if(brain.call(srv)){
             ROS_INFO("service successful!!!");
           } else {
             ROS_INFO("service failed");
             return 1;
-          }
+          }*/
  
 		loop_rate.sleep();
 		ros::spinOnce();
