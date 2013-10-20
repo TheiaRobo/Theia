@@ -156,6 +156,7 @@ void update_params(const control_motion::params::ConstPtr msg){
 double compute_angle(double * ir){
 	
 	double theta=0.0;
+	
 
 	if(ir[0]>ir[1]){ // going away from wall
 		
@@ -323,6 +324,7 @@ int rotate(ros::Rate loop_rate){
 int forward_wall(ros::Rate loop_rate){
 
 	double ir_wall[2]={0.0,0.0};
+	double theta_ref=0.0, theta_meas=0.0, theta_error=0.0;
 	int wall=0; // 1 - left side; 2 - right side
 	
 	
@@ -348,22 +350,26 @@ int forward_wall(ros::Rate loop_rate){
 				getchar();
 				return 0;
 			}
+		}
 			
-			// check for wall on right side
-			if(ir_readings[2] < dist_thres && ir_readings[3] < dist_thres){
-				for(int i=2; i<4; i++)
-					ir_wall[i]=ir_readings[i];
-					
-				ROS_INFO("Following wall to the right!");
-				wall=2;
-			} else{
-				stop();
+		// check for wall on right side
+		if(ir_readings[2] < dist_thres && ir_readings[3] < dist_thres){
+			for(int i=2; i<4; i++)
+				ir_wall[i-2]=ir_readings[i];
 				
-				ROS_INFO("Could not find wall!");
+			ROS_INFO("Following wall to the right!");
+			wall=2;
+		} else{
+		
+			if(wall==2){
+				stop();
+		
+				ROS_INFO("Stopped seeing wall from the right!");
 				getchar();
 				return 0;
 			}
 		}
+		
 		
 		// check if obstacle ahead
 		
@@ -375,6 +381,20 @@ int forward_wall(ros::Rate loop_rate){
 			getchar();
 			return 0;
 		}
+		
+		// get angle to wall
+		
+		
+		theta_meas = compute_angle(ir_wall);
+		theta_error = theta_ref - theta_meas;
+		
+		// for the same angle measurements we want to rotate to the opposite side than that of the right wall
+		if(wall==1)
+			theta_error=-theta_error;
+		
+		control_message.v=std_velocity;
+		control_message.w=k_rotate*theta_error;
+		vw_pub.publish(control_message);
 		
 		
 	
