@@ -170,6 +170,16 @@ double compute_angle(double * ir){
 
 }
 
+/** stop: Publishes a (v,w)=(0,0) message
+*
+**/
+void stop(){
+	
+	control_message.v=0;
+	control_message.w=0;
+	vw_pub.publish(control_message);
+	
+}
 
 /** none: Implements the 'None' behavior
 *
@@ -178,10 +188,7 @@ double compute_angle(double * ir){
 **/
 int none(ros::Rate loop_rate){
 
-	control_message.v=0;
-	control_message.w=0;
-	
-	vw_pub.publish(control_message);
+	stop();
 
 	srv.request.A=true;
 	
@@ -228,9 +235,7 @@ int forward(ros::Rate loop_rate){
 		status_changed = ir_has_changed(initial_ir);
 		
 		if(status_changed==1){
-			control_message.v=0;
-			control_message.w=0;
-			vw_pub.publish(control_message);
+			stop();
 			
 			ROS_INFO("Finished the forward behavior due to changing environment!");
 			getchar();
@@ -286,6 +291,8 @@ int rotate(ros::Rate loop_rate){
 		// action completed
 		if(std::abs(heading_error)<heading_thres){
 		
+			stop();
+			
 			ROS_INFO("Finished the rotation behavior successfully with error %.2f (absolute value %.2f)!",heading_error, std::abs(heading_error));
 			getchar();
 		
@@ -336,6 +343,7 @@ int forward_wall(ros::Rate loop_rate){
 				
 		}else{
 			if(wall==1){
+				stop();
 				ROS_INFO("Stopped seeing wall from the left!");
 				getchar();
 				return 0;
@@ -349,10 +357,23 @@ int forward_wall(ros::Rate loop_rate){
 				ROS_INFO("Following wall to the right!");
 				wall=2;
 			} else{
+				stop();
+				
 				ROS_INFO("Could not find wall!");
 				getchar();
 				return 0;
 			}
+		}
+		
+		// check if obstacle ahead
+		
+		if(ir_readings[4] < dist_thres || ir_readings[5] < dist_thres){
+			
+			stop();
+			
+			ROS_INFO("Obstacle ahead!");
+			getchar();
+			return 0;
 		}
 		
 		
