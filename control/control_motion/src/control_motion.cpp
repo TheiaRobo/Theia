@@ -43,6 +43,11 @@ double dist_thres=20.0;
 //0 - None; 1 - Forward; 2 - Rotate xº; 3 - Forward with wall
 int behavior=0; 
 
+
+// distance between ir sensors
+
+double ir_dist=20.0;
+
 ros::Publisher vw_pub;
 ros::ServiceClient ask_logic;
 
@@ -69,11 +74,13 @@ void odo_proc(nav_msgs::Odometry::ConstPtr odo_msg){
 /* Function that should update the IR values obtained from the core*/
 void ir_proc(core_sensors::ir::ConstPtr ir_msg){
 
-	for(int i=0; i<8; i++)
+	for(int i=0; i<8; i++){
 		ir_readings[i]=ir_msg->dist[i];
 	
-	//Debug
-	ROS_INFO("Got ir 1: %.2f\nGot ir 2: %.2f",ir_readings[0],ir_readings[1]);
+		//Debug
+		ROS_INFO("IR %d: %.2f",i,ir_readings[i]);
+	}
+
 
 }
 
@@ -85,18 +92,37 @@ void ir_proc(core_sensors::ir::ConstPtr ir_msg){
 *
 **/
 int ir_has_changed(double * init_readings){
+
+	double jumps[8];
+	
+	// absolute change in ir_values
+	for(int i=0; i<8; i++)
+		jumps[i]=std::abs(init_readings[i]-ir_readings[i]);
 		
 	// I'm assuming pairs (0,1) for left side; (2,3) for right. Check in the robot and correct later		
 	
-	if(std::abs(ir_readings[0]-init_readings[0])>dist_thres && std::abs(ir_readings[1]-init_readings[1])>dist_thres)
-		return 1;
-		
-	if(std::abs(ir_readings[2]-init_readings[2])>dist_thres && std::abs(ir_readings[3]-init_readings[3])>dist_thres)
-		return 1;			
+	// Moved away from the wall on the left/right side of the robot
 	
-	for(int i=4;i<6;i++)
-		if(std::abs(ir_readings[i]-init_readings[i])>dist_thres)
+	for(int i=0; i<4; i+=2)
+		if(init_readings[i]>dist_thres && jumps[i]<dist_thres && init_readings[i+1]<dist_thres && jumps[i+1]>dist_thres)
 			return 1;
+		
+	// Detected wall on sides
+	
+	for(int i=0; i<4; i+=2)
+		if(init_readings[i] > dist_thres && init_readings[i+1] > dist_thres && jumps[i]>dist_thres && jumps[i+1] > dist_thres)
+			return 1;
+			
+	// Detected obstacle in front
+	
+	for(int i=4; i<6;i++)
+		if(init_readings[i]<dist_thres || jumps[i]>dist_thres)
+			return 1;
+	
+	
+	
+	
+	
 			
 	return 0;
 	
@@ -121,6 +147,29 @@ void update_params(const control_motion::params::ConstPtr msg){
 	
 	
 }
+
+/** compute_angle: Computes the angle from two ir readings, assuming they belong to two sensors separated by ir_dist measuring the same obstacle
+*
+*	Angle's signal indicates if robot is going against or away from the wall
+*
+**/
+double compute_angle(double * ir){
+	
+	double theta=0.0;
+
+	if(ir[0]>ir[1]){ // going away from wall
+		
+		theta = atan2(ir[0]-ir[1],ir_dist);
+		return theta;	
+	}
+	
+	// going against the wall
+	theta = - atan2(ir[1]-ir[0],ir_dist);
+	
+	return theta;
+
+}
+
 
 /** none: Implements the 'None' behavior
 *
@@ -261,11 +310,59 @@ int rotate(ros::Rate loop_rate){
 
 /** forward_wall: Implements the 'Forward with wall' behavior
 *
-*	Sends a (v>0, w=k*error) message to the core, with the error being based on the ir readings
+*	Sends a (v>0, w=k*error) message to the core, with the error being based on the ir readings. Goes back to none when detects a corner or stops seeing the wall
 *
 **/
 int forward_wall(ros::Rate loop_rate){
+
+	double ir_wall[2]={0.0,0.0};
+	int wall=0; // 1 - left side; 2 - right side
 	
+	
+	while(ros::ok()){
+		
+		// check for wall on left side
+		if(ir_readings[0] < dist_thres && ir_readings[1] < dist_thres){
+			for(int i=0; i<2; i++)
+				ir_wall[i]=ir_readings[i];
+			
+			// keep following previous wall
+			if(wall==2){
+				wall=2;
+			}else{
+				ROS_INFO("Following wall to the left!");
+				wall=1;
+			}
+				
+		}else{
+			if(wall==1){
+				ROS_INFO("Stopped seeing wall from the left!");
+				getchar();
+				return 0;
+			}
+			
+			// check for wall on right side
+			if(ir_readings[2] < dist_thres && ir_readings[3] < dist_thres){
+				for(int i=2; i<4; i++)
+					ir_wall[i]=ir_readings[i];
+					
+				ROS_INFO("Following wall to the right!");
+				wall=2;
+			} else{
+				ROS_INFO("Could not find wall!");
+				getchar();
+				return 0;
+			}
+		}
+		
+		
+	
+	
+		loop_rate.sleep();
+		ros::spinOnce();
+	
+	}
+		
 	return 0;
 }
 
