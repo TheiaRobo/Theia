@@ -29,9 +29,19 @@ double heading_ref=0.0; // reference for the rotate xº behavior
 // Control parameters
 double k_forward=1.0;
 double k_rotate=1.0;
+
+// Forward velocity
 double std_velocity=15.0;
+
+// Maximum distance to be travelled while on 'forward' behavior
+double forward_distance=25.0;
+
+// Threshold for the sensors
 double heading_thres=0.01;
 double dist_thres=20.0;
+
+//0 - None; 1 - Forward; 2 - Rotate xº; 3 - Forward with wall
+int behavior=0; 
 
 ros::Publisher vw_pub;
 ros::ServiceClient ask_logic;
@@ -68,20 +78,28 @@ void ir_proc(core_sensors::ir::ConstPtr ir_msg){
 }
 
 
-/** is_close: Checks if any short range ir detects an obstacle
+/** ir_has_changed: Checks if short range status changed
 *
-*	Will assume obstacle if the ir reading is below a certain threshold
+*	Given the inital ir_readings, this function monitor each short range ir to check for significant changes. If the the ir is mounted on the side,
+*	it checks for changes on both sensors from the same side
 *
 **/
-int is_close(){
-
-	for(int i=0; i<6; i++){
-		if(ir_readings[i]<dist_thres)
-			return 1;
-	}
+int ir_has_changed(double * init_readings){
+		
+	// I'm assuming pairs (0,1) for left side; (2,3) for right. Check in the robot and correct later		
 	
+	if(std::abs(ir_readings[0]-init_readings[0])>dist_thres && std::abs(ir_readings[1]-init_readings[1])>dist_thres)
+		return 1;
+		
+	if(std::abs(ir_readings[2]-init_readings[2])>dist_thres && std::abs(ir_readings[3]-init_readings[3])>dist_thres)
+		return 1;			
+	
+	for(int i=4;i<6;i++)
+		if(std::abs(ir_readings[i]-init_readings[i])>dist_thres)
+			return 1;
+			
 	return 0;
-
+	
 }
 
 void update_params(const control_motion::params::ConstPtr msg){
@@ -91,8 +109,16 @@ void update_params(const control_motion::params::ConstPtr msg){
 	std_velocity=msg->std_velocity;
 	heading_thres=msg->heading_thres;
 	dist_thres=msg->dist_thres;
+	forward_distance=msg->forward_distance;
+	heading_ref=msg->heading_ref;
 	
-	ROS_INFO("New params: k_forward: %.2f\nk_rotate: %.2f\nstd_velocity: %.2f\nheading_thres: %.2f\ndist_thres: %.2f",k_forward,k_rotate,std_velocity,heading_thres,dist_thres);
+	ROS_INFO("New params: k_forward: %.2f\nk_rotate: %.2f\nstd_velocity: %.2f\nheading_thres: %.2f\ndist_thres: %.2f\nforward_distance: %.2f",k_forward,k_rotate,std_velocity,heading_thres,dist_thres,forward_distance);
+	
+	if(msg->behavior!=0){
+		behavior=msg->behavior;
+		ROS_INFO("Will switch to behavior %d!!",behavior);
+	}
+	
 	
 }
 
@@ -118,11 +144,12 @@ int none(ros::Rate loop_rate){
 	if(ask_logic.call(srv)){
             ROS_INFO("Got new instruction");
             
-            return 0; // Temporary. Will get instruction from control_logic
+            return behavior; // Temporary. Will get instruction from control_logic
             
         } else {
- 
-            return 0;
+ 		
+ 	    // to allow change in behavior from external message
+            return behavior;
         }
 
 
@@ -135,19 +162,30 @@ int none(ros::Rate loop_rate){
 **/
 int forward(ros::Rate loop_rate){
 	
-	double initial_theta=theta;
+	double initial_theta=heading_ref; // needs to receive rotation angle from logic node
 	double heading_error=0.0;
-	int obstacle=0;
+	int status_changed=0;
+	double initial_ir[8];
+	int num_loops=(int) ceil(forward_distance/(std_velocity/freq));
 	
+	for(int i=0; i<8; i++)
+		initial_ir[i]=ir_readings[i];
+
+	ROS_INFO("Debug mode. Behavior is moving forward. Press any key to go on");
+	getchar();
 	
-	while(ros::ok()){ // Will keep moving forward until sensors report obstacle
+	for(int i=0; i<num_loops; i++){ // Will keep moving forward until sensors report obstacle or forward_distance is achieved
 		
-		obstacle = is_close();
+		status_changed = ir_has_changed(initial_ir);
 		
-		if(obstacle==1){
+		if(status_changed==1){
 			control_message.v=0;
 			control_message.w=0;
 			vw_pub.publish(control_message);
+			
+			ROS_INFO("Finished the forward behavior due to changing environment!");
+			getchar();
+			
 			return 0;
 		}
 		
@@ -158,7 +196,7 @@ int forward(ros::Rate loop_rate){
 		//ROS_INFO("initial_theta: %.2f\ntheta: %.2f\nheading_error: %.2f",initial_theta,theta,heading_error);
 		
 		// Some small threshold to account for noise
-		if(abs(heading_error)<heading_thres)
+		if(std::abs(heading_error)<heading_thres)
 			heading_error=0.0;
 		
 		control_message.v=std_velocity;
@@ -168,9 +206,13 @@ int forward(ros::Rate loop_rate){
 		
 		loop_rate.sleep();
 		ros::spinOnce();
+		
 	}
 		
+	ROS_INFO("Finished the forward behavior successfully!");
+	getchar();
 	
+	return 0;
 
 }
 
@@ -181,15 +223,23 @@ int forward(ros::Rate loop_rate){
 **/
 
 int rotate(ros::Rate loop_rate){
-	double initial_theta=theta;
+
 	double heading_error=0.0;
+	
+	
+	ROS_INFO("Debug mode. Behavior is rotation on spot. Press any key to go on");
+	getchar();
 	
 	while(ros::ok()){
 		
-		heading_error=initial_theta-theta;
+		heading_error=heading_ref-theta;
 		
 		// action completed
-		if(abs(heading_error)<heading_thres){
+		if(std::abs(heading_error)<heading_thres){
+		
+			ROS_INFO("Finished the rotation behavior successfully with error %.2f (absolute value %.2f)!",heading_error, std::abs(heading_error));
+			getchar();
+		
 			return 0;
 		}
 			
@@ -202,6 +252,8 @@ int rotate(ros::Rate loop_rate){
 		ros::spinOnce();
 	
 	}
+	
+	return 0;
 	
 
 }
@@ -230,8 +282,6 @@ int main(int argc, char ** argv){
 	
         ask_logic = n.serviceClient<control_logic::MotionCommand>("control_logic/motion_command");
         
-        int behaviour=2; //0 - None; 1 - Forward; 2 - Rotate xº; 3 - Forward with wall
-        
 
 	vw_pub = n.advertise<core_control_motor::vw>("/control_motion/vw",1);
 	odo_sub = n.subscribe("/core_sensors/odometry",1,odo_proc);
@@ -250,18 +300,18 @@ int main(int argc, char ** argv){
 	
 	while(ros::ok()){
 	
-		switch(behaviour){
+		switch(behavior){
 			case 0: 
-				behaviour = none(loop_rate);
+				behavior = none(loop_rate);
 				break;
 			case 1:
-				behaviour = forward(loop_rate);
+				behavior = forward(loop_rate);
 				break;
 			case 2:
-				behaviour = rotate(loop_rate);
+				behavior = rotate(loop_rate);
 				break;			
 			case 3:
-				behaviour = forward_wall(loop_rate);
+				behavior = forward_wall(loop_rate);
 				break;
 		}
  
