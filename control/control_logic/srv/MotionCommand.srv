@@ -1,3 +1,4 @@
 bool A
 ---
-bool B
+int32 B
+float64 heading_ref
