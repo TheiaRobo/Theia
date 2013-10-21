@@ -11,7 +11,7 @@
 
 const double freq=100;
 double x=0.0,y=0.0,theta=0.0;
-double L=21.35,R1=5.0,R2=5.0; // Values in cm
+double L=21.35/2,R1=5.0,R2=5.0; // Values in cm
 
 ros::Publisher odo_pub;
 
@@ -39,11 +39,9 @@ void update_odometry(const core_control_motor::motorvel::ConstPtr msg){
 	delta_s=(dist1+dist2)/2; //Travelled distance estimate for the vehicle
 	delta_theta=(dist2-dist1)/baseline; // Estimated angle made by the vehicle
 	
-	
-	// Following the odometry estimate from the book...
-	x+=delta_s*cos(theta+delta_theta/2);
-	y+=delta_s*sin(theta+delta_theta/2);
 	theta+=delta_theta;
+	x+=delta_s*cos(theta);
+	y+=delta_s*sin(theta);
 	
 	ROS_INFO("theta: %.4f",theta);
 	

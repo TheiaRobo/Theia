@@ -54,6 +54,10 @@ ros::ServiceClient ask_logic;
 core_control_motor::vw control_message;
 control_logic::MotionCommand srv;
 
+ros::Subscriber	odo_sub;
+ros::Subscriber ir_sub;	
+ros::Subscriber params_sub;
+
 
 
 /* Function that should update the odometry values obtained from the core*/
@@ -66,7 +70,7 @@ void odo_proc(nav_msgs::Odometry::ConstPtr odo_msg){
 	theta=tf::getYaw(pose.getRotation());
 	
 	//Debug
-	ROS_INFO("Got Pose: (x,y,theta)=(%.2f,%.2f,%.2f)",x,y,theta);
+	//ROS_INFO("Got Pose: (x,y,theta)=(%.2f,%.2f,%.2f)",x,y,theta);
 	
 
 }
@@ -78,7 +82,7 @@ void ir_proc(core_sensors::ir::ConstPtr ir_msg){
 		ir_readings[i]=ir_msg->dist[i];
 	
 		//Debug
-		ROS_INFO("IR %d: %.2f",i,ir_readings[i]);
+		//ROS_INFO("IR %d: %.2f",i,ir_readings[i]);
 	}
 
 
@@ -263,7 +267,9 @@ int forward(ros::Rate loop_rate){
 		ros::spinOnce();
 		
 	}
-		
+	
+	stop();
+	
 	ROS_INFO("Finished the forward behavior successfully!");
 	getchar();
 	
@@ -280,14 +286,14 @@ int forward(ros::Rate loop_rate){
 int rotate(ros::Rate loop_rate){
 
 	double heading_error=0.0;
-	
+	double init_theta=theta;
 	
 	ROS_INFO("Debug mode. Behavior is rotation on spot. Press any key to go on");
 	getchar();
 	
 	while(ros::ok()){
 		
-		heading_error=heading_ref-theta;
+		heading_error=heading_ref-(theta-init_theta);
 		
 		// action completed
 		if(std::abs(heading_error)<heading_thres){
@@ -414,16 +420,14 @@ int main(int argc, char ** argv){
 	ros::NodeHandle n;
 	ros::Rate loop_rate(freq);
 	
-	ros::Subscriber	odo_sub;
-	ros::Subscriber ir_sub;	
-	ros::Subscriber params_sub;
+	
 	
         ask_logic = n.serviceClient<control_logic::MotionCommand>("control_logic/motion_command");
         
 
 	vw_pub = n.advertise<core_control_motor::vw>("/control_motion/vw",1);
-	odo_sub = n.subscribe("/core_sensors/odometry",1,odo_proc);
-	ir_sub = n.subscribe("/core_sensors/ir",1,ir_proc);
+	odo_sub = n.subscribe("/core_sensors_odometry/odometry",1,odo_proc);
+	ir_sub = n.subscribe("/core_sensors_ir/ir",1,ir_proc);
 	params_sub = n.subscribe("/control_motion/params",1,update_params);
 	
 	ROS_INFO("Started the control_motion node");
