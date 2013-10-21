@@ -17,7 +17,7 @@
 ros::Publisher dist_pub;
 long num;
 
-const int AVG_MAX=101;
+const int AVG_MAX=9;
 double avg[8][AVG_MAX];
 
 
