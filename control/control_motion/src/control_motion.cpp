@@ -286,14 +286,14 @@ int forward(ros::Rate loop_rate){
 int rotate(ros::Rate loop_rate){
 
 	double heading_error=0.0;
-	
+	double abs_ref=heading_ref-theta;
 	
 	ROS_INFO("Debug mode. Behavior is rotation on spot. Press any key to go on");
 	getchar();
 	
 	while(ros::ok()){
 		
-		heading_error=heading_ref-theta;
+		heading_error=abs_ref-theta;
 		
 		// action completed
 		if(std::abs(heading_error)<heading_thres){
