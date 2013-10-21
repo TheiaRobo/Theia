@@ -99,23 +99,23 @@ int ir_has_changed(double * init_readings){
 	for(int i=0; i<8; i++)
 		jumps[i]=std::abs(init_readings[i]-ir_readings[i]);
 		
-	// I'm assuming pairs (0,1) for left side; (2,3) for right. Check in the robot and correct later		
+	// I'm assuming pairs (3,4) for left side; (5,6) for right. 	
 	
 	// Moved away from the wall on the left/right side of the robot
 	
-	for(int i=0; i<4; i+=2)
+	for(int i=2; i<6; i+=2)
 		if(init_readings[i]>dist_thres && jumps[i]<dist_thres && init_readings[i+1]<dist_thres && jumps[i+1]>dist_thres)
 			return 1;
 		
 	// Detected wall on sides
 	
-	for(int i=0; i<4; i+=2)
+	for(int i=2; i<6; i+=2)
 		if(init_readings[i] > dist_thres && init_readings[i+1] > dist_thres && jumps[i]>dist_thres && jumps[i+1] > dist_thres)
 			return 1;
 			
 	// Detected obstacle in front
 	
-	for(int i=4; i<6;i++)
+	for(int i=0; i<2;i++)
 		if(init_readings[i]<dist_thres || jumps[i]>dist_thres)
 			return 1;
 	
@@ -331,9 +331,9 @@ int forward_wall(ros::Rate loop_rate){
 	while(ros::ok()){
 		
 		// check for wall on left side
-		if(ir_readings[0] < dist_thres && ir_readings[1] < dist_thres){
-			for(int i=0; i<2; i++)
-				ir_wall[i]=ir_readings[i];
+		if(ir_readings[2] < dist_thres && ir_readings[3] < dist_thres){
+			for(int i=2; i<4; i++)
+				ir_wall[i-2]=ir_readings[i];
 			
 			// keep following previous wall
 			if(wall==2){
@@ -353,9 +353,9 @@ int forward_wall(ros::Rate loop_rate){
 		}
 			
 		// check for wall on right side
-		if(ir_readings[2] < dist_thres && ir_readings[3] < dist_thres){
-			for(int i=2; i<4; i++)
-				ir_wall[i-2]=ir_readings[i];
+		if(ir_readings[4] < dist_thres && ir_readings[5] < dist_thres){
+			for(int i=4; i<6; i++)
+				ir_wall[i-4]=ir_readings[i];
 				
 			ROS_INFO("Following wall to the right!");
 			wall=2;
@@ -373,7 +373,7 @@ int forward_wall(ros::Rate loop_rate){
 		
 		// check if obstacle ahead
 		
-		if(ir_readings[4] < dist_thres || ir_readings[5] < dist_thres){
+		if(ir_readings[0] < dist_thres || ir_readings[1] < dist_thres){
 			
 			stop();
 			
