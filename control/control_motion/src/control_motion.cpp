@@ -203,9 +203,16 @@ int none(ros::Rate loop_rate){
 	ros::spinOnce();
 	
 	if(ask_logic.call(srv)){
-            ROS_INFO("Got new instruction");
+            ROS_INFO("Got new instruction: %d",srv.response.B);
             
-            return behavior; // Temporary. Will get instruction from control_logic
+            if(srv.response.B==2){
+            	heading_ref=srv.response.heading_ref;
+            	ROS_INFO("Rotation command: %.2f",heading_ref);
+            }
+            
+            getchar();
+            
+            return srv.response.B; // Temporary. Will get instruction from control_logic
             
         } else {
  		
