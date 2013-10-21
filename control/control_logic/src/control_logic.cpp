@@ -58,7 +58,7 @@ int main(int argc, char ** argv){
   ros::NodeHandle n;
 
   ros::ServiceServer motion_command = n.advertiseService("control_logic/motion_command", think); //Set up service server in this node
-  ros::Subscriber ir_data = n.subscribe("/core_sensors_ir/ir", 1000, readIrData); 
+  ros::Subscriber ir_data = n.subscribe("/core_sensors_ir/ir", 1, readIrData); 
 
   ros::spin();
 

@@ -38,7 +38,7 @@ double forward_distance=25.0;
 
 // Threshold for the sensors
 double heading_thres=0.01;
-double dist_thres=20.0;
+double dist_thres=10.0;
 
 //0 - None; 1 - Forward; 2 - Rotate xº; 3 - Forward with wall
 int behavior=0; 
@@ -107,20 +107,20 @@ int ir_has_changed(double * init_readings){
 	
 	// Moved away from the wall on the left/right side of the robot
 	
-	for(int i=2; i<6; i+=2)
+	/*for(int i=2; i<6; i+=2)
 		if(init_readings[i]>dist_thres && jumps[i]<dist_thres && init_readings[i+1]<dist_thres && jumps[i+1]>dist_thres)
-			return 1;
+			return 1;*/
 		
 	// Detected wall on sides
 	
 	for(int i=2; i<6; i+=2)
-		if(init_readings[i] > dist_thres && init_readings[i+1] > dist_thres && jumps[i]>dist_thres && jumps[i+1] > dist_thres)
+		if(init_readings[i] > dist_thres && init_readings[i+1] > dist_thres && ir_readings[i]<dist_thres && ir_readings[i+1] < dist_thres)
 			return 1;
 			
 	// Detected obstacle in front
 	
 	for(int i=0; i<2;i++)
-		if(init_readings[i]<dist_thres || jumps[i]>dist_thres)
+		if(ir_readings[i]<dist_thres)
 			return 1;
 	
 	
