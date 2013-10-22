@@ -45,8 +45,12 @@ int behavior=0;
 
 
 // distance between ir sensors
-
 double ir_dist=20.0;
+
+// Thresholds for the velocities
+
+double V_MAX=15.0;
+double W_MAX=0.5;
 
 ros::Publisher vw_pub;
 ros::ServiceClient ask_logic;
@@ -97,19 +101,8 @@ void ir_proc(core_sensors::ir::ConstPtr ir_msg){
 **/
 int ir_has_changed(double * init_readings){
 
-	double jumps[8];
 	
-	// absolute change in ir_values
-	for(int i=0; i<8; i++)
-		jumps[i]=std::abs(init_readings[i]-ir_readings[i]);
-		
-	// I'm assuming pairs (3,4) for left side; (5,6) for right. 	
-	
-	// Moved away from the wall on the left/right side of the robot
-	
-	/*for(int i=2; i<6; i+=2)
-		if(init_readings[i]>dist_thres && jumps[i]<dist_thres && init_readings[i+1]<dist_thres && jumps[i+1]>dist_thres)
-			return 1;*/
+	// Will keep it simple until the forward behavior has been tested more properly
 		
 	// Detected wall on sides
 	
@@ -122,11 +115,6 @@ int ir_has_changed(double * init_readings){
 	for(int i=0; i<2;i++)
 		if(ir_readings[i]<dist_thres)
 			return 1;
-	
-	
-	
-	
-	
 			
 	return 0;
 	
@@ -142,7 +130,7 @@ void update_params(const control_motion::params::ConstPtr msg){
 	forward_distance=msg->forward_distance;
 	heading_ref=msg->heading_ref;
 	
-	ROS_INFO("New params: k_forward: %.2f\nk_rotate: %.2f\nstd_velocity: %.2f\nheading_thres: %.2f\ndist_thres: %.2f\nforward_distance: %.2f",k_forward,k_rotate,std_velocity,heading_thres,dist_thres,forward_distance);
+	ROS_INFO("New params: k_forward: %.2f\nk_rotate: %.2f\nstd_velocity: %.2f\nheading_thres: %.2f\ndist_thres: %.2f\nforward_distance: %.2f\nheading_ref:%.2f",k_forward,k_rotate,std_velocity,heading_thres,dist_thres,forward_distance,heading_ref);
 	
 	if(msg->behavior!=0){
 		behavior=msg->behavior;
@@ -185,6 +173,30 @@ void stop(){
 	vw_pub.publish(control_message);
 	
 }
+
+/** control_pub: sends a custom (v,w) message
+*
+**/
+void control_pub(double v,double w){
+	
+	double f_v=v,f_w=w;
+
+	if(f_v>V_MAX)
+		f_v=V_MAX;
+	if(f_v<-V_MAX)
+		f_v=-V_MAX;
+	
+	if(f_w>W_MAX)
+		f_w=W_MAX;
+	if(f_w<-W_MAX)
+		f_w=-W_MAX;
+		
+	control_message.v=f_v;
+	control_message.w=f_w;
+	vw_pub.publish(control_message);
+}
+	
+	
 
 /** none: Implements the 'None' behavior
 *
@@ -239,8 +251,8 @@ int forward(ros::Rate loop_rate){
 	for(int i=0; i<8; i++)
 		initial_ir[i]=ir_readings[i];
 
-	ROS_INFO("Debug mode. Behavior is moving forward. Press any key to go on");
-	getchar();
+	ROS_INFO("Debug mode. Behavior is moving forward.");
+	//getchar();
 	
 	for(int i=0; i<num_loops; i++){ // Will keep moving forward until sensors report obstacle or forward_distance is achieved
 		
@@ -265,10 +277,7 @@ int forward(ros::Rate loop_rate){
 		if(std::abs(heading_error)<heading_thres)
 			heading_error=0.0;
 		
-		control_message.v=std_velocity;
-		control_message.w=k_forward*heading_error;
-		
-		vw_pub.publish(control_message);
+		control_pub(std_velocity,k_forward*heading_error);
 		
 		loop_rate.sleep();
 		ros::spinOnce();
@@ -313,10 +322,7 @@ int rotate(ros::Rate loop_rate){
 			return 0;
 		}
 			
-		control_message.v=0.0;
-		control_message.w=k_rotate*heading_error;
-		
-		vw_pub.publish(control_message);	
+		control_pub(0.0,k_rotate*heading_error);	
 	
 		loop_rate.sleep();
 		ros::spinOnce();
@@ -405,12 +411,7 @@ int forward_wall(ros::Rate loop_rate){
 		if(wall==1)
 			theta_error=-theta_error;
 		
-		control_message.v=std_velocity;
-		control_message.w=k_rotate*theta_error;
-		vw_pub.publish(control_message);
-		
-		
-	
+		control_pub(std_velocity,k_rotate*theta_error);	
 	
 		loop_rate.sleep();
 		ros::spinOnce();
@@ -439,7 +440,6 @@ int main(int argc, char ** argv){
 	
 	ROS_INFO("Started the control_motion node");
 	
-	//srv.request.A=true;
 	
 	// initialize ir_readings vector
 	for(int i=0;i<8;i++)
