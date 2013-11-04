@@ -12,7 +12,9 @@
   <depend package="sensor_msgs"/>
   <depend package="pcl"/>
   <export>
-  	<cpp cflags="-I${prefix}/include"/>
+  	<cpp
+      cflags="-I${prefix}/include"
+      lflags="-L${prefix}/lib -lvision_common_cloud -lvision_common_file"/>
   </export>
 
 </package>
