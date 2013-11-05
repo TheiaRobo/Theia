@@ -23,6 +23,7 @@ int main(int argc, char ** argv){
 
 	TrainConfig_t trainConfig;
 	trainConfig.path = trainDir;
+	trainConfig.surfMinHessian = 800;
 
 	errorCode = train(trainConfig);
 
