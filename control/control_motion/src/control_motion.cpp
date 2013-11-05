@@ -40,7 +40,7 @@ double forward_distance=15.0;
 
 // Threshold for the sensors
 double heading_thres=0.02;
-double dist_thres=25.0;
+double dist_thres=15.0;
 
 //0 - None; 1 - Forward; 2 - Rotate xº; 3 - Forward with wall
 int behavior=0; 

@@ -4,7 +4,6 @@
 
 double ir[8] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
 const float PI = 3.1415926f;
-ros::Rate loop_rate(1); // To allow for some delay
 
 void readIrData(const core_sensors::ir::ConstPtr& msg){
 
@@ -28,7 +27,8 @@ void readIrData(const core_sensors::ir::ConstPtr& msg){
 }
 
 bool think(control_logic::MotionCommand::Request &req, control_logic::MotionCommand::Response &res){
-  
+ 
+
   /*
   if(req.A == true){
     res.B = true;
@@ -37,17 +37,16 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
     res.B = false;
   }
   */ 
-  
-  loop_rate.sleep();
-  if(ir[0] > 20 && ir[1] > 20){
+
+  if(ir[0] > 15 && ir[1] > 15){
   	if((ir[2] < 15 && ir[3] < 15) || (ir[4] < 15 && ir[5] < 15))
   		res.B = 3;
   	else
     		res.B = 1;
-  } else if(ir[2] > 20 && ir[3] > 20){
+  } else if(ir[2] > 15 && ir[3] > 15){
     res.B = 2;
     res.heading_ref = PI/2;
-  } else if(ir[4] > 20 && ir[5] > 20){
+  } else if(ir[4] > 15 && ir[5] > 15){
     res.B = 2;
     res.heading_ref = -PI/2;
   }
