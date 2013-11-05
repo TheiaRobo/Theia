@@ -21,7 +21,12 @@ int main(int argc, char ** argv){
 
 	init();
 
-	TrainConfig_t trainConfig;
+	ObjectTrainConfig_t trainConfig;
+
+	/**
+	* TODO
+	* Move to config server
+	*/
 	trainConfig.path = trainDir;
 	trainConfig.surfMinHessian = 800;
 

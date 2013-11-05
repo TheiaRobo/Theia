@@ -6,8 +6,8 @@
 typedef struct {
 	std::string path;
 	int surfMinHessian;
-} TrainConfig_t;
+} ObjectTrainConfig_t;
 
-int train(TrainConfig_t & trainConfig);
+int train(ObjectTrainConfig_t & trainConfig);
 
 #endif

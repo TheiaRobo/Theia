@@ -16,12 +16,12 @@ using namespace cv;
 
 int trainFile(
 	ObjectFileTrain_t & trainFile,
-	TrainConfig_t & trainConfig
+	ObjectTrainConfig_t & trainConfig
 );
 
 int trainFile(
 	ObjectFileTrain_t & trainFile,
-	TrainConfig_t & trainConfig
+	ObjectTrainConfig_t & trainConfig
 ){
 	std::cout << "TRAINING" << std::endl;
 	std::cout << " Path: " << trainFile.path << std::endl;
@@ -76,7 +76,7 @@ int trainFile(
 /**
 * Find and list training files
 */
-int train(TrainConfig_t & trainConfig){
+int train(ObjectTrainConfig_t & trainConfig){
 	int errorCode;
 
 	/**
