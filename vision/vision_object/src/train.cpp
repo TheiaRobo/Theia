@@ -1,12 +1,10 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/nonfree/features2d.hpp>
-
 #include <vision/file.h>
 
 #include "file.h"
@@ -16,11 +14,13 @@ using namespace cv;
 
 int trainFile(
 	ObjectFileTrain_t & trainFile,
+	ObjectTrainData_t & trainData,
 	ObjectTrainConfig_t & trainConfig
 );
 
 int trainFile(
 	ObjectFileTrain_t & trainFile,
+	ObjectTrainData_t & trainData,
 	ObjectTrainConfig_t & trainConfig
 ){
 	std::cout << "TRAINING" << std::endl;
@@ -70,6 +70,12 @@ int trainFile(
 
 	extractor.compute(image, keypoints, descriptors);
 
+	/**
+	* Store data
+	*/
+	trainData.file = trainFile;
+	trainData.descriptors = descriptors;
+
 	return 0;
 }
 
@@ -100,17 +106,26 @@ int train(ObjectTrainConfig_t & trainConfig){
 	/**
 	* Extract features from training images
 	*/
+	std::vector<ObjectTrainData_t> trainDataVect;
+
 	size_t numbTrainFiles;
 	numbTrainFiles = trainFileVect.size();
 
 	size_t i;
 	for(i = 0; i < numbTrainFiles; i++){
-		errorCode = trainFile(trainFileVect[i], trainConfig);
+		ObjectTrainData_t trainData;
+		errorCode = trainFile(
+			trainFileVect[i],
+			trainData,
+			trainConfig
+		);
 
 		if(errorCode){
 			std::cout << "Error: Could not train image" << std::endl;
 			return errorCode;
 		}
+
+		trainDataVect.push_back(trainData);
 	}
 
 	return 0;
