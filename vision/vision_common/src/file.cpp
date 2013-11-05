@@ -81,10 +81,3 @@ int visionFileScanDir(string dirName, vector<string> & fileVect){
 
     return 0;
 }
-
-int visionFileFilterTraining(
-    vector<string> & fileVect,
-    vector<VisionTrainingFile_t> & trainingFileVect
-){
-  return 0;  
-}
