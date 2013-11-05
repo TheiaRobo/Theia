@@ -201,6 +201,20 @@ void control_pub(double v,double w){
 	vw_pub.publish(control_message);
 }
 	
+/** discretize: discretizes a double value on increments of step
+*
+**/
+
+double discretize(double val, double step){
+
+	for(double i=0; i<100/step; i+=step){
+		if(std::abs(val-i)<step){
+			ROS_INFO("val %.3f -> i %.3f",val,i);
+			return i;
+		}
+	}
+	
+}
 	
 
 /** none: Implements the 'None' behavior
@@ -379,7 +393,7 @@ int forward_wall(ros::Rate loop_rate){
 		// check for wall on left side
 		if(ir_readings[2] < dist_thres && ir_readings[3] < dist_thres){
 			for(int i=2; i<4; i++)
-				ir_wall[i-2]=ir_readings[i];
+				ir_wall[i-2]=discretize(ir_readings[i],1.0);
 			
 			// keep following previous wall
 			if(wall==2){
@@ -401,7 +415,7 @@ int forward_wall(ros::Rate loop_rate){
 		// check for wall on right side
 		if(ir_readings[4] < dist_thres && ir_readings[5] < dist_thres){
 			for(int i=4; i<6; i++)
-				ir_wall[i-4]=ir_readings[i];
+				ir_wall[i-4]=discretize(ir_readings[i],1.0);
 				
 			
 			if(wall==1){
