@@ -1,0 +1,16 @@
+<package>
+  <description brief="sensor_calib">
+
+     sensor_calib
+
+  </description>
+  <author>robo</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/sensor_calib</url>
+  <depend package="roscpp"/>
+  <depend package="differential_drive"/>
+
+</package>
+
+

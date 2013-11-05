@@ -38,7 +38,10 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
   */
 
   if(ir[0] > 20 && ir[1] > 20){
-    res.B = 1;
+  	if((ir[2] < 15 && ir[3] < 15) || (ir[4] < 15 && ir[5] < 15))
+  		res.B = 3;
+  	else
+    		res.B = 1;
   } else if(ir[2] > 20 && ir[3] > 20){
     res.B = 2;
     res.heading_ref = PI/2;
