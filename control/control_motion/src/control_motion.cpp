@@ -41,6 +41,7 @@ double forward_distance=15.0;
 // Threshold for the sensors
 double heading_thres=0.02;
 double dist_thres=15.0;
+double rotation_error_thres=0.05;
 
 //0 - None; 1 - Forward; 2 - Rotate xº; 3 - Forward with wall
 int behavior=0; 
@@ -331,43 +332,94 @@ int rotate(ros::Rate loop_rate){
 	double heading_error=0.0;
 	double processed_theta=theta+theta_correction; // will have corrections for the pi to -pi jump
 	double init_theta=processed_theta;
+	double init_error=heading_ref-(processed_theta-init_theta);
+	int correction_mode=0, wall=1;
+	double ir_wall[2]={0.0,0.0};
+	double theta_ref=0.0, theta_meas=0.0, theta_error=0.0;
 	
 	ROS_INFO("Debug mode. Behavior is rotation on spot. Press any key to go on");
 	//getchar();
 	
 	while(ros::ok()){
-	
-		// process theta
 		
-		if(std::abs(theta-last_theta)>=PI){
-			if(theta>last_theta)
-				theta_correction+=-2*PI;
-			else
-				theta_correction+=2*PI;
-		}
+		if(!correction_mode){
+			// process theta
 		
-		processed_theta=theta+theta_correction;
+			if(std::abs(theta-last_theta)>=PI){
+				if(theta>last_theta)
+					theta_correction+=-2*PI;
+				else
+					theta_correction+=2*PI;
+			}
 		
-		heading_error=heading_ref-(processed_theta-init_theta);
+			processed_theta=theta+theta_correction;
 		
-		ROS_INFO("Theta: %.3f\nCorrected theta: %.3f\nDisplacement: %.3f\nError: %.3f\n",theta,processed_theta,processed_theta-init_theta,heading_error);
+			heading_error=heading_ref-(processed_theta-init_theta);
+		
+			ROS_INFO("Theta: %.3f\nCorrected theta: %.3f\nDisplacement: %.3f\nError: %.3f\n",theta,processed_theta,processed_theta-init_theta,heading_error);
 
-		// action completed
-		if(std::abs(heading_error)<heading_thres){
+			// action completed
+			if(std::abs(heading_error)<heading_thres){
 		
-			stop();
+				stop();
 			
-			ROS_INFO("Finished the rotation behavior successfully with error %.2f (absolute value %.2f)!",heading_error, std::abs(heading_error));
-			//getchar();
+				ROS_INFO("Finished the rotation behavior successfully with error %.2f (absolute value %.2f)!",heading_error, std::abs(heading_error));
+				//getchar();
 		
-			return 0;
+				return 0;
+			}
+			
+			
+			if(heading_error/init_error<rotation_error_thres && wall==1)
+				correction_mode=1;	
+			
+			
+			control_pub(0.0,k_rotate*heading_error);	
+	
+			loop_rate.sleep();
+			ros::spinOnce();
+		}else{ // Correction mode: we finished rotating, and now we want to align ourselves with the wall
+			
+			// check for wall on the left
+			if(ir_readings[2] < dist_thres && ir_readings[3] < dist_thres){
+				for(int i=2; i<4;i++)
+					ir_wall[i-2]=discretize(ir_readings[i],0.5);
+					
+				wall=1;
+			}else{
+				if(ir_readings[4] < dist_thres && ir_readings[5] < dist_thres){
+					for(int i=4; i<6; i++)
+						ir_wall[i-4]=discretize(ir_readings[i],0.5);
+						
+					wall=2;
+				}else{ // no wall
+					wall=0;
+					correction_mode=0;
+				}
+			}
+			
+			if(wall){
+				
+				// get angle to wall
+	
+				theta_meas = compute_angle(ir_wall);
+				theta_error = theta_ref - theta_meas;
+				
+				if(wall==1)
+					theta_error=-theta_error;
+		
+				ROS_INFO("Theta_error: %.3f\n",theta_error);
+				
+				if(theta_error==0)
+					return 0;
+				
+				
+				control_pub(0,k_rotate*theta_error);		
+				loop_rate.sleep();
+				ros::spinOnce();
+			}
 		}
 			
-		control_pub(0.0,k_rotate*heading_error);	
-	
-		loop_rate.sleep();
-		ros::spinOnce();
-	
 	}
 	
 	return 0;
