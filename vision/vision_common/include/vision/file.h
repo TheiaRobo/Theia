@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#define VISION_DIR_SEPARATOR '/'
+
 /**
 * Recursively scan a directory for files
 */

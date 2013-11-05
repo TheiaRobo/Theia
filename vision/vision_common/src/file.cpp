@@ -46,7 +46,7 @@ int visionFileScanDir(string dirName, vector<string> & fileVect){
         }
 
         string fullFileName;
-        fullFileName = dirName + '/' + fileName;
+        fullFileName = dirName + VISION_DIR_SEPARATOR + fileName;
 
         switch(dirEntPtr->d_type){
             // regular file
