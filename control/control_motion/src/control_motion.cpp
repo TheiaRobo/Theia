@@ -33,14 +33,14 @@ double k_forward=1.0;
 double k_rotate=1.0;
 
 // Forward velocity
-double std_velocity=15.0;
+double std_velocity=7.5;
 
 // Maximum distance to be travelled while on 'forward' behavior
-double forward_distance=25.0;
+double forward_distance=15.0;
 
 // Threshold for the sensors
-double heading_thres=0.01;
-double dist_thres=20.0;
+double heading_thres=0.02;
+double dist_thres=25.0;
 
 //0 - None; 1 - Forward; 2 - Rotate xº; 3 - Forward with wall
 int behavior=0; 
@@ -54,7 +54,7 @@ double ir_dist=20.0;
 // Thresholds for the velocities
 
 double V_MAX=15.0;
-double W_MAX=0.5;
+double W_MAX=PI/8;
 
 ros::Publisher vw_pub;
 ros::ServiceClient ask_logic;
@@ -391,39 +391,29 @@ int forward_wall(ros::Rate loop_rate){
 	while(ros::ok()){
 		
 		// check for wall on left side
-		if(ir_readings[2] < dist_thres && ir_readings[3] < dist_thres){
+		if(ir_readings[2] < dist_thres && ir_readings[3] < dist_thres && wall !=2){
 			for(int i=2; i<4; i++)
-				ir_wall[i-2]=discretize(ir_readings[i],1.0);
+				ir_wall[i-2]=discretize(ir_readings[i],0.5);
 			
-			// keep following previous wall
-			if(wall==2){
-				wall=2;
-			}else{
-				//ROS_INFO("Following wall to the left!");
-				wall=1;
-			}
+			//ROS_INFO("Following wall to the left!");
+			wall=1;
 				
 		}else{
 			if(wall==1){
 				stop();
 				ROS_INFO("Stopped seeing wall from the left!");
 				//getchar();
-				return 0;
+				return 1; // Will try to get 'on the open'
 			}
 		}
 			
 		// check for wall on right side
-		if(ir_readings[4] < dist_thres && ir_readings[5] < dist_thres){
+		if(ir_readings[4] < dist_thres && ir_readings[5] < dist_thres && wall!=1){
 			for(int i=4; i<6; i++)
-				ir_wall[i-4]=discretize(ir_readings[i],1.0);
-				
+				ir_wall[i-4]=discretize(ir_readings[i],0.5);
 			
-			if(wall==1){
-				wall==1;
-			}else{
-				//ROS_INFO("Following wall to the right!");
-				wall=2;
-			}
+			//ROS_INFO("Following wall to the right!");
+			wall=2;
 		} else{
 		
 			if(wall==2){
@@ -431,7 +421,7 @@ int forward_wall(ros::Rate loop_rate){
 		
 				ROS_INFO("Stopped seeing wall from the right!");
 				//getchar();
-				return 0;
+				return 1;
 			}
 		}
 		
@@ -461,10 +451,13 @@ int forward_wall(ros::Rate loop_rate){
 			theta_error=-theta_error;
 		
 		ROS_INFO("Theta_error: %.3f\n",theta_error);
-		control_pub(std_velocity,k_rotate*theta_error);	
-	
-		loop_rate.sleep();
-		ros::spinOnce();
+
+		if(std::abs(theta_error<0.26)){ //15 degrees error
+			control_pub(std_velocity,k_rotate*theta_error);		
+			loop_rate.sleep();
+			ros::spinOnce();
+		}else //oops
+			return 1;
 	
 	}
 		
