@@ -5,10 +5,9 @@
 
 typedef struct {
 	std::string path;
-	std::string object;
-	int rotation;
-} TrainFile_t;
+	int surfMinHessian;
+} TrainConfig_t;
 
-int train(std::string dirName);
+int train(TrainConfig_t & trainConfig);
 
 #endif

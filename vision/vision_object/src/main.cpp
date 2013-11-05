@@ -8,17 +8,24 @@ using namespace std;
 
 string trainDir;
 
-int main(int argc, char ** argv){
-	int errorCode;
-
+void init(){
 	/*
 	* TODO
 	* Move to config server
 	*/
 	trainDir = "/home/amotta/Documents/Theia/vision/vision_object/train";
+}
 
-	errorCode = train(trainDir);
-	
+int main(int argc, char ** argv){
+	int errorCode;
+
+	init();
+
+	TrainConfig_t trainConfig;
+	trainConfig.path = trainDir;
+
+	errorCode = train(trainConfig);
+
 	if(errorCode){
 		cout << "Error: Training failed" << endl;
 		return errorCode;
