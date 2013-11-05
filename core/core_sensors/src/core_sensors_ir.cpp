@@ -159,21 +159,35 @@ void get_distance(const differential_drive::AnalogC::ConstPtr msg){
 			med[i][j]=avg[i][j]; //so that we keep the temporal order after the qsort
 
 	
+	
+	// To do an average
+	
+	for(int i=0; i<7; i++){
+		dist_msg.dist[i]=0;
+		for(int j=0; j<AVG_MAX;j++)
+			dist_msg.dist[i]+=avg[i][j]/AVG_MAX;
+	}
+	
+	// To do a median
+	/*
 	for(int i=0; i<8;i++)
 		qsort((void*) &med[i],AVG_MAX,sizeof(double),compare);
 	
 	for(int i=0; i<8;i++){
-		//dist_msg.dist[i]=med[i][AVG_MAX/2];
+		dist_msg.dist[i]=med[i][AVG_MAX/2];
 	}
-
-	dist_msg.dist[0]=convert(msg->ch1,1);
+	*/
+	
+	
+	// To pass the raw values
+	/*dist_msg.dist[0]=convert(msg->ch1,1);
 	dist_msg.dist[1]=convert(msg->ch2,2);
 	dist_msg.dist[2]=convert(msg->ch3,3);
 	dist_msg.dist[3]=convert(msg->ch4,4);
 	dist_msg.dist[4]=convert(msg->ch5,5);
 	dist_msg.dist[5]=convert(msg->ch6,6);
 	dist_msg.dist[6]=convert(msg->ch7,7);
-	dist_msg.dist[7]=convert(msg->ch8,8);
+	dist_msg.dist[7]=convert(msg->ch8,8);*/
 		
 	
 	dist_pub.publish(dist_msg);
