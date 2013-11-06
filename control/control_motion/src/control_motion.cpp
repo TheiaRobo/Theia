@@ -41,7 +41,7 @@ double forward_distance=15.0;
 // Threshold for the sensors
 double heading_thres=0.02;
 double dist_thres=15.0;
-double rotation_error_thres=0.05;
+double rotation_error_thres=0.30;
 
 //0 - None; 1 - Forward; 2 - Rotate xº; 3 - Forward with wall
 int behavior=0; 
@@ -107,15 +107,6 @@ void ir_proc(core_sensors::ir::ConstPtr ir_msg){
 **/
 int ir_has_changed(double * init_readings){
 
-	
-	// Will keep it simple until the forward behavior has been tested more properly
-		
-	// Detected wall on sides
-	
-	//for(int i=2; i<6; i+=2)
-		//if(init_readings[i] > dist_thres && init_readings[i+1] > dist_thres && ir_readings[i]<dist_thres && ir_readings[i+1] < dist_thres)
-			//return 1;
-			
 	// Detected obstacle in front
 	
 	for(int i=0; i<2;i++)
@@ -392,9 +383,17 @@ int rotate(ros::Rate loop_rate){
 						ir_wall[i-4]=discretize(ir_readings[i],0.5);
 						
 					wall=2;
-				}else{ // no wall
-					wall=0;
-					correction_mode=0;
+				}else{ // in the case that we can align with a wall on the front
+					
+					if(ir_readings[0] < dist_thres && ir_readings[1] < dist_thres){
+						for(int i=0; i<1; i++)
+							ir_wall[i]=discretize(ir_readings[i],0.5);
+						
+					wall=3;
+					}else{ //no wall
+						wall=0;
+						correction_mode=0;
+					}
 				}
 			}
 			
@@ -406,7 +405,11 @@ int rotate(ros::Rate loop_rate){
 				theta_error = theta_ref - theta_meas;
 				
 				if(wall==1)
-					theta_error=-theta_error;
+					theta_error = -theta_error;
+					
+				if(wall==3)
+					if(ir_readings[0] < ir_readings[1])
+						theta_error = -theta_error;
 		
 				ROS_INFO("Theta_error: %.3f\n",theta_error);
 				
