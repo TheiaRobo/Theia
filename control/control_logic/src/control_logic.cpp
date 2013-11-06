@@ -38,11 +38,21 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
   }
   */ 
 
-  if(ir[0] > 15 && ir[1] > 15){
+  if(ir[0]==0 && ir[1]==0 && ir[2]==0 && ir[3]==0 && ir[4]==0 && ir[5]==0 && ir[6]==0 && ir[7]==0){
+	res.B=0;
+	return true;
+  }
 
-	if(ir[2] < 30 && ir[3] < 30)
+  ros::Duration refresh(1);
+  
+  refresh.sleep(); // wait a bit before sending new orders
+	
+  res.B=0; //default
+  if(ir[0] > 10 && ir[1] > 10){
+
+	if(ir[2] < 15 && ir[3] < 15)
 		res.B=3;
-	else if(ir[4] < 30 && ir[5] < 30)
+	else if(ir[4] < 15 && ir[5] < 15)
 		res.B=3;
 		
 		else
@@ -53,6 +63,10 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
   } else if(ir[4] > 10 && ir[5] > 10){
     res.B = 2;
     res.heading_ref = -PI/2;
+  } else if(ir[2] < 10 && ir[3] < 10 && ir[4] < 10 && ir[5] < 10){ // turn back
+	ROS_INFO("TURN BACK\nir3: %.2f\nir4: %.2f\n ir5: %.2f\n ir6: %.2f",ir[2],ir[3],ir[4],ir[5]);
+	res.B = 2;
+	res.heading_ref=PI;
   }
 
   return true;

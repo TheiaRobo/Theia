@@ -40,9 +40,9 @@ double forward_distance=20.0;
 
 // Threshold for the sensors
 double heading_thres=0.01;
-double dist_thres=15.0;
-double inf_thres=30.0;
-double rotation_error_thres=0.15;
+double dist_thres=10.0;
+double inf_thres=15.0;
+double rotation_error_thres=0.10;
 
 //0 - None; 1 - Forward; 2 - Rotate xº; 3 - Forward with wall
 int behavior=0; 
@@ -388,7 +388,7 @@ int rotate(ros::Rate loop_rate){
 					
 					if(ir_readings[0] < dist_thres && ir_readings[1] < dist_thres){
 						for(int i=0; i<1; i++)
-							ir_wall[i]=discretize(ir_readings[i],0.5);
+							ir_wall[i]=discretize(ir_readings[i],0.1);
 						
 					wall=3;
 					}else{ //no wall
@@ -414,7 +414,7 @@ int rotate(ros::Rate loop_rate){
 		
 				ROS_INFO("Theta_error: %.3f\n",theta_error);
 				
-				if(theta_error==0)
+				if(theta_error<heading_thres)
 					return 0;
 				
 				
