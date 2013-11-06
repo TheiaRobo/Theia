@@ -5,9 +5,12 @@
 #include <fstream>
 
 using namespace std;
+int counter=1;
 
 void print_sensor(const differential_drive::AnalogC::ConstPtr msg){
 
+	// 5 values per line, regarding the same sensor distance
+	
 	ofstream myfile;
 
 	ROS_INFO("Sensor values:");
@@ -21,14 +24,24 @@ void print_sensor(const differential_drive::AnalogC::ConstPtr msg){
 	
 	getchar();
 
-	myfile.open("data_5.txt",ios::app);
-	myfile << msg->ch5;
-	myfile << "\n";
+	myfile.open("data_1.txt",ios::app);
+	myfile << msg->ch1;
+	
+	if(counter==5){
+		myfile << "\n";
+	}
+		
 	myfile.close();
 
-	myfile.open("data_6.txt",ios::app);
-	myfile << msg->ch6;
-	myfile << "\n";
+	myfile.open("data_2.txt",ios::app);
+	myfile << msg->ch2;
+	
+	if(counter==5){
+		myfile << "\n";
+		counter=0;
+	}
+	counter++;
+		
 	myfile.close();
 	
 
