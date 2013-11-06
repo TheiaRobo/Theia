@@ -1,16 +1,10 @@
 control_mux: {V_MAX: 10.0, W_MAX: 1.0}
 core: {L: 21.35, R1: 5.0, R2: 5.0}
+vision_object:
+  config:
+    path: /home/amotta/Documents/Theia/vision/vision_object/train
+    surfMinHessian: 800
 vision_plane:
   config:
     crop: {maxX: 20, maxY: 0.1, maxZ: 20, minX: -20, minY: -0.1, minZ: 0}
     plane: {percentage: 0.25}
-
-rosdistro: 'fuerte
-
-  '
-roslaunch:
-  uris: {host_diogo__39840: 'http://diogo:39840/'}
-rosversion: '1.8.11
-
-  '
-run_id: 88a2e32a-375a-11e3-969c-50b7c3875bc1
