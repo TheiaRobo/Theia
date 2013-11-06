@@ -16,6 +16,9 @@ typedef struct {
 	cv::Mat descriptors;
 } ObjectTrainData_t;
 
-int train(ObjectTrainConfig_t & trainConfig);
+int train(
+	ObjectTrainConfig_t & trainConfig,
+	std::vector<ObjectTrainData_t> & trainDataVect
+);
 
 #endif

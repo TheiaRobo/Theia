@@ -82,8 +82,14 @@ int trainFile(
 /**
 * Find and list training files
 */
-int train(ObjectTrainConfig_t & trainConfig){
+int train(
+	ObjectTrainConfig_t & trainConfig,
+	std::vector<ObjectTrainData_t> & trainDataVect
+){
 	int errorCode;
+
+	// Remove old data
+	trainDataVect.empty();
 
 	/**
 	* Find files in training directory
@@ -106,8 +112,6 @@ int train(ObjectTrainConfig_t & trainConfig){
 	/**
 	* Extract features from training images
 	*/
-	std::vector<ObjectTrainData_t> trainDataVect;
-
 	size_t numbTrainFiles;
 	numbTrainFiles = trainFileVect.size();
 
