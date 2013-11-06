@@ -439,7 +439,7 @@ int rotate(ros::Rate loop_rate){
 int forward_wall(ros::Rate loop_rate){
 
 	double ir_wall[2]={0.0,0.0};
-	double theta_ref=0.0, theta_meas=0.0, theta_error=0.0;
+	double theta_ref=0.0, theta_meas=0.0, theta_error=0.0, avg_dist=0.0;
 	int wall=0; // 1 - left side; 2 - right side
 	
 	
@@ -448,7 +448,7 @@ int forward_wall(ros::Rate loop_rate){
 		// check for wall on left side
 		if(ir_readings[2] < dist_thres && ir_readings[3] < dist_thres && wall !=2){
 			for(int i=2; i<4; i++)
-				ir_wall[i-2]=discretize(ir_readings[i],0.5);
+				ir_wall[i-2]=discretize(ir_readings[i],0.1);
 			
 			//ROS_INFO("Following wall to the left!");
 			wall=1;
@@ -465,7 +465,7 @@ int forward_wall(ros::Rate loop_rate){
 		// check for wall on right side
 		if(ir_readings[4] < dist_thres && ir_readings[5] < dist_thres && wall!=1){
 			for(int i=4; i<6; i++)
-				ir_wall[i-4]=discretize(ir_readings[i],0.5);
+				ir_wall[i-4]=discretize(ir_readings[i],0.1);
 			
 			//ROS_INFO("Following wall to the right!");
 			wall=2;
@@ -506,13 +506,27 @@ int forward_wall(ros::Rate loop_rate){
 			theta_error=-theta_error;
 		
 		ROS_INFO("Theta_error: %.3f\n",theta_error);
-
-		if(std::abs(theta_error<0.26)){ //15 degrees error
-			control_pub(std_velocity,k_rotate*theta_error);		
-			loop_rate.sleep();
-			ros::spinOnce();
-		}else //oops
-			return 1;
+		
+		avg_dist=(ir_wall[0]+ir_wall[1])/2; // Average distance to the wall
+		
+		if(avg_dist < dist_thres){
+			if(std::abs(theta_error<0.26)){ //15 degrees error
+				control_pub(std_velocity,k_rotate*theta_error);		
+				loop_rate.sleep();
+				ros::spinOnce();
+			}else //oops
+				return 1;
+		}else{ // move away from the wall without moving too much
+			
+			if(wall==1)
+				theta_ref=-PI/4;
+			if(wall==2)
+				theta_ref=PI/4;
+				
+			theta_error = theta_ref - theta_meas;
+			
+			control_pub(std_velocity/2,k_rotate*theta_error);
+		}
 	
 	}
 		
