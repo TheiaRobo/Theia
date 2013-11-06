@@ -5,45 +5,50 @@
 #include <fstream>
 
 using namespace std;
+
+int mes=1;
 int counter=1;
 
 void print_sensor(const differential_drive::AnalogC::ConstPtr msg){
 
+	
+	ros::Duration refresh(0.1);
 	// 5 values per line, regarding the same sensor distance
 	
 	ofstream myfile;
 
-	ROS_INFO("Sensor values:");
-	ROS_INFO("Ch1: %d",msg->ch1);
-	ROS_INFO("Ch2: %d",msg->ch2);
-	ROS_INFO("Ch3: %d",msg->ch3);
-	ROS_INFO("Ch4: %d",msg->ch4);
-	ROS_INFO("Ch5: %d",msg->ch5);
-	ROS_INFO("Ch6: %d",msg->ch6);
-	ROS_INFO("Press any key to continue...");
+	if(counter==1){
+		ROS_INFO("Measurement number %d\nPress any key to continue...",mes);
 	
-	getchar();
+		getchar();
+	}
+	
 
-	myfile.open("data_1.txt",ios::app);
-	myfile << msg->ch1;
-	
+	myfile.open("data_3.txt",ios::app);
+	myfile << msg->ch3;
+	myfile << "\t";
+
 	if(counter==5){
 		myfile << "\n";
 	}
-		
+	
 	myfile.close();
 
-	myfile.open("data_2.txt",ios::app);
-	myfile << msg->ch2;
-	
+	myfile.open("data_4.txt",ios::app);
+	myfile << msg->ch4;
+	myfile << "\t";
+
 	if(counter==5){
 		myfile << "\n";
-		counter=0;
+		counter = 0;
 	}
 	counter++;
-		
-	myfile.close();
 	
+	myfile.close();
+	refresh.sleep();
+	
+	if(counter==1)
+		mes++;
 
 }
 
