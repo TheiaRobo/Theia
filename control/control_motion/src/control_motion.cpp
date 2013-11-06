@@ -36,12 +36,13 @@ double k_rotate=1.0;
 double std_velocity=7.5;
 
 // Maximum distance to be travelled while on 'forward' behavior
-double forward_distance=15.0;
+double forward_distance=20.0;
 
 // Threshold for the sensors
-double heading_thres=0.02;
+double heading_thres=0.01;
 double dist_thres=15.0;
-double rotation_error_thres=0.30;
+double inf_thres=30.0;
+double rotation_error_thres=0.15;
 
 //0 - None; 1 - Forward; 2 - Rotate xº; 3 - Forward with wall
 int behavior=0; 
@@ -54,8 +55,8 @@ double ir_dist=20.0;
 
 // Thresholds for the velocities
 
-double V_MAX=15.0;
-double W_MAX=PI/8;
+double V_MAX=7.5;
+double W_MAX=PI/4;
 
 ros::Publisher vw_pub;
 ros::ServiceClient ask_logic;
@@ -64,7 +65,7 @@ core_control_motor::vw control_message;
 control_logic::MotionCommand srv;
 
 ros::Subscriber	odo_sub;
-ros::Subscriber ir_sub;	
+ros::Subscriber ir_sub;
 ros::Subscriber params_sub;
 
 
@@ -73,7 +74,7 @@ ros::Subscriber params_sub;
 void odo_proc(nav_msgs::Odometry::ConstPtr odo_msg){
 	tf::Pose pose;
 	tf::poseMsgToTF(odo_msg->pose.pose,pose);
-	
+
 	x=odo_msg->pose.pose.position.x;
 	y=odo_msg->pose.pose.position.y;
 	last_theta=theta;
@@ -201,7 +202,7 @@ double discretize(double val, double step){
 
 	for(double i=0; i<100/step; i+=step){
 		if(std::abs(val-i)<step){
-			ROS_INFO("val %.3f -> i %.3f",val,i);
+			//ROS_INFO("val %.3f -> i %.3f",val,i);
 			return i;
 		}
 	}
@@ -374,13 +375,13 @@ int rotate(ros::Rate loop_rate){
 			// check for wall on the left
 			if(ir_readings[2] < dist_thres && ir_readings[3] < dist_thres){
 				for(int i=2; i<4;i++)
-					ir_wall[i-2]=discretize(ir_readings[i],0.5);
+					ir_wall[i-2]=discretize(ir_readings[i],0.1);
 					
 				wall=1;
 			}else{
 				if(ir_readings[4] < dist_thres && ir_readings[5] < dist_thres){
 					for(int i=4; i<6; i++)
-						ir_wall[i-4]=discretize(ir_readings[i],0.5);
+						ir_wall[i-4]=discretize(ir_readings[i],0.1);
 						
 					wall=2;
 				}else{ // in the case that we can align with a wall on the front
@@ -446,7 +447,7 @@ int forward_wall(ros::Rate loop_rate){
 	while(ros::ok()){
 		
 		// check for wall on left side
-		if(ir_readings[2] < dist_thres && ir_readings[3] < dist_thres && wall !=2){
+		if(ir_readings[2] < inf_thres && ir_readings[3] < inf_thres && wall !=2){
 			for(int i=2; i<4; i++)
 				ir_wall[i-2]=discretize(ir_readings[i],0.1);
 			
@@ -463,7 +464,7 @@ int forward_wall(ros::Rate loop_rate){
 		}
 			
 		// check for wall on right side
-		if(ir_readings[4] < dist_thres && ir_readings[5] < dist_thres && wall!=1){
+		if(ir_readings[4] < inf_thres && ir_readings[5] < inf_thres && wall!=1){
 			for(int i=4; i<6; i++)
 				ir_wall[i-4]=discretize(ir_readings[i],0.1);
 			
@@ -490,10 +491,16 @@ int forward_wall(ros::Rate loop_rate){
 				count=0;
 				ROS_INFO("Obstacle ahead!");
 				//getchar();
+				loop_rate.sleep();
 				return 0;
 			}
 		}else
 			count=0;
+			
+		if(!wall){
+			loop_rate.sleep();
+			return 0;
+		}
 		
 		// get angle to wall
 		
@@ -505,23 +512,28 @@ int forward_wall(ros::Rate loop_rate){
 		if(wall==1)
 			theta_error=-theta_error;
 		
-		ROS_INFO("Theta_error: %.3f\n",theta_error);
+		//ROS_INFO("Theta_error: %.3f\n",theta_error);
 		
-		avg_dist=(ir_wall[0]+ir_wall[1])/2; // Average distance to the wall
+		avg_dist=(ir_wall[0]);
 		
-		if(avg_dist < dist_thres){
+		if(1){//avg_dist > dist_thres && avg_dist < inf_thres){ VERY BUGGY
+			ROS_INFO("Normal wall following");
 			if(std::abs(theta_error<0.26)){ //15 degrees error
 				control_pub(std_velocity,k_rotate*theta_error);		
 				loop_rate.sleep();
 				ros::spinOnce();
-			}else //oops
+			}else{ //oops
+				loop_rate.sleep();
 				return 1;
-		}else{ // move away from the wall without moving too much
+			}
+				
+		}else if(avg_dist < dist_thres){ // move away from the wall without moving too much
 			
+			ROS_INFO("Too close to the wall");
 			if(wall==1)
-				theta_ref=-PI/4;
+				theta_ref=-PI/20;
 			if(wall==2)
-				theta_ref=PI/4;
+				theta_ref=PI/20;
 				
 			theta_error = theta_ref - theta_meas;
 			
@@ -529,7 +541,7 @@ int forward_wall(ros::Rate loop_rate){
 		}
 	
 	}
-		
+	loop_rate.sleep();
 	return 0;
 }
 
