@@ -43,7 +43,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 	return true;
   }
 
-  ros::Duration refresh(1);
+  ros::Duration refresh(0.1);
   
   refresh.sleep(); // wait a bit before sending new orders
 	

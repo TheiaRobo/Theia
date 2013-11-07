@@ -24,8 +24,8 @@ void print_sensor(const differential_drive::AnalogC::ConstPtr msg){
 	}
 	
 	if(counter!=1){//discard first reading
-		myfile.open("data_3.txt",ios::app);
-		myfile << msg->ch3;
+		myfile.open("data_5.txt",ios::app);
+		myfile << msg->ch5;
 		myfile << "\t";
 
 		if(counter==10){
@@ -34,8 +34,8 @@ void print_sensor(const differential_drive::AnalogC::ConstPtr msg){
 	
 		myfile.close();
 
-		myfile.open("data_4.txt",ios::app);
-		myfile << msg->ch4;
+		myfile.open("data_6.txt",ios::app);
+		myfile << msg->ch6;
 		myfile << "\t";
 
 		if(counter==10){

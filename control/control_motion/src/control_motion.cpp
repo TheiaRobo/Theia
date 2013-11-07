@@ -22,7 +22,7 @@
 #include <control_motion/params.h>
 
 const float PI=3.1415926f;
-double freq=10.0;
+double freq=50.0;
 double x=0.0,y=0.0,theta=0.0,last_theta=0.0;; // Position estimate given by the odometry
 double ir_readings[8];
 double heading_ref=0.0; // reference for the rotate xº behavior
@@ -33,7 +33,7 @@ double k_forward=1.0;
 double k_rotate=1.0;
 
 // Forward velocity
-double std_velocity=7.5;
+double std_velocity=15.0;
 
 // Maximum distance to be travelled while on 'forward' behavior
 double forward_distance=20.0;
@@ -55,7 +55,7 @@ double ir_dist=20.0;
 
 // Thresholds for the velocities
 
-double V_MAX=7.5;
+double V_MAX=50;
 double W_MAX=PI/4;
 
 ros::Publisher vw_pub;
