@@ -13,7 +13,7 @@ void print_sensor(const differential_drive::AnalogC::ConstPtr msg){
 
 	
 	ros::Duration refresh(0.1);
-	// 5 values per line, regarding the same sensor distance
+	// 10 values per line, regarding the same sensor distance
 	
 	ofstream myfile;
 
@@ -23,29 +23,30 @@ void print_sensor(const differential_drive::AnalogC::ConstPtr msg){
 		getchar();
 	}
 	
+	if(counter!=1){//discard first reading
+		myfile.open("data_3.txt",ios::app);
+		myfile << msg->ch3;
+		myfile << "\t";
 
-	myfile.open("data_3.txt",ios::app);
-	myfile << msg->ch3;
-	myfile << "\t";
-
-	if(counter==5){
-		myfile << "\n";
-	}
+		if(counter==10){
+			myfile << "\n";
+		}
 	
-	myfile.close();
+		myfile.close();
 
-	myfile.open("data_4.txt",ios::app);
-	myfile << msg->ch4;
-	myfile << "\t";
+		myfile.open("data_4.txt",ios::app);
+		myfile << msg->ch4;
+		myfile << "\t";
 
-	if(counter==5){
-		myfile << "\n";
-		counter = 0;
+		if(counter==10){
+			myfile << "\n";
+			counter = 0;
+		}
+		myfile.close();
 	}
+	refresh.sleep();
 	counter++;
 	
-	myfile.close();
-	refresh.sleep();
 	
 	if(counter==1)
 		mes++;
