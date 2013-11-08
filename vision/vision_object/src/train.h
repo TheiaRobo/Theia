@@ -13,6 +13,7 @@ typedef struct {
 
 typedef struct {
 	ObjectFileTrain_t file;
+	cv::Mat image;
 	cv::Mat descriptors;
 } ObjectTrainData_t;
 

@@ -23,7 +23,7 @@ int trainFile(
 	ObjectTrainData_t & trainData,
 	ObjectTrainConfig_t & trainConfig
 ){
-	std::cout << "TRAINING" << std::endl;
+	std::cout << "trainFile" << std::endl;
 	std::cout << " Path: " << trainFile.path << std::endl;
 
 	/**
@@ -42,10 +42,9 @@ int trainFile(
 	*/
 	SurfFeatureDetector detector(trainConfig.surfMinHessian);
 	std::vector<KeyPoint> keypoints;
-
 	detector.detect(image, keypoints);
 
-	std::cout << " Number of keypoints: " << keypoints.size() << std::endl;
+	std::cout << " # keypoints: " << keypoints.size() << std::endl;
 
 	/**
 	* Draw keypoints
@@ -74,6 +73,7 @@ int trainFile(
 	* Store data
 	*/
 	trainData.file = trainFile;
+	trainData.image = image;
 	trainData.descriptors = descriptors;
 
 	return 0;
@@ -89,7 +89,7 @@ int train(
 	int errorCode;
 
 	// Remove old data
-	trainDataVect.empty();
+	trainDataVect.clear();
 
 	/**
 	* Find files in training directory
