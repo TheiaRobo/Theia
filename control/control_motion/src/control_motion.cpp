@@ -76,8 +76,8 @@ void odo_proc(nav_msgs::Odometry::ConstPtr odo_msg){
 	tf::Pose pose;
 	tf::poseMsgToTF(odo_msg->pose.pose,pose);
 
-	x=odo_msg->pose.pose.position.x;
-	y=odo_msg->pose.pose.position.y;
+	x=odo_msg->pose.pose.position.x*100;
+	y=odo_msg->pose.pose.position.y*100;
 	last_theta=theta;
 	theta=tf::getYaw(pose.getRotation());
 	
@@ -274,7 +274,7 @@ int forward(ros::Rate loop_rate){
 
 		if(status_changed==1){
 			count++; // Quick and dirty solution that avoids premature stoping due to outliers. Should be carried over to the core_sensors_ir node, somehow.
-			if(count>=1){
+			if(count>=2){
 				stop();
 				count=0;
 				ROS_INFO("Finished the forward behavior due to changing environment!");
@@ -297,7 +297,12 @@ int forward(ros::Rate loop_rate){
 		if(std::abs(heading_error)<heading_thres)
 			heading_error=0.0;
 		
-		control_pub(std_velocity,k_forward*heading_error);
+		if(ir_readings[0] < inf_thres || ir_readings[1] < inf_thres){
+			ROS_INFO("Moving slower");
+			control_pub(std_velocity/2,0);//k_forward*heading_error);
+		}else{
+			control_pub(std_velocity,0);
+		}
 		
 		loop_rate.sleep();
 		ros::spinOnce();
@@ -417,7 +422,7 @@ int rotate(ros::Rate loop_rate){
 		
 				ROS_INFO("Theta_error: %.3f\n",theta_error);
 				
-				if(theta_error<2*heading_thres){
+				if(theta_error<0.04){
 					stop();
 					return 0;
 				}
@@ -491,7 +496,7 @@ int forward_wall(ros::Rate loop_rate){
 		
 		if(ir_readings[0] < dist_thres+delay_thres || ir_readings[1] < dist_thres+delay_thres){
 			count++;
-			if(count>=1){	
+			if(count>=2){	
 				stop();
 				count=0;
 				ROS_INFO("Obstacle ahead!");
@@ -524,7 +529,12 @@ int forward_wall(ros::Rate loop_rate){
 		if(1){//avg_dist > dist_thres && avg_dist < inf_thres){ VERY BUGGY
 			ROS_INFO("Normal wall following");
 			if(std::abs(theta_error<0.26)){ //15 degrees error
-				control_pub(std_velocity,k_rotate*theta_error);		
+				if(ir_readings[0] < inf_thres || ir_readings[1] < inf_thres){
+					ROS_INFO("Moving slower");
+					control_pub(std_velocity/2,k_rotate*theta_error);
+				}else{
+					control_pub(std_velocity,k_rotate*theta_error);	
+				}	
 				loop_rate.sleep();
 				ros::spinOnce();
 			}else{ //oops
