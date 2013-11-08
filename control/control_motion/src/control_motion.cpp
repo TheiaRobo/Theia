@@ -25,7 +25,7 @@ const float PI=3.1415926f;
 double freq=10.0;
 double x=0.0,y=0.0,theta=0.0,last_theta=0.0;; // Position estimate given by the odometry
 double ir_readings[8];
-double ir_raw=[8][3];
+double ir_raw[8][3];
 double heading_ref=0.0; // reference for the rotate xº behavior
 double theta_correction=0.0;
 
@@ -246,6 +246,45 @@ int is_wall(int side, double thres, double * ir){
 
 }
 
+/** compute_ir_error: Computes angle error given ir readings
+* 
+*
+**/
+double compute_ir_error(int wall, double ir_wall[2],double theta_ref){
+	
+	double theta_meas,theta_error;
+	// get angle to wall
+
+	theta_meas = compute_angle(ir_wall);
+	theta_error = theta_ref - theta_meas;
+
+	if(wall==1)
+		theta_error = -theta_error;
+	
+	return theta_error;
+}
+
+/** correct_theta: Adds an offset to the heading estimate to make for discontinuities
+*
+*	t -> theta, l_t -> last_theta
+*
+**/
+double correct_theta(double t, double l_t){
+	
+	double processed_theta=0.0;
+	
+	if(std::abs(t-l_t)>=PI){
+		if(t>l_t)
+			theta_correction+=-2*PI;
+		else
+			theta_correction+=2*PI;
+	}
+
+	processed_theta=theta+theta_correction;
+	
+	return processed_theta;
+}
+
 /** none: Implements the 'None' behavior
 *
 *	Sends a stopping message to the core and asks for instructions to the logic node
@@ -363,53 +402,34 @@ int rotate(ros::Rate loop_rate){
 	//getchar();
 	
 	while(ros::ok() && !done){
-		
-		/*if(correction_mode<=0){*/
-			// process theta
-		
-			/*if(std::abs(theta-last_theta)>=PI){
-				if(theta>last_theta)
-					theta_correction+=-2*PI;
-				else
-					theta_correction+=2*PI;
-			}
-		
-			processed_theta=theta+theta_correction;*/
-		
-			heading_error=heading_ref-(processed_theta-init_theta);
-		
-			ROS_INFO("Theta: %.3f\nCorrected theta: %.3f\nDisplacement: %.3f\nError: %.3f\n",theta,processed_theta,processed_theta-init_theta,heading_error);
-
-			// action completed
-			if(std::abs(heading_error)<heading_thres){
-		
-				done=1;
 			
-				ROS_INFO("Finished the rotation behavior successfully with error %.2f (absolute value %.2f)!",heading_error, std::abs(heading_error));
-				//getchar();
-				
-				/*if(correction_mode==0)
-					correction_mode=1; // to really be sure we can align with walls
-				else
-					return 0;*/
-			}else{
-				/*if(heading_error/init_error<rotation_error_thres && wall==1)
-					correction_mode=1;*/
-			
-			
-				control_pub(0.0,k_rotate*heading_error);	
+		processed_theta=correct_theta(theta,last_theta);
+		
+		heading_error=heading_ref-(processed_theta-init_theta);
 	
-				loop_rate.sleep();
-				ros::spinOnce();
-			}
+		ROS_INFO("Theta: %.3f\nCorrected theta: %.3f\nDisplacement: %.3f\nError: %.3f\n",theta,processed_theta,processed_theta-init_theta,heading_error);
+
+		// action completed
+		if(std::abs(heading_error)<heading_thres){
+	
+			done=1;
+		
+			ROS_INFO("Finished the rotation behavior successfully with error %.2f (absolute value %.2f)!",heading_error, std::abs(heading_error));
+		}else{
+
+			control_pub(0.0,k_rotate*heading_error);	
+
+			loop_rate.sleep();
+			ros::spinOnce();
+		}
 	} // Correction mode: we finished rotating, and now we want to align ourselves with the wall
 	
-	while(ros::ok(){	
+	while(ros::ok()){	
 		// check for wall on the left
 		
-		if(is_wall(1,inf_thres,ir_readings){
+		if(is_wall(1,inf_thres,ir_readings)){
 			wall=1;
-		}else if(is_wall(2,inf_thres,ir_readings){
+		}else if(is_wall(2,inf_thres,ir_readings)){
 			wall=2;
 		}else{ //no wall
 			wall=0;
@@ -420,23 +440,14 @@ int rotate(ros::Rate loop_rate){
 		if(wall){
 		
 			// get angle to wall
-
-			/*theta_meas = compute_angle(ir_wall);
-			theta_error = theta_ref - theta_meas;
-		
-			if(wall==1){
-				ROS_INFO("Aligning with left wall");
-				theta_error = -theta_error;
-			}else{
-				ROS_INFO("Aligning with right wall");
-			}
-
+			theta_error=compute_ir_error(wall,ir_wall,theta_ref);
+			
 			ROS_INFO("Theta_error: %.3f\n",theta_error);
 		
 			if(theta_error<0.04){
 				stop();
 				return 0;
-			}*/
+			}
 		
 		
 			control_pub(0,k_rotate*theta_error);		
@@ -487,19 +498,13 @@ int forward_wall(ros::Rate loop_rate){
 		
 		// get angle to wall
 		
-		
-		/*theta_meas = compute_angle(ir_wall);
-		theta_error = theta_ref - theta_meas;
-		
-		// for the same angle measurements we want to rotate to the opposite side than that of the right wall
-		if(wall==1)
-			theta_error=-theta_error;*/
+		theta_error=compute_ir_error(wall,ir_wall,theta_ref);
 		
 		//ROS_INFO("Theta_error: %.3f\n",theta_error);
 		
 		ROS_INFO("Normal wall following");
 		if(std::abs(theta_error) < PI/20){ // 9 degrees
-			if(is_wall(3,inf_thres,ir_readings){
+			if(is_wall(3,inf_thres,ir_readings)){
 				ROS_INFO("Moving Slower");
 				control_pub(std_velocity/2,k_rotate*theta_error);
 			}else{
@@ -510,6 +515,7 @@ int forward_wall(ros::Rate loop_rate){
 			stop();
 			return 1;
 		}
+	}
 		
 }
 
