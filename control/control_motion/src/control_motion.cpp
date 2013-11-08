@@ -513,7 +513,7 @@ int forward_wall(ros::Rate loop_rate){
 		ROS_INFO("Normal wall following");
 		if(std::abs(theta_error) < PI/20){ // 9 degrees
 			if(is_wall(3,inf_thres,ir_readings)){
-				ROS_INFO("Moving Slower");
+				ROS_INFO("Moving Slower\n");
 				control_pub(std_velocity/2,k_rotate*theta_error);
 			}else{
 				control_pub(std_velocity,k_rotate*theta_error);
