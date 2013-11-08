@@ -42,9 +42,9 @@ double forward_distance=20.0;
 // Threshold for the sensors
 double heading_thres=0.01;
 double dist_thres=5.0;
-double inf_thres=15.0;
+double inf_thres=20.0;
 double rotation_error_thres=0.10;
-double delay_thres=4.0; // no real time :(
+double delay_thres=2.0; // no real time :(
 
 //0 - None; 1 - Forward; 2 - Rotate xº; 3 - Forward with wall
 int behavior=0; 
@@ -71,19 +71,24 @@ ros::Subscriber ir_sub;
 ros::Subscriber params_sub;
 
 double median (double ir[3]){ // stupid 3 value median filter
- 	double temp;
+ 	double temp, ir_temp[3];
  	
+
+	for(int i=0; i < 3; i++)
+		ir_temp[i]=ir[i];
+
  	for(int i=0; i < 3; i++){
  		for(int j=i+1; j<3; j++){
  			if(ir[i]>ir[j]){
- 				temp=ir[i];
- 				ir[i]=ir[j];
- 				ir[j]=temp;
+ 				temp=ir_temp[i];
+ 				ir_temp[i]=ir_temp[j];
+ 				ir_temp[j]=temp;
  			}
  		}
  	}
  	
- 	return ir[2];
+ 	
+ 	return ir_temp[1];
  	
 }
 
@@ -116,7 +121,8 @@ void ir_proc(core_sensors::ir::ConstPtr ir_msg){
 		ir_raw[i][0]=ir_msg->dist[i];
 		ir_readings[i]=median(ir_raw[i]);
 	}
-
+	
+	ROS_INFO("IR_RAW: (%.2f,%.2f)\nIR_READINGS: (%.2f,%.2f)",ir_raw[0][0],ir_raw[1][0],ir_readings[0],ir_readings[1]);
 
 }
 
@@ -216,7 +222,9 @@ double discretize(double val, double step){
 *	Side: 1 - Left, 2 - Right, 3 - front
 *
 **/
-int is_wall(int side, double thres, double * ir){ 
+int is_wall(int side, double thres, double ir[8]){ 
+	
+	ROS_INFO("side: %d\nthres: %.2f\nir: (%.2f,%.2f)",side,thres,ir[0],ir[1]);
 	
 	switch(side){
 		case 1:
@@ -241,7 +249,7 @@ int is_wall(int side, double thres, double * ir){
 			}
 			break;
 		default:
-			return 0;
+			return 1;
 	}
 
 }
@@ -344,7 +352,7 @@ int forward(ros::Rate loop_rate){
 	while(std::abs(curr_dist-initial_dist)<forward_distance){ // Will keep moving forward until sensors report obstacle or forward_distance is achieved
 		
 		
-		if(is_wall(3,dist_thres,ir_readings)){
+		if(is_wall(3,dist_thres+delay_thres,ir_readings)){
 			stop();
 			return 0;
 		}
@@ -484,7 +492,7 @@ int forward_wall(ros::Rate loop_rate){
 		
 		// check if obstacle ahead
 		
-		if(is_wall(3,dist_thres,ir_readings)){
+		if(is_wall(3,dist_thres+delay_thres,ir_readings)){
 			stop();
 			ROS_INFO("Obstacle ahead!");
 			return 0;
@@ -493,7 +501,7 @@ int forward_wall(ros::Rate loop_rate){
 		if(!wall){
 			stop();
 			ROS_INFO("Stopped seeing wall!");
-			return 0;
+			return 1;
 		}
 		
 		// get angle to wall
@@ -515,6 +523,8 @@ int forward_wall(ros::Rate loop_rate){
 			stop();
 			return 1;
 		}
+		loop_rate.sleep();
+		ros::spinOnce();
 	}
 		
 }
