@@ -273,7 +273,7 @@ int forward(ros::Rate loop_rate){
 		ROS_INFO("ir_readings: (%.3f,%.3f)\n",ir_readings[0],ir_readings[1]);
 
 		if(status_changed==1){
-			count++; // Quick and dirty solution that avoids premature stoping due to outliers. Should be carried over to the core_sensors_ir node, somehow.
+			/*count++; // Quick and dirty solution that avoids premature stoping due to outliers. Should be carried over to the core_sensors_ir node, somehow.
 			if(count>=2){
 				stop();
 				count=0;
@@ -284,7 +284,7 @@ int forward(ros::Rate loop_rate){
 			}
 		}else{
 			count=0;
-		}
+		}*/
 		
 		curr_dist=std::sqrt(x*x+y*y);
 		
@@ -297,12 +297,12 @@ int forward(ros::Rate loop_rate){
 		if(std::abs(heading_error)<heading_thres)
 			heading_error=0.0;
 		
-		if(ir_readings[0] < inf_thres || ir_readings[1] < inf_thres){
+		/*if(ir_readings[0] < inf_thres || ir_readings[1] < inf_thres){
 			ROS_INFO("Moving slower");
 			control_pub(std_velocity/2,0);//k_forward*heading_error);
 		}else{
 			control_pub(std_velocity,0);
-		}
+		}*/
 		
 		loop_rate.sleep();
 		ros::spinOnce();
@@ -331,26 +331,26 @@ int rotate(ros::Rate loop_rate){
 	double processed_theta=theta+theta_correction; // will have corrections for the pi to -pi jump
 	double init_theta=processed_theta;
 	double init_error=heading_ref-(processed_theta-init_theta);
-	int correction_mode=0, wall=1;
+	int done=0, wall=1;
 	double ir_wall[2]={0.0,0.0};
 	double theta_ref=0.0, theta_meas=0.0, theta_error=0.0;
 	
 	ROS_INFO("Debug mode. Behavior is rotation on spot. Press any key to go on");
 	//getchar();
 	
-	while(ros::ok()){
+	while(ros::ok() && !done){
 		
-		if(correction_mode<=0){
+		/*if(correction_mode<=0){*/
 			// process theta
 		
-			if(std::abs(theta-last_theta)>=PI){
+			/*if(std::abs(theta-last_theta)>=PI){
 				if(theta>last_theta)
 					theta_correction+=-2*PI;
 				else
 					theta_correction+=2*PI;
 			}
 		
-			processed_theta=theta+theta_correction;
+			processed_theta=theta+theta_correction;*/
 		
 			heading_error=heading_ref-(processed_theta-init_theta);
 		
@@ -359,89 +359,77 @@ int rotate(ros::Rate loop_rate){
 			// action completed
 			if(std::abs(heading_error)<heading_thres){
 		
-				stop();
+				done=1;
 			
 				ROS_INFO("Finished the rotation behavior successfully with error %.2f (absolute value %.2f)!",heading_error, std::abs(heading_error));
 				//getchar();
 				
-				if(correction_mode==0)
+				/*if(correction_mode==0)
 					correction_mode=1; // to really be sure we can align with walls
 				else
-					return 0;
-			}
-			
-			
-			if(heading_error/init_error<rotation_error_thres && wall==1)
-				correction_mode=1;	
-			
-			
-			control_pub(0.0,k_rotate*heading_error);	
-	
-			loop_rate.sleep();
-			ros::spinOnce();
-		}else{ // Correction mode: we finished rotating, and now we want to align ourselves with the wall
-			
-			// check for wall on the left
-			if(ir_readings[2] < dist_thres && ir_readings[3] < dist_thres){
-				for(int i=2; i<4;i++)
-					ir_wall[i-2]=discretize(ir_readings[i],0.1);
-					
-				wall=1;
+					return 0;*/
 			}else{
-				if(ir_readings[4] < dist_thres && ir_readings[5] < dist_thres){
-					for(int i=4; i<6; i++)
-						ir_wall[i-4]=discretize(ir_readings[i],0.1);
-						
-					wall=2;
-				}else{ // in the case that we can align with a wall on the front
-					
-					if(ir_readings[0] < dist_thres && ir_readings[1] < dist_thres && 0){ //disabled
-						for(int i=0; i<1; i++)
-							ir_wall[i]=discretize(ir_readings[i],0.1);
-					wall=0;
-					}else{ //no wall
-						wall=0;
-						correction_mode=-1; // so that we can exit above
-					}
-				}
-			}
+				/*if(heading_error/init_error<rotation_error_thres && wall==1)
+					correction_mode=1;*/
 			
-			if(wall){
-				
-				// get angle to wall
+			
+				control_pub(0.0,k_rotate*heading_error);	
 	
-				theta_meas = compute_angle(ir_wall);
-				theta_error = theta_ref - theta_meas;
-				
-				if(wall==1){
-					ROS_INFO("Aligning with left wall");
-					theta_error = -theta_error;
-				}else{
-					ROS_INFO("Aligning with right wall");
-				}
-		
-				ROS_INFO("Theta_error: %.3f\n",theta_error);
-				
-				if(theta_error<0.04){
-					stop();
-					return 0;
-				}
-				
-				
-				control_pub(0,k_rotate*theta_error);		
 				loop_rate.sleep();
 				ros::spinOnce();
 			}
-		}
+	} // Correction mode: we finished rotating, and now we want to align ourselves with the wall
+	
+	while(ros::ok(){	
+		// check for wall on the left
+		/*if(ir_readings[2] < dist_thres && ir_readings[3] < dist_thres){
+			for(int i=2; i<4;i++)
+				ir_wall[i-2]=discretize(ir_readings[i],0.1);
 			
+			wall=1;
+		}*/else{
+			/*if(ir_readings[4] < dist_thres && ir_readings[5] < dist_thres){
+				for(int i=4; i<6; i++)
+					ir_wall[i-4]=discretize(ir_readings[i],0.1);
+				
+				wall=2;
+			}*/else{ //no wall
+					wall=0;
+					stop();
+					return 0;
+				}
+			}
+	
+		if(wall){
+		
+			// get angle to wall
+
+			theta_meas = compute_angle(ir_wall);
+			theta_error = theta_ref - theta_meas;
+		
+			if(wall==1){
+				ROS_INFO("Aligning with left wall");
+				theta_error = -theta_error;
+			}else{
+				ROS_INFO("Aligning with right wall");
+			}
+
+			ROS_INFO("Theta_error: %.3f\n",theta_error);
+		
+			if(theta_error<0.04){
+				stop();
+				return 0;
+			}
+		
+		
+			control_pub(0,k_rotate*theta_error);		
+			loop_rate.sleep();
+			ros::spinOnce();
+		}
 	}
-	
 	return 0;
-	
-
 }
-
-
+			
 /** forward_wall: Implements the 'Forward with wall' behavior
 *
 *	Sends a (v>0, w=k*error) message to the core, with the error being based on the ir readings. Goes back to none when detects a corner or stops seeing the wall
@@ -457,30 +445,30 @@ int forward_wall(ros::Rate loop_rate){
 	while(ros::ok()){
 		
 		// check for wall on left side
-		if(ir_readings[2] < inf_thres && ir_readings[3] < inf_thres && wall !=2){
+		/*if(ir_readings[2] < inf_thres && ir_readings[3] < inf_thres && wall !=2){
 			for(int i=2; i<4; i++)
 				ir_wall[i-2]=discretize(ir_readings[i],0.1);
 			
 			//ROS_INFO("Following wall to the left!");
 			wall=1;
 				
-		}else{
-			if(wall==1){
+		}*/else{
+			/*if(wall==1){
 				stop();
 				ROS_INFO("Stopped seeing wall from the left!");
 				//getchar();
 				return 1; // Will try to get 'on the open'
-			}
+			}*/
 		}
 			
 		// check for wall on right side
-		if(ir_readings[4] < inf_thres && ir_readings[5] < inf_thres && wall!=1){
+		/*if(ir_readings[4] < inf_thres && ir_readings[5] < inf_thres && wall!=1){
 			for(int i=4; i<6; i++)
 				ir_wall[i-4]=discretize(ir_readings[i],0.1);
 			
 			//ROS_INFO("Following wall to the right!");
 			wall=2;
-		} else{
+		}*/ else{/*
 		
 			if(wall==2){
 				stop();
@@ -488,13 +476,13 @@ int forward_wall(ros::Rate loop_rate){
 				ROS_INFO("Stopped seeing wall from the right!");
 				//getchar();
 				return 1;
-			}
+			}*/
 		}
 		
 		
 		// check if obstacle ahead
 		
-		if(ir_readings[0] < dist_thres+delay_thres || ir_readings[1] < dist_thres+delay_thres){
+		/*if(ir_readings[0] < dist_thres+delay_thres || ir_readings[1] < dist_thres+delay_thres){
 			count++;
 			if(count>=2){	
 				stop();
@@ -505,9 +493,10 @@ int forward_wall(ros::Rate loop_rate){
 				return 0;
 			}
 		}else
-			count=0;
+			count=0;*/
 			
 		if(!wall){
+			stop();
 			loop_rate.sleep();
 			return 0;
 		}
@@ -515,18 +504,18 @@ int forward_wall(ros::Rate loop_rate){
 		// get angle to wall
 		
 		
-		theta_meas = compute_angle(ir_wall);
+		/*theta_meas = compute_angle(ir_wall);
 		theta_error = theta_ref - theta_meas;
 		
 		// for the same angle measurements we want to rotate to the opposite side than that of the right wall
 		if(wall==1)
-			theta_error=-theta_error;
+			theta_error=-theta_error;*/
 		
 		//ROS_INFO("Theta_error: %.3f\n",theta_error);
 		
 		avg_dist=(ir_wall[0]);
 		
-		if(1){//avg_dist > dist_thres && avg_dist < inf_thres){ VERY BUGGY
+		/*if(1){//avg_dist > dist_thres && avg_dist < inf_thres){ VERY BUGGY
 			ROS_INFO("Normal wall following");
 			if(std::abs(theta_error<0.26)){ //15 degrees error
 				if(ir_readings[0] < inf_thres || ir_readings[1] < inf_thres){
@@ -553,9 +542,10 @@ int forward_wall(ros::Rate loop_rate){
 			theta_error = theta_ref - theta_meas;
 			
 			control_pub(std_velocity/2,k_rotate*theta_error);
-		}
+			}
 	
-	}
+		}*/
+	stop();
 	loop_rate.sleep();
 	return 0;
 }
