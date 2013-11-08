@@ -25,6 +25,7 @@ const float PI=3.1415926f;
 double freq=10.0;
 double x=0.0,y=0.0,theta=0.0,last_theta=0.0;; // Position estimate given by the odometry
 double ir_readings[8];
+double ir_raw=[8][3];
 double heading_ref=0.0; // reference for the rotate xº behavior
 double theta_correction=0.0;
 
@@ -69,7 +70,22 @@ ros::Subscriber	odo_sub;
 ros::Subscriber ir_sub;
 ros::Subscriber params_sub;
 
-
+double median (double ir[3]){ // stupid 3 value median filter
+ 	double temp;
+ 	
+ 	for(int i=0; i < 3; i++){
+ 		for(int j=i+1; j<3; j++){
+ 			if(ir[i]>ir[j]){
+ 				temp=ir[i];
+ 				ir[i]=ir[j];
+ 				ir[j]=temp;
+ 			}
+ 		}
+ 	}
+ 	
+ 	return ir[2];
+ 	
+}
 
 /* Function that should update the odometry values obtained from the core*/
 void odo_proc(nav_msgs::Odometry::ConstPtr odo_msg){
@@ -89,12 +105,16 @@ void odo_proc(nav_msgs::Odometry::ConstPtr odo_msg){
 
 /* Function that should update the IR values obtained from the core*/
 void ir_proc(core_sensors::ir::ConstPtr ir_msg){
-
-	for(int i=0; i<8; i++){
-		ir_readings[i]=ir_msg->dist[i];
 	
-		//Debug
-		//ROS_INFO("IR %d: %.2f",i,ir_readings[i]);
+	for(int i=0; i<8; i++){
+		for(int j=0; j<2;j++){
+			ir_raw[i][j+1]=ir_raw[i][j];
+		}
+	}
+	
+	for(int i=0; i<8; i++){
+		ir_raw[i][0]=ir_msg->dist[i];
+		ir_readings[i]=median(ir_raw[i]);
 	}
 
 
