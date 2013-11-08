@@ -100,25 +100,6 @@ void ir_proc(core_sensors::ir::ConstPtr ir_msg){
 
 }
 
-
-/** ir_has_changed: Checks if short range status changed
-*
-*	Given the inital ir_readings, this function monitor each short range ir to check for significant changes. If the the ir is mounted on the side,
-*	it checks for changes on both sensors from the same side
-*
-**/
-int ir_has_changed(double * init_readings){
-
-	// Detected obstacle in front
-	
-	for(int i=0; i<2;i++)
-		if(ir_readings[i]<dist_thres)
-			return 1;
-			
-	return 0;
-	
-}
-
 void update_params(const control_motion::params::ConstPtr msg){
 	
 	k_forward=msg->k_forward;
@@ -209,7 +190,41 @@ double discretize(double val, double step){
 	}
 	
 }
+
+/** is_wall: Checks for a nearby wall in the vincinity of a given threshold
+*
+*	Side: 1 - Left, 2 - Right, 3 - front
+*
+**/
+int is_wall(int side, double thres, double * ir){ 
 	
+	switch(side){
+		case 1:
+			if(ir[3] < thres && ir[4] < thres){
+				return 1;
+			}else{
+				return 0;
+			}
+			break;
+		case 2:
+			if(ir[5] < thres && ir[6] < thres){
+				return 1;
+			}else{
+				return 0;
+			}
+			break;
+		case 3:
+			if(ir[0] < thres || ir[1] < thres){
+				return 1;
+			}else{
+				return 0;
+			}
+			break;
+		default:
+			return 0;
+	}
+
+}
 
 /** none: Implements the 'None' behavior
 *
@@ -269,22 +284,11 @@ int forward(ros::Rate loop_rate){
 	
 	while(std::abs(curr_dist-initial_dist)<forward_distance){ // Will keep moving forward until sensors report obstacle or forward_distance is achieved
 		
-		status_changed = ir_has_changed(initial_ir);
-		ROS_INFO("ir_readings: (%.3f,%.3f)\n",ir_readings[0],ir_readings[1]);
-
-		if(status_changed==1){
-			/*count++; // Quick and dirty solution that avoids premature stoping due to outliers. Should be carried over to the core_sensors_ir node, somehow.
-			if(count>=2){
-				stop();
-				count=0;
-				ROS_INFO("Finished the forward behavior due to changing environment!");
-			
-				//getchar();
-				return 0;
-			}
-		}else{
-			count=0;
-		}*/
+		
+		if(is_wall(3,dist_thres,ir_readings)){
+			stop();
+			return 0;
+		}
 		
 		curr_dist=std::sqrt(x*x+y*y);
 		
@@ -297,12 +301,12 @@ int forward(ros::Rate loop_rate){
 		if(std::abs(heading_error)<heading_thres)
 			heading_error=0.0;
 		
-		/*if(ir_readings[0] < inf_thres || ir_readings[1] < inf_thres){
-			ROS_INFO("Moving slower");
-			control_pub(std_velocity/2,0);//k_forward*heading_error);
+		if(is_wall(3,inf_thres,ir_readings)){
+			ROS_INFO("Moving Slower");
+			control_pub(std_velocity/2,0);
 		}else{
 			control_pub(std_velocity,0);
-		}*/
+		}
 		
 		loop_rate.sleep();
 		ros::spinOnce();
@@ -382,29 +386,22 @@ int rotate(ros::Rate loop_rate){
 	
 	while(ros::ok(){	
 		// check for wall on the left
-		/*if(ir_readings[2] < dist_thres && ir_readings[3] < dist_thres){
-			for(int i=2; i<4;i++)
-				ir_wall[i-2]=discretize(ir_readings[i],0.1);
-			
+		
+		if(is_wall(1,inf_thres,ir_readings){
 			wall=1;
-		}*/else{
-			/*if(ir_readings[4] < dist_thres && ir_readings[5] < dist_thres){
-				for(int i=4; i<6; i++)
-					ir_wall[i-4]=discretize(ir_readings[i],0.1);
-				
-				wall=2;
-			}*/else{ //no wall
-					wall=0;
-					stop();
-					return 0;
-				}
-			}
-	
+		}else if(is_wall(2,inf_thres,ir_readings){
+			wall=2;
+		}else{ //no wall
+			wall=0;
+			stop();
+			return 0;
+		}
+		
 		if(wall){
 		
 			// get angle to wall
 
-			theta_meas = compute_angle(ir_wall);
+			/*theta_meas = compute_angle(ir_wall);
 			theta_error = theta_ref - theta_meas;
 		
 			if(wall==1){
@@ -419,7 +416,7 @@ int rotate(ros::Rate loop_rate){
 			if(theta_error<0.04){
 				stop();
 				return 0;
-			}
+			}*/
 		
 		
 			control_pub(0,k_rotate*theta_error);		
@@ -445,59 +442,26 @@ int forward_wall(ros::Rate loop_rate){
 	while(ros::ok()){
 		
 		// check for wall on left side
-		/*if(ir_readings[2] < inf_thres && ir_readings[3] < inf_thres && wall !=2){
-			for(int i=2; i<4; i++)
-				ir_wall[i-2]=discretize(ir_readings[i],0.1);
-			
-			//ROS_INFO("Following wall to the left!");
+		if(is_wall(1,inf_thres,ir_readings)){
 			wall=1;
-				
-		}*/else{
-			/*if(wall==1){
-				stop();
-				ROS_INFO("Stopped seeing wall from the left!");
-				//getchar();
-				return 1; // Will try to get 'on the open'
-			}*/
-		}
-			
-		// check for wall on right side
-		/*if(ir_readings[4] < inf_thres && ir_readings[5] < inf_thres && wall!=1){
-			for(int i=4; i<6; i++)
-				ir_wall[i-4]=discretize(ir_readings[i],0.1);
-			
-			//ROS_INFO("Following wall to the right!");
+		}else if(is_wall(2,inf_thres,ir_readings)){
 			wall=2;
-		}*/ else{/*
-		
-			if(wall==2){
-				stop();
-		
-				ROS_INFO("Stopped seeing wall from the right!");
-				//getchar();
-				return 1;
-			}*/
+		}else{
+			wall=0;
 		}
 		
 		
 		// check if obstacle ahead
 		
-		/*if(ir_readings[0] < dist_thres+delay_thres || ir_readings[1] < dist_thres+delay_thres){
-			count++;
-			if(count>=2){	
-				stop();
-				count=0;
-				ROS_INFO("Obstacle ahead!");
-				//getchar();
-				loop_rate.sleep();
-				return 0;
-			}
-		}else
-			count=0;*/
+		if(is_wall(3,dist_thres,ir_readings)){
+			stop();
+			ROS_INFO("Obstacle ahead!");
+			return 0;
+		}
 			
 		if(!wall){
 			stop();
-			loop_rate.sleep();
+			ROS_INFO("Stopped seeing wall!");
 			return 0;
 		}
 		
@@ -513,41 +477,20 @@ int forward_wall(ros::Rate loop_rate){
 		
 		//ROS_INFO("Theta_error: %.3f\n",theta_error);
 		
-		avg_dist=(ir_wall[0]);
+		ROS_INFO("Normal wall following");
+		if(std::abs(theta_error) < PI/20){ // 9 degrees
+			if(is_wall(3,inf_thres,ir_readings){
+				ROS_INFO("Moving Slower");
+				control_pub(std_velocity/2,k_rotate*theta_error);
+			}else{
+				control_pub(std_velocity,k_rotate*theta_error);
+			}
+		}else{
+			ROS_INFO("Drifting away from the wall");
+			stop();
+			return 1;
+		}
 		
-		/*if(1){//avg_dist > dist_thres && avg_dist < inf_thres){ VERY BUGGY
-			ROS_INFO("Normal wall following");
-			if(std::abs(theta_error<0.26)){ //15 degrees error
-				if(ir_readings[0] < inf_thres || ir_readings[1] < inf_thres){
-					ROS_INFO("Moving slower");
-					control_pub(std_velocity/2,k_rotate*theta_error);
-				}else{
-					control_pub(std_velocity,k_rotate*theta_error);	
-				}	
-				loop_rate.sleep();
-				ros::spinOnce();
-			}else{ //oops
-				loop_rate.sleep();
-				return 1;
-			}
-				
-		}else if(avg_dist < dist_thres){ // move away from the wall without moving too much
-			
-			ROS_INFO("Too close to the wall");
-			if(wall==1)
-				theta_ref=-PI/20;
-			if(wall==2)
-				theta_ref=PI/20;
-				
-			theta_error = theta_ref - theta_meas;
-			
-			control_pub(std_velocity/2,k_rotate*theta_error);
-			}
-	
-		}*/
-	stop();
-	loop_rate.sleep();
-	return 0;
 }
 
 
