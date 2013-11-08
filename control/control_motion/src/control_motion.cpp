@@ -28,8 +28,10 @@ double ir_readings[8];
 double ir_raw[8][3];
 double heading_ref=0.0; // reference for the rotate xº behavior
 double theta_correction=0.0;
-double initial_break_dist = 0.0;
-int break_dist = 1;
+double initial_break_dist_1 = 0.0;
+double initial_break_dist_3 = 0.0;
+int break_dist_1 = 1;
+int break_dist_3 = 1;
 
 // Control parameters
 double k_forward=1.0;
@@ -337,7 +339,7 @@ int forward(ros::Rate loop_rate){
 	double initial_ir[8];
 	double initial_dist=std::sqrt(x*x+y*y),curr_dist=initial_dist;
 
-	double BreakingRatio;
+	double BreakingRatio_1;
 	
 	for(int i=0; i<8; i++)
 		initial_ir[i]=ir_readings[i];
@@ -347,7 +349,6 @@ int forward(ros::Rate loop_rate){
 	
 		//Distance to wall < delay_thres ---> very close! STOP
 		if(is_wall(3,dist_thres,ir_readings)){ // Deleted: +delay_thres
-			break_dist = 1;
 			stop();
 			return 0;
 		}
@@ -363,22 +364,20 @@ int forward(ros::Rate loop_rate){
 		if(is_wall(3,inf_thres,ir_readings)){
 			//ROS_INFO("Moving Slower\n");
 		
-			if(break_dist == 1){
-			initial_break_dist = ir_readings[0];
-			break_dist = 0;
+			if(break_dist_1 == 1){
+			initial_break_dist_1 = ir_readings[0];
+			break_dist_1 = 0;
 			control_pub(std_velocity,0);
-			ROS_INFO("WTF");
 			}else{
-			BreakingRatio = ((initial_break_dist-ir_readings[0])/(inf_thres-dist_thres));
-			control_pub(abs(std_velocity*( 1 - BreakingRatio )),0);
-			ROS_INFO("\ninitial_break_dist %.2f\n", initial_break_dist );
-			ROS_INFO("\nSlowing down %.2f\n", BreakingRatio );
-			ROS_INFO("\nDEN %.2f\n", (inf_thres-dist_thres) );
-			ROS_INFO("\nVelocity %.2f\n", std_velocity*(1 - BreakingRatio) );
+			//2 yields (1/2)*std_velocity... 1 gives 0 
+			BreakingRatio_1 = ((initial_break_dist_1-ir_readings[0])/(2*(inf_thres-dist_thres))); 
+			control_pub(abs(std_velocity*( 1 - BreakingRatio_1 )),0);
+			ROS_INFO("\nVelocity %.2f\n", std_velocity*(1 - BreakingRatio_1) );
 			
 			}
 		}else{
 			control_pub(std_velocity,0);
+			break_dist_1 = 1;
 		}
 		
 		loop_rate.sleep();
@@ -480,7 +479,8 @@ int forward_wall(ros::Rate loop_rate){
 	double theta_ref=0.0, theta_meas=0.0, theta_error=0.0, avg_dist=0.0;
 	int wall=0; // 1 - left side; 2 - right side
 	
-	
+	double BreakingRatio_3;
+		
 	while(ros::ok()){
 		
 		// check for wall on left side
@@ -493,7 +493,7 @@ int forward_wall(ros::Rate loop_rate){
 		}
 		
 		// check if obstacle ahead
-		if(is_wall(3,dist_thres+delay_thres,ir_readings)){
+		if(is_wall(3,dist_thres,ir_readings)){
 			stop();
 			ROS_INFO("Obstacle ahead!\n");
 			return 0;
@@ -513,12 +513,34 @@ int forward_wall(ros::Rate loop_rate){
 		
 		ROS_INFO("Normal wall following\n");
 		if(std::abs(theta_error) < PI/20){ // 9 degrees
+			
+			//NEW
+			//Distance to wall < inf_thres ---> close! Reduce velocity
 			if(is_wall(3,inf_thres,ir_readings)){
+			//ROS_INFO("Moving Slower\n");
+		
+			if(break_dist_3 == 1){
+			initial_break_dist_3 = ir_readings[0];
+			break_dist_3 = 0;
+			control_pub(std_velocity,k_rotate*theta_error);
+			}else{
+			//2 yields (1/2)*std_velocity... 1 gives 0 
+			BreakingRatio_3 = ((initial_break_dist_3-ir_readings[0])/(2*(inf_thres-dist_thres))); 
+			control_pub(abs(std_velocity*( 1 - BreakingRatio_3 )),k_rotate*theta_error);
+			ROS_INFO("\nVelocity %.2f\n", std_velocity*(1 - BreakingRatio_3) );
+				}
+			}else{
+				control_pub(std_velocity,k_rotate*theta_error);
+				break_dist_3 = 1;
+			}
+			//END NEW
+			
+			/*if(is_wall(3,inf_thres,ir_readings)){
 				ROS_INFO("Moving Slower\n");
 				control_pub(std_velocity/2,k_rotate*theta_error);
 			}else{
 				control_pub(std_velocity,k_rotate*theta_error);
-			}
+			}*/
 		}else{
 			ROS_INFO("Drifting away from the wall\n");
 			stop();
