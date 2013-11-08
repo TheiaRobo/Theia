@@ -22,7 +22,7 @@
 #include <control_motion/params.h>
 
 const float PI=3.1415926f;
-double freq=50.0;
+double freq=10.0;
 double x=0.0,y=0.0,theta=0.0,last_theta=0.0;; // Position estimate given by the odometry
 double ir_readings[8];
 double heading_ref=0.0; // reference for the rotate xº behavior
@@ -33,16 +33,17 @@ double k_forward=1.0;
 double k_rotate=1.0;
 
 // Forward velocity
-double std_velocity=15.0;
+double std_velocity=9.0;
 
 // Maximum distance to be travelled while on 'forward' behavior
 double forward_distance=20.0;
 
 // Threshold for the sensors
 double heading_thres=0.01;
-double dist_thres=10.0;
+double dist_thres=5.0;
 double inf_thres=15.0;
 double rotation_error_thres=0.10;
+double delay_thres=4.0; // no real time :(
 
 //0 - None; 1 - Forward; 2 - Rotate xº; 3 - Forward with wall
 int behavior=0; 
@@ -258,7 +259,7 @@ int forward(ros::Rate loop_rate){
 	double heading_error=0.0;
 	int status_changed=0;
 	double initial_ir[8];
-	int num_loops=(int) ceil(forward_distance/(std_velocity/freq));
+	double initial_dist=std::sqrt(x*x+y*y),curr_dist=initial_dist;
 	
 	for(int i=0; i<8; i++)
 		initial_ir[i]=ir_readings[i];
@@ -266,14 +267,14 @@ int forward(ros::Rate loop_rate){
 	ROS_INFO("Debug mode. Behavior is moving forward.");
 	//getchar();
 	
-	for(int i=0; i<num_loops; i++){ // Will keep moving forward until sensors report obstacle or forward_distance is achieved
+	while(std::abs(curr_dist-initial_dist)<forward_distance){ // Will keep moving forward until sensors report obstacle or forward_distance is achieved
 		
 		status_changed = ir_has_changed(initial_ir);
 		ROS_INFO("ir_readings: (%.3f,%.3f)\n",ir_readings[0],ir_readings[1]);
 
 		if(status_changed==1){
 			count++; // Quick and dirty solution that avoids premature stoping due to outliers. Should be carried over to the core_sensors_ir node, somehow.
-			if(count>=2){
+			if(count>=1){
 				stop();
 				count=0;
 				ROS_INFO("Finished the forward behavior due to changing environment!");
@@ -285,7 +286,7 @@ int forward(ros::Rate loop_rate){
 			count=0;
 		}
 		
-		
+		curr_dist=std::sqrt(x*x+y*y);
 		
 		heading_error=initial_theta-theta;
 		
@@ -296,7 +297,7 @@ int forward(ros::Rate loop_rate){
 		if(std::abs(heading_error)<heading_thres)
 			heading_error=0.0;
 		
-		control_pub(std_velocity,0);//k_forward*heading_error);
+		control_pub(std_velocity,k_forward*heading_error);
 		
 		loop_rate.sleep();
 		ros::spinOnce();
@@ -334,7 +335,7 @@ int rotate(ros::Rate loop_rate){
 	
 	while(ros::ok()){
 		
-		if(!correction_mode){
+		if(correction_mode<=0){
 			// process theta
 		
 			if(std::abs(theta-last_theta)>=PI){
@@ -357,8 +358,11 @@ int rotate(ros::Rate loop_rate){
 			
 				ROS_INFO("Finished the rotation behavior successfully with error %.2f (absolute value %.2f)!",heading_error, std::abs(heading_error));
 				//getchar();
-		
-				return 0;
+				
+				if(correction_mode==0)
+					correction_mode=1; // to really be sure we can align with walls
+				else
+					return 0;
 			}
 			
 			
@@ -386,14 +390,13 @@ int rotate(ros::Rate loop_rate){
 					wall=2;
 				}else{ // in the case that we can align with a wall on the front
 					
-					if(ir_readings[0] < dist_thres && ir_readings[1] < dist_thres){
+					if(ir_readings[0] < dist_thres && ir_readings[1] < dist_thres && 0){ //disabled
 						for(int i=0; i<1; i++)
 							ir_wall[i]=discretize(ir_readings[i],0.1);
-						
-					wall=3;
+					wall=0;
 					}else{ //no wall
 						wall=0;
-						correction_mode=0;
+						correction_mode=-1; // so that we can exit above
 					}
 				}
 			}
@@ -405,17 +408,19 @@ int rotate(ros::Rate loop_rate){
 				theta_meas = compute_angle(ir_wall);
 				theta_error = theta_ref - theta_meas;
 				
-				if(wall==1)
+				if(wall==1){
+					ROS_INFO("Aligning with left wall");
 					theta_error = -theta_error;
-					
-				if(wall==3)
-					if(ir_readings[0] < ir_readings[1])
-						theta_error = -theta_error;
+				}else{
+					ROS_INFO("Aligning with right wall");
+				}
 		
 				ROS_INFO("Theta_error: %.3f\n",theta_error);
 				
-				if(theta_error<heading_thres)
+				if(theta_error<2*heading_thres){
+					stop();
 					return 0;
+				}
 				
 				
 				control_pub(0,k_rotate*theta_error);		
@@ -484,9 +489,9 @@ int forward_wall(ros::Rate loop_rate){
 		
 		// check if obstacle ahead
 		
-		if(ir_readings[0] < dist_thres || ir_readings[1] < dist_thres){
+		if(ir_readings[0] < dist_thres+delay_thres || ir_readings[1] < dist_thres+delay_thres){
 			count++;
-			if(count>=2){	
+			if(count>=1){	
 				stop();
 				count=0;
 				ROS_INFO("Obstacle ahead!");
