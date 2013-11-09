@@ -1,4 +1,5 @@
 bool A
+int32 stop_type
 ---
 int32 B
 float64 heading_ref

@@ -4,6 +4,14 @@
 
 double ir[8] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
 const float PI = 3.1415926f;
+double fwd_buffer = 15;
+double sde_buffer = 20;
+double crs_buffer = 30;
+int last_turn = 0;	//0 - null, 1 - left, 2 - right
+int last_direction = 0; //0 - null, 1 - left, 2 - right, 3 - forward
+double range_exc = 30.0;
+double heading_ref = 0;
+double drive_mode = 0;
 
 void readIrData(const core_sensors::ir::ConstPtr& msg){
 
@@ -26,6 +34,58 @@ void readIrData(const core_sensors::ir::ConstPtr& msg){
   
 }
 
+void turn_left() {
+  heading_ref = PI/2;  //set to turn left
+  last_turn = 1;
+  last_direction = last_turn;
+  ROS_INFO("TURNING LEFT/n");
+  return;
+}
+
+void turn_right() {
+  heading_ref = -PI/2;  //set to turn right
+  last_turn = 2;
+  last_direction = last_turn;
+  ROS_INFO("TURNING RIGHT/n");
+  return;
+}
+
+void turn_around() {
+  heading_ref = PI;
+  ROS_INFO("TURNING AROUND/n");
+  return;
+}
+
+void go_forward() {
+  heading_ref = 0;
+  drive_mode = 3;
+  last_direction = 3;
+  ROS_INFO("GOING FORWARD/n");
+  return;
+}
+
+bool try_turn() {      // This expression assesses whether the robot has room to turn lef or right and which direction it should turn.
+  bool left = false;   // Where possible it will turn a different direction each time.
+  bool right = false;
+  if(ir[2] < sde_buffer && ir[3] < sde_buffer) left = true;
+  if(ir[4] < sde_buffer && ir[5] < sde_buffer) right = true;
+  if(left == true && right == false) {
+    turn_left();
+    return true;
+  } else if(left == false && right == true) {
+    turn_right();
+    return true;
+  } else if(left == true && right == true) {
+    if(last_turn = 0 || last_turn == 2) {
+      turn_left();
+      return true;
+    } else if(last_turn == 1) {
+      turn_right();
+      return true;
+    }
+  } else return false;
+
+}
 bool think(control_logic::MotionCommand::Request &req, control_logic::MotionCommand::Response &res){
  
 
@@ -48,6 +108,9 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
   refresh.sleep(); // wait a bit before sending new orders
 	
   res.B=0; //default
+  heading_ref = 0;
+  drive_mode = 0;
+/*
   if(ir[0] > 10 && ir[1] > 10){
 
 	if(ir[2] < 15 && ir[3] < 15)
@@ -68,6 +131,57 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 	res.B = 2;
 	res.heading_ref=PI;
   }
+*/
+  switch(req.stop_type) {		//depending on stop reason different code will run
+    case '1': drive_mode = 2;
+              if(try_turn()) {		//if it's possible to turn left or right it will, direction based on oppisite of previous turn
+                break;
+              } else turn_around();	//if can't turn left or right robot will turn 180 degrees
+              break;
+    case '2': if(last_direction = 3) {  // if last direction was forward
+                if(try_turn()) {        // then lets see if we can turn
+                  drive_mode = 2;
+                  break;
+                } else {
+                  go_forward();         // if for some reason we can't turn we'll just continue forward
+                  break;
+                }
+              }
+    case '3': if(ir[0] < fwd_buffer && ir[1] < fwd_buffer) { // if we can go forward we will
+                go_forward();
+                break;
+              } else {                                      // else we'll try turning
+                if(try_turn()) {
+                  drive_mode = 2;
+                  break;
+                }
+              }
+    case '4': if(ir[0] < range_exc || ir[1] < range_exc) {         // Basically if we're in open space we'll just find the nearest
+                go_forward();                                      // wall and then start following it. If everything is out of range 
+                break;                                             // then we'll zigzag until we find something.
+              } else if(ir[2] < range_exc || ir[3] < range_exc) {
+                drive_mode = 2;
+                turn_left();
+                break;
+              } else if(ir[4] < range_exc || ir[5] < range_exc) {
+                drive_mode = 2;
+                turn_right();
+                break;
+              } else {
+                if(last_direction = 3) {
+                  if(try_turn()) {
+                    drive_mode = 2;
+                    break;
+                  }
+                } else {
+                  go_forward();
+                  break;
+                }
+              }
+  }
+
+  res.heading_ref = heading_ref;
+  res.B = drive_mode;
 
   return true;
 }
