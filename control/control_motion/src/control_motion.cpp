@@ -2,7 +2,13 @@
 *
 *	Default behaviors: 'Forward', 'Rotate xº', 'Forward with wall', 'None'
 *
-*	None: Send (v,w)=(0,0) command to the core and asks for instructions to the control_logic node
+*	Sensors:
+*	ir FRONT: ir_readings[0],ir_readings[1]);
+*	ir LEFT : ir_readings[2],ir_readings[3]);
+*	ir RIGHT: ir_readings[4],ir_readings[5]);
+*	ir NONE:  ir_readings[6],ir_readings[7]);
+*	
+None: Send (v,w)=(0,0) command to the core and asks for instructions to the control_logic node
 *
 *	Forward: Makes the system move forwards, keeping the current heading. Goes to None when sensor readings indicate nearby obstacle.
 *
@@ -10,7 +16,6 @@
 *
 *	Forward with wall: Goes forward, trying to keep parallel to the closest wall. Goes to none when sensor readings report no walls to the sides. Goes to Forward when one of the lateral sensors on the wall's side detects a significant change in estimated distance (meaning the robot is on the wall's limit, for instance).
 **/
-
 
 #include "ros/ros.h"
 #include <cmath>
@@ -123,7 +128,6 @@ void ir_proc(core_sensors::ir::ConstPtr ir_msg){
 		ir_readings[i]=median(ir_raw[i]);
 	}
 	
-	//ROS_INFO("IR_RAW: (%.2f,%.2f)\nIR_READINGS: (%.2f,%.2f)",ir_raw[0][0],ir_raw[1][0],ir_readings[0],ir_readings[1]);
 	ROS_INFO("\nIR_READINGS: (%.2f,%.2f)\n",ir_readings[0],ir_readings[1]);
 
 }
@@ -152,16 +156,16 @@ void update_params(const control_motion::params::ConstPtr msg){
 *	Angle signal indicates if robot is going against or away from the wall
 *
 **/
-double compute_angle(double * ir){
+double compute_angle(double ir[2]){ //* ir
 	
 	double theta=0.0;
 
-	if(ir[0]>ir[1]){ // going away from wall
+	if(ir[0]>ir[1]){ 	// going away from wall
 		
 		theta = atan2(ir[0]-ir[1],ir_dist);
 		return theta;	
-	}else{ // going against the wall
-		theta = - atan2(ir[1]-ir[0],ir_dist);
+	}else{ 			// going against the wall
+		theta = - atan2(ir[1]-ir[0],ir_dist); //The sign of theta = (-) atan2(ir[1]-ir[0],ir_dist) is WRONG?
 		return theta;
 	}
 }
@@ -222,17 +226,17 @@ double discretize(double val, double step){
 int is_wall(int side, double thres, double ir[8]){ 
 	
 	//ROS_INFO("side: %d\nthres: %.2f\nir: (%.2f,%.2f)",side,thres,ir[0],ir[1]);
-	
+		
 	switch(side){
 		case 1:
-			if(ir[3] < thres && ir[4] < thres){
+			if(ir[2] < thres && ir[3] < thres){
 				return 1;
 			}else{
 				return 0;
 			}
 			break;
 		case 2:
-			if(ir[5] < thres && ir[6] < thres){
+			if(ir[4] < thres && ir[5] < thres){
 				return 1;
 			}else{
 				return 0;
@@ -259,8 +263,8 @@ double compute_ir_error(int wall, double ir_wall[2], double theta_ref){
 	
 	double theta_meas,theta_error;
 	// get angle to wall
-
 	theta_meas = compute_angle(ir_wall);
+
 	theta_error = theta_ref - theta_meas;
 
 	if(wall==1)
@@ -303,7 +307,7 @@ int none(ros::Rate loop_rate){
 	
 	
 	/* Because a behavior may stay in loop while doing its thing */
-	loop_rate.sleep();
+	//loop_rate.sleep();
 	ros::spinOnce();
 	
 	if(ask_logic.call(srv)){
@@ -351,6 +355,7 @@ int forward(ros::Rate loop_rate){
 		if(is_wall(3,dist_thres,ir_readings)){ // Deleted: +delay_thres
 			stop();
 			return 0;
+			//loop_rate.sleep();
 		}
 		
 		curr_dist=std::sqrt(x*x+y*y);
@@ -380,7 +385,7 @@ int forward(ros::Rate loop_rate){
 			break_dist_1 = 1;
 		}
 		
-		loop_rate.sleep();
+		//loop_rate.sleep();
 		ros::spinOnce();
 		
 	}
@@ -391,6 +396,15 @@ int forward(ros::Rate loop_rate){
 	return 0;
 
 }
+
+
+
+
+
+
+
+
+
 
 /** rotate: Implements the 'Rotate xº' behavior
 *
@@ -403,70 +417,64 @@ int rotate(ros::Rate loop_rate){
 	double heading_error=0.0;
 	double processed_theta=theta+theta_correction; // will have corrections for the pi to -pi jump
 	double init_theta=processed_theta;
-	double init_error=heading_ref-(processed_theta-init_theta);
+	double init_error=heading_ref-(processed_theta-init_theta); //Why now is different than in Forward?
 	int done=0, wall=1;
 	double ir_wall[2]={0.0,0.0};
 	double theta_ref=0.0, theta_meas=0.0, theta_error=0.0;
 	
 	ROS_INFO("Debug mode. Behavior is rotation on spot. Press any key to go on\n");
-	//getchar();
 	
+	// Rotation on-going
 	while(ros::ok() && !done){
-			
 		processed_theta=correct_theta(theta,last_theta);
-		
 		heading_error=heading_ref-(processed_theta-init_theta);
-	
-		ROS_INFO("Theta: %.3f\nCorrected theta: %.3f\nDisplacement: %.3f\nError: %.3f\n",theta,processed_theta,processed_theta-init_theta,heading_error);
+		ROS_INFO("Rotation on-going \nTheta: %.3f\nProcessed theta: %.3f\nInit theta: %.3f\nDisplacement: %.3f\nHeading error: %.3f\n",theta,processed_theta,init_theta,processed_theta-init_theta,heading_error);
 
-		// action completed
-		if(std::abs(heading_error)<heading_thres){
-	
+		// If Rotation completed
+		if(std::abs(heading_error) < heading_thres){
 			done=1;
-		
-			ROS_INFO("Finished the rotation behavior successfully with error %.2f (absolute value %.2f)!\n",heading_error, std::abs(heading_error));
+			control_pub(0.0,0);	
+			ROS_INFO(" Rotation completed! \nerror %.2f AND (absolute value %.2f)\n",heading_error, std::abs(heading_error));
 		}else{
-
 			control_pub(0.0,k_rotate*heading_error);	
-
-			loop_rate.sleep();
+			//loop_rate.sleep();
 			ros::spinOnce();
 		}
-	} // Correction mode: we finished rotating, and now we want to align ourselves with the wall
+	} 
 	
+	// Rotation Completed -> Correction mode: we finished rotating, and now we want to align ourselves with the wall
 	while(ros::ok()){	
-		// check for wall on the left
 		
-		if(is_wall(1,inf_thres,ir_readings)){
+		if(is_wall(1,inf_thres,ir_readings)){		// check for wall on the left
 			wall=1;
-		}else if(is_wall(2,inf_thres,ir_readings)){
+		}else if(is_wall(2,inf_thres,ir_readings)){ 	// check for wall on the right
 			wall=2;
-		}else{ //no wall
+		}else{ 						// check for no wall
 			wall=0;
 			stop();
 			return 0;
 		}
 		
-		if(wall){
+		if(wall == 1 || wall == 2){
 		
 			// get angle to wall
 			theta_error=compute_ir_error(wall,ir_wall,theta_ref);
 			
 			ROS_INFO("Theta_error: %.3f\n",theta_error);
 		
-			if(theta_error<0.04){
+			if(theta_error<2*heading_thres){
 				stop();
 				return 0;
 			}
 		
-		
 			control_pub(0,k_rotate*theta_error);		
-			loop_rate.sleep();
+			//loop_rate.sleep();
 			ros::spinOnce();
 		}
 	}
 	return 0;
 }
+	
 			
 /** forward_wall: Implements the 'Forward with wall' behavior
 *
@@ -546,12 +554,11 @@ int forward_wall(ros::Rate loop_rate){
 			stop();
 			return 1;
 		}
-		loop_rate.sleep();
+		//loop_rate.sleep();
 		ros::spinOnce();
 	}
 		
 }
-
 
 int main(int argc, char ** argv){
 
@@ -590,7 +597,7 @@ int main(int argc, char ** argv){
 		}
  
 	}
-	
+	loop_rate.sleep();
 	return 0;
 
 }
