@@ -513,6 +513,7 @@ int forward_wall(ros::Rate loop_rate){
 			ROS_INFO("Stop! There is no wall!\n"); 
 			// behavior = 1: Go straight when there is no wall. If a wall is detected then behavior = 3. 
 			return 1;
+			
 		}
 
 		// get angle to wall
