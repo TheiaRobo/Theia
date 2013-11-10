@@ -81,6 +81,16 @@ double ir_dist=20.0;
 double V_MAX=50;
 double W_MAX=PI/4;
 
+/* Stop motive for the brain
+ * 
+ * 	1 - Saw something in front of me
+ * 	2 - Moved 20cm
+ * 	3 - Finished rotation
+ * 	4 - Started seeing a wall on the side while moving forward
+ */
+
+int stop_type=0;
+
 ros::Publisher vw_pub;
 ros::ServiceClient ask_logic;
 
@@ -384,6 +394,7 @@ int none(ros::Rate loop_rate){
 	stop();
 
 	srv.request.A=true;
+	srv.request.stop_type=stop_type;
 
 
 	/* Because a behavior may stay in loop while doing its thing */
@@ -433,7 +444,8 @@ int forward(ros::Rate loop_rate){
 
 		if(wall_in_range(1,inf_thres,ir_readings) || wall_in_range(2,inf_thres,ir_readings)){ 		// check for wall to follow
 			//ROS_INFO("Wall to follow\n");
-			return 3;
+			stop_type=4; 
+			return 0;
 		}else{
 			//ROS_INFO("No Wall to follow\n");
 
@@ -441,6 +453,7 @@ int forward(ros::Rate loop_rate){
 			if(wall_in_range(3,dist_thres,ir_readings)){ //
 				stop();
 				loop_rate.sleep();
+				stop_type=1;
 				return 0;
 			}
 
@@ -475,6 +488,7 @@ int forward(ros::Rate loop_rate){
 
 	stop();
 	ROS_INFO("Finished the forward behavior successfully!\n");
+	stop_type=2;
 	count=0;
 	return 0;
 
@@ -527,6 +541,7 @@ int rotate(ros::Rate loop_rate){
 		}else{ 						// check for no wall
 			wall=0;
 			stop();
+			stop_type=3;
 			return 0;
 		}
 
@@ -539,6 +554,7 @@ int rotate(ros::Rate loop_rate){
 
 			if(error_theta<2*heading_thres){
 				stop();
+				stop_type=3;
 				return 0;
 			}
 
@@ -581,6 +597,7 @@ int forward_wall(ros::Rate loop_rate){
 		if(wall_in_range(3,dist_thres,ir_readings)){ 		// check if obstacle ahead
 			stop();
 			ROS_INFO("Stop! Obstacle ahead!\n");
+			stop_type=1;
 			return 0;
 		}
 
