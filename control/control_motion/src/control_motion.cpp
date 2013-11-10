@@ -50,19 +50,19 @@ double k_rotate=1.0;
 double k_dist=1.0/50;
 
 // Forward velocity
-double std_velocity=9.0;
+double std_velocity=12.0;
 double velocity_fw=std_velocity;
 double u_theta=0.0;
 double u_dist=0.0;
 double dist_wall_min=0.0;
 double epsilon_theta=0.09; // 5 degrees
-double epsilon_dist=2.00;
+double epsilon_dist=1.00;
 // Maximum distance to be travelled while on 'forward' behavior
 double forward_distance=20.0;
 
 // Threshold for the sensors
 double heading_thres=0.01;
-double dist_thres=5.0;
+double dist_thres=7.5;
 double inf_thres=20.0;
 double rotation_error_thres=0.10;
 double delay_thres=2.0; // no real time :(
@@ -472,7 +472,7 @@ int forward(ros::Rate loop_rate){
 					control_pub(std_velocity,0);
 				}else{
 					//2 yields (1/2)*std_velocity... 1 gives 0 
-					BreakingRatio_1 = ((initial_break_dist_1-ir_readings[0])/(2*(inf_thres-dist_thres))); 
+					BreakingRatio_1 = ((initial_break_dist_1-ir_readings[0])/(1.5*(inf_thres-dist_thres))); 
 					control_pub(abs(std_velocity*( 1 - BreakingRatio_1 )),0);
 					//ROS_INFO("\nVelocity %.2f\n", std_velocity*(1 - BreakingRatio_1) );
 				}
@@ -583,7 +583,7 @@ int forward_wall(ros::Rate loop_rate){
 
 	double ir_wall[2]={0.0,0.0};
 	double theta_ref=0.0, theta_meas=0.0, error_theta=0.0; 
-	double dist_ref=5.0, dist_meas=0.0, error_dist=0.0, avg_dist=0.0;
+	double dist_ref=3.0, dist_meas=0.0, error_dist=0.0, avg_dist=0.0;
 
 	int wall=0; // 1 - left side; 2 - right side
 	WallInfo wall_min;
@@ -664,17 +664,17 @@ int forward_wall(ros::Rate loop_rate){
 			//ROS_INFO("Wall in front: Moving Slower\n");
 			if(break_dist_3 == 1){
 				break_dist_3 = 0;
-				initial_break_dist_3 = ir_readings[0];
+				initial_break_dist_3 = ir_readings[0]; // what if only ir_readings[1] is getting the obstacle?
 				velocity_fw=std_velocity;
 				control_pub(velocity_fw,u_theta);
 			}else{
-				BreakingRatio_3 = ((initial_break_dist_3-ir_readings[0])/(1*(inf_thres-dist_thres)));	//2 yields (1/2)*std_velocity... 1 gives 0 
+				BreakingRatio_3 = (initial_break_dist_3-ir_readings[0])/(1.5*(inf_thres-dist_thres));	//2 yields (1/2)*std_velocity... 1 gives 0 
 				velocity_fw=abs(std_velocity*( 1 - BreakingRatio_3 ));
 				control_pub(velocity_fw,u_theta);
 				//ROS_INFO("\nVelocity %.2f\n", velocity_fw);
 			}
 		}else{
-			//Distance to wall > inf_thres ---> close! Reduce velocity
+			//Distance to wall > inf_thres ---> normal
 			velocity_fw=std_velocity;
 			control_pub(velocity_fw,u_theta);
 			break_dist_3 = 1;

@@ -140,11 +140,12 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 			drive_mode = 2;
 			if(try_turn()) {  //if it's possible to turn left or right it will, direction based on opposite of previous turn
 				break;
-			} else 
-				turn_around();	//if can't turn left or right robot will turn 180 degrees
-			break;
+			} //else 
+				//turn_around();	//if can't turn left or right robot will turn 180 degrees
+			//break;
 		case 2: 
-			if(last_direction == 3) {  // if last direction was forward
+			//if(last_direction == 3) {  // if last direction was forward
+			if(last_direction!=3){
 				if(try_turn()) {        // then lets see if we can turn
 					drive_mode = 2;
 					break;
