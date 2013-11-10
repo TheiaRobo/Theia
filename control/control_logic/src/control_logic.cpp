@@ -70,6 +70,7 @@ void turn_right() {
 void turn_around() {
 	heading_ref = PI;
 	ROS_INFO("TURNING AROUND");
+	last_direction=0;
 	return;
 }
 
@@ -84,6 +85,7 @@ void go_forward() {
 bool try_turn() {      // This expression assesses whether the robot has room to turn lef or right and which direction it should turn.
 	bool left = false;   // Where possible it will turn a different direction each time.
 	bool right = false;
+	double left_avg=0.0,right_avg=0.0;
   
 	if(ir[2] > sde_buffer && ir[3] > sde_buffer) left = true;
 	if(ir[4] > sde_buffer && ir[5] > sde_buffer) right = true;
@@ -99,8 +101,25 @@ bool try_turn() {      // This expression assesses whether the robot has room to
 		return true;
 		
 	} else if(left == true && right == true) {
-	
-		if(last_turn = 0 || last_turn == 2) {
+		
+		// First try: always turn left if possible
+		
+		turn_left();
+		return true;
+		
+		
+		/*left_avg=(ir[2]+ir[3])/2;
+		right_avg=(ir[4]+ir[5])/2;
+		
+		if(left_avg > right_avg){
+			turn_left();
+			return true;
+		}else{
+			turn_right();
+			return true;
+		}*/
+		
+		/*if(last_turn = 0 || last_turn == 2) {
 		
 			turn_left();
 			return true;
@@ -110,7 +129,7 @@ bool try_turn() {      // This expression assesses whether the robot has room to
 			turn_right();
 			return true;
 			
-		}
+		}*/
 		
 	} else 
 		return false;
@@ -118,7 +137,8 @@ bool try_turn() {      // This expression assesses whether the robot has room to
 }
 bool think(control_logic::MotionCommand::Request &req, control_logic::MotionCommand::Response &res){
   
-
+	bool turn;
+	
 	if(ir[0]==0 && ir[1]==0 && ir[2]==0 && ir[3]==0 && ir[4]==0 && ir[5]==0 && ir[6]==0 && ir[7]==0){
 		res.B=0;
 		return true;
@@ -134,8 +154,21 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 	
 	
 	ROS_INFO("Stop Type: %d", req.stop_type);
-  
-	switch(req.stop_type) {	//depending on stop reason different code will run
+  	
+  	
+  	if(ir[0] > fwd_buffer && ir[1] > fwd_buffer && last_direction!=3){
+  		go_forward();
+  	}else{
+  		turn=try_turn();
+  	}
+  	
+  	if(turn==false){
+  		turn_around();
+  	}
+  	
+  	
+  	
+	/*switch(req.stop_type) {	//depending on stop reason different code will run
 		case 1: 
 			drive_mode = 2;
 			if(try_turn()) {  //if it's possible to turn left or right it will, direction based on opposite of previous turn
@@ -190,7 +223,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 		default: 
 			go_forward();
 
-	}
+	}*/
 
 	ROS_INFO("Drive mode is %d\n Heading ref is %.2f", drive_mode, heading_ref);
 
