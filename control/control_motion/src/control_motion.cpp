@@ -27,7 +27,7 @@ None: Send (v,w)=(0,0) command to the core and asks for instructions to the cont
 #include <control_motion/params.h>
 
 typedef struct WallInfo_struct {
-	int wall;
+	int wall_num;
 	double irvalue;
 }WallInfo;
 
@@ -47,11 +47,13 @@ int break_dist_3 = 1;
 // Control parameters
 double k_forward=1.0;
 double k_rotate=1.0;
+double k_dist=1.0;
 
 // Forward velocity
 double std_velocity=9.0;
 double velocity_fw=std_velocity;
-double angle_fw=0.0;
+double u_theta=0.0;
+double u_dist=0.0;
 double dist_wall_min=0.0;
 
 // Maximum distance to be travelled while on 'forward' behavior
@@ -267,17 +269,35 @@ double compute_angle(double *ir){ //ir[2]
  **/
 double compute_ir_error(int wall, double ir_wall[2], double theta_ref){
 
-	double theta_meas,theta_error;
+	double theta_meas,error_theta;
 	// get angle to wall
 	theta_meas = compute_angle(ir_wall);
-	theta_error = theta_ref - theta_meas;
+	error_theta = theta_ref - theta_meas;
 
 	if(wall == 1)
-		return -theta_error;
+		return -error_theta;
 	else if(wall == 2)
-		return theta_error;
+		return error_theta;
 	else
 		return 0;
+}
+
+/** compute_ir_dist: Computes distance error given ir readings
+ * 
+ *
+ **/
+double compute_ir_dist(int wall, double ir_wall[2], double dist_ref){
+
+	double dist_meas,error_dist;
+	// get dist to wall
+	if(ir_wall[0]>ir_wall[1])
+		dist_meas = ir_wall[1];
+	else
+		dist_meas = ir_wall[0];
+	
+	error_dist= dist_ref - dist_meas;
+	
+	return error_dist;
 }
 
 /** correct_theta: Adds an offset to the heading estimate to make for discontinuities
@@ -301,17 +321,19 @@ double correct_theta(double t, double l_t){
 	return processed_theta;
 }
 
-/** correct_theta: Adds an offset to the heading estimate to make for discontinuities
+/** dist_closest_wall: Given the wall returns the closest one of both walls 
  *
- *	t -> theta, l_t -> last_theta
+ * wall = 1 (left); wall = 2 (right); wall = 12 (both);	
+ *
+ *	//Not implemented: wall_closest.irvalue=(closest_wall_left+closest_wall_right)/2;
  *
  **/
-WallInfo dist_closest_wall(void){
+WallInfo dist_closest_wall(int wall){
 
 	double closest_wall_left = 0.0;
 	double closest_wall_right = 0.0;
 	WallInfo wall_closest;
-	wall_closest.wall=0;
+	wall_closest.wall_num=0;
 	wall_closest.irvalue=0.0;
 
 	if(ir_readings[2] < ir_readings[3]) 		// check for closest wall on left side
@@ -324,17 +346,24 @@ WallInfo dist_closest_wall(void){
 	else
 		closest_wall_right=ir_readings[5];
 
-	if(closest_wall_left < closest_wall_right){ 		// check for closest wall
+	if(closest_wall_left < closest_wall_right){ // check for closest wall
 		wall_closest.irvalue=closest_wall_left;
-		wall_closest.wall=1;
+		wall_closest.wall_num=1;
 	}else{
 		wall_closest.irvalue=closest_wall_right;
-		wall_closest.wall=2;
+		wall_closest.wall_num=2;
 	}
 
-	//wall_closest.irvalue=(closest_wall_left+closest_wall_right)/2;
-	return wall_closest;
-
+	if (wall == 1){
+		wall_closest.irvalue=closest_wall_left;
+		wall_closest.wall_num=1;	
+	}else if (wall == 2){
+		wall_closest.irvalue=closest_wall_right;
+		wall_closest.wall_num=2;
+	}else if (wall == 12){ 
+		return wall_closest;
+	}else //it should not occur because we are calling this function if wall = 1, 2 or 12. Safety statement
+		return wall_closest;
 }
 
 /** none: Implements the 'None' behavior
@@ -457,7 +486,7 @@ int rotate(ros::Rate loop_rate){
 	double init_error=heading_ref-(processed_theta-init_theta); //Why now is different than in Forward?
 	int done=0, wall=1;
 	double ir_wall[2]={0.0,0.0};
-	double theta_ref=0.0, theta_meas=0.0, theta_error=0.0;
+	double theta_ref=0.0, theta_meas=0.0, error_theta=0.0;
 
 	ROS_INFO("Debug mode. Behavior is rotation on spot. Press any key to go on\n");
 
@@ -495,16 +524,16 @@ int rotate(ros::Rate loop_rate){
 		if(wall == 1 || wall == 2){
 
 			// get angle to wall
-			theta_error=compute_ir_error(wall,ir_wall,theta_ref);
+			error_theta=compute_ir_error(wall,ir_wall,theta_ref);
 
-			ROS_INFO("Theta_error: %.3f\n",theta_error);
+			ROS_INFO("Theta_error: %.3f\n",error_theta);
 
-			if(theta_error<2*heading_thres){
+			if(error_theta<2*heading_thres){
 				stop();
 				return 0;
 			}
 
-			control_pub(0,k_rotate*theta_error);		
+			control_pub(0,k_rotate*error_theta);		
 			//loop_rate.sleep();
 			ros::spinOnce();
 		}
@@ -528,11 +557,14 @@ int rotate(ros::Rate loop_rate){
 int forward_wall(ros::Rate loop_rate){
 
 	double ir_wall[2]={0.0,0.0};
-	double theta_ref=0.0, theta_meas=0.0, theta_error=0.0, avg_dist=0.0;
+	double theta_ref=0.0, theta_meas=0.0, error_theta=0.0, epsilon_theta=0.09; // 5 degrees
+	double dist_ref=10.0, dist_meas=0.0, error_dist=0.0, avg_dist=0.0, epsilon_dist=1.00;
+
 	int wall=0; // 1 - left side; 2 - right side
 	WallInfo wall_min;
-	wall_min.wall=0;
+	wall_min.wall_num=0;
 	wall_min.irvalue=0.0;
+
 	double BreakingRatio_3; //Variable used to compute the velocity to break proportional to distance
 
 	while(ros::ok()){
@@ -543,30 +575,44 @@ int forward_wall(ros::Rate loop_rate){
 			return 0;
 		}
 
-		//Are we between walls?
+		//Are we between closer walls?
 		if(wall_in_range(1,inf_thres,ir_readings) || wall_in_range(2,inf_thres,ir_readings)){ 
 			//We are detecting at least one wall
 
-			if(!wall_in_range(2,inf_thres,ir_readings)){ 		// check if NOT wall on right side
+			if(!wall_in_range(2,inf_thres,ir_readings)){ 		// check if NOT wall on right side -> Just left wall
 				wall=1;
 				ir_wall[0]=ir_readings[2];
 				ir_wall[1]=ir_readings[3];
+				wall_min=dist_closest_wall(wall);
+				wall=wall_min.wall_num;
+				dist_wall_min=wall_min.irvalue;
 				//ROS_INFO("\n Left wall\n"); 
-			}else if (!wall_in_range(1,inf_thres,ir_readings)){ // check if NOT wall on left side
+			}else if (!wall_in_range(1,inf_thres,ir_readings)){ // check if NOT wall on left side -> Just right wall
 				wall=2;
 				ir_wall[0]=ir_readings[4];
 				ir_wall[1]=ir_readings[5];
+				wall_min=dist_closest_wall(wall);
+				wall=wall_min.wall_num;
+				dist_wall_min=wall_min.irvalue;
 				//ROS_INFO("\n Right wall\n"); 
 			}
 			else // We are detecting both walls
 			{
 				/*We select to set the reference position for driving as the average of both positions	
 				and we choose to follow the closest wall*/
-				wall_min = dist_closest_wall();
+				wall=12; //wall = both;
+				wall_min = dist_closest_wall(wall);
 
-				wall=wall_min.wall;
+				wall=wall_min.wall_num;
 				dist_wall_min=wall_min.irvalue;
 
+				if(wall == 1){
+					ir_wall[0]=ir_readings[2];
+					ir_wall[1]=ir_readings[3];
+				}else if (wall == 2){
+					ir_wall[0]=ir_readings[4];
+					ir_wall[1]=ir_readings[5];
+				}
 				//ROS_INFO("\nwall: %.3i\ndist_wall_min: %.3f\n",wall, dist_wall_min);
 			}
 
@@ -579,57 +625,55 @@ int forward_wall(ros::Rate loop_rate){
 		}
 
 		// get angle to wall
-		theta_error=compute_ir_error(wall,ir_wall,theta_ref);
+		error_theta=compute_ir_error(wall,ir_wall,theta_ref);
+		error_dist=compute_ir_dist(wall,ir_wall,dist_ref);
 
-		//		ROS_INFO("Theta_error: %.3f\n",theta_error);
-		if(std::abs(theta_error) < PI/20){ // 9 degrees
+		//		ROS_INFO("Theta_error: %.3f\n",error_theta);
 
+		//Control velocity of the robot
+		if(wall_in_range(3,inf_thres,ir_readings)){
 			//Distance to wall <= inf_thres ---> close! Reduce velocity
-			if(wall_in_range(3,inf_thres,ir_readings)){
-				ROS_INFO("Wall in front: Moving Slower\n");
-				if(break_dist_3 == 1){
-					break_dist_3 = 0;
-					initial_break_dist_3 = ir_readings[0];
-					velocity_fw=std_velocity;
-					angle_fw=k_rotate*theta_error;
-					control_pub(velocity_fw,angle_fw);
-				}else{
-					//2 yields (1/2)*std_velocity... 1 gives 0 
-					BreakingRatio_3 = ((initial_break_dist_3-ir_readings[0])/(2*(inf_thres-dist_thres))); 
-					velocity_fw=abs(std_velocity*( 1 - BreakingRatio_3 ));
-					angle_fw=k_rotate*theta_error;
-					control_pub(velocity_fw,angle_fw);
-					//ROS_INFO("\nVelocity %.2f\n", velocity_fw);
-				}
-			}else{
-				//Distance to wall > inf_thres ---> close! Reduce velocity
+			ROS_INFO("Wall in front: Moving Slower\n");
+			if(break_dist_3 == 1){
+				break_dist_3 = 0;
+				initial_break_dist_3 = ir_readings[0];
 				velocity_fw=std_velocity;
-				angle_fw=k_rotate*theta_error;
-				control_pub(velocity_fw,angle_fw);
-				break_dist_3 = 1;
+				control_pub(velocity_fw,u_theta);
+			}else{
+				BreakingRatio_3 = ((initial_break_dist_3-ir_readings[0])/(2*(inf_thres-dist_thres)));	//2 yields (1/2)*std_velocity... 1 gives 0 
+				velocity_fw=abs(std_velocity*( 1 - BreakingRatio_3 ));
+				control_pub(velocity_fw,u_theta);
+				//ROS_INFO("\nVelocity %.2f\n", velocity_fw);
 			}
+		}else{
+			//Distance to wall > inf_thres ---> close! Reduce velocity
+			velocity_fw=std_velocity;
+			control_pub(velocity_fw,u_theta);
+			break_dist_3 = 1;
+		}
+
+		//Control the angle to the wall
+		if(std::abs(error_theta) < epsilon_theta){ //Small epsilon
+
+			u_theta=0;
+			control_pub(velocity_fw,u_theta+u_dist);
+		}else{
+			u_theta=k_rotate*error_theta;
+			control_pub(velocity_fw,u_theta+u_dist);
+		}
+
+		//Control the distance to the wall
+		if(std::abs(error_dist) < epsilon_dist){ //Small epsilon
+			u_dist=0;
+			control_pub(velocity_fw,u_theta+u_dist);
 
 		}else{
-			//ROS_INFO("Drifting away from the wall\n");
-			/*stop();
-			return 0; //We might want to move 1 instead*/
-
-			//Instead of stopping we need to control the distance
-			//velocity_fw=velocity_fw;
-			angle_fw=k_rotate*theta_error; //Multiply times a new K
-			control_pub(velocity_fw,angle_fw);
+			u_dist=k_dist*error_dist;
+			control_pub(velocity_fw,u_theta+u_dist);
 		}
-		//loop_rate.sleep();
+
 		ros::spinOnce();
 	}
-
-	//Check distances to the left and right wall are the required values
-	/*if (wall == 1 || wall == 2)
-	{	
-		ir_wall[0]=ir_readings[2];
-		ir_wall[1]=ir_readings[3];	
-
-	}*/
 
 }
 
