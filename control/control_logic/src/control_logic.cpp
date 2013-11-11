@@ -91,19 +91,19 @@ bool try_turn() {      // This expression assesses whether the robot has room to
 	if(ir[4] > sde_buffer && ir[5] > sde_buffer) right = true;
 
 	if(left == true && right == false) {
-	
+		drive_mode=2;
 		turn_left();
 		return true;
 		
 	} else if(left == false && right == true) {
-	
+		drive_mode=2;
 		turn_right();
 		return true;
 		
 	} else if(left == true && right == true) {
 		
 		// First try: always turn left if possible
-		
+		drive_mode=2;
 		turn_left();
 		return true;
 		
