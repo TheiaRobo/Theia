@@ -4,6 +4,18 @@
 #include <opencv2/nonfree/features2d.hpp>
 #include <vision/image.h>
 
+using namespace cv;
+
+int theiaImageCreateContext(
+	int minHessian,
+	TheiaImageContext & context
+){
+	context.detector = SurfFeatureDetector(minHessian);
+	context.extractor = SurfDescriptorExtractor();
+
+	return 0;
+}
+
 int theiaImageDetectKeypoints(
 	TheiaImageData & data,
 	TheiaImageContext & context
@@ -29,6 +41,6 @@ int theiaImageExtractDescriptors(
 		data.keypoints,
 		data.descriptors
 	);
-	
+
 	return 0;
 }

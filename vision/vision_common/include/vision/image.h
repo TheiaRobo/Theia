@@ -17,6 +17,11 @@ typedef struct {
 	cv::Mat descriptors;
 } TheiaImageData;
 
+int theiaImageCreateContext(
+	int minHessian,
+	TheiaImageContext & context
+);
+
 int theiaImageDetectKeypoints(
 	TheiaImageData & data,
 	TheiaImageContext & context
