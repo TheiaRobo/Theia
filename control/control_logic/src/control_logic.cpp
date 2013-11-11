@@ -163,6 +163,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
   	}
   	
   	if(turn==false){
+		drive_mode=2;
   		turn_around();
   	}
   	
