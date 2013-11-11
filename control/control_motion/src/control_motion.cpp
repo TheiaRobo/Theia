@@ -133,7 +133,7 @@ void odo_proc(nav_msgs::Odometry::ConstPtr odo_msg){
 	theta=tf::getYaw(pose.getRotation());
 
 	//Debug
-	//ROS_INFO("Got Pose: (x,y,theta)=(%.2f,%.2f,%.2f)",x,y,theta);
+	////ROS_INFO("Got Pose: (x,y,theta)=(%.2f,%.2f,%.2f)",x,y,theta);
 
 }
 
@@ -151,7 +151,7 @@ void ir_proc(core_sensors::ir::ConstPtr ir_msg){
 		ir_readings[i]=median(ir_raw[i]);
 	}
 
-	//ROS_INFO("\nIR_READINGS: (%.2f,%.2f)\n",ir_readings[0],ir_readings[1]);
+	////ROS_INFO("\nIR_READINGS: (%.2f,%.2f)\n",ir_readings[0],ir_readings[1]);
 
 }
 
@@ -165,11 +165,11 @@ void update_params(const control_motion::params::ConstPtr msg){
 	forward_distance=msg->forward_distance;
 	heading_ref=msg->heading_ref;
 
-	//ROS_INFO("New params: k_forward: %.2f\nk_rotate: %.2f\nstd_velocity: %.2f\nheading_thres: %.2f\ndist_thres: %.2f\nforward_distance:%.2f\nheading_ref:%.2f",k_forward,k_rotate,std_velocity,heading_thres,dist_thres,forward_distance,heading_ref);
+	////ROS_INFO("New params: k_forward: %.2f\nk_rotate: %.2f\nstd_velocity: %.2f\nheading_thres: %.2f\ndist_thres: %.2f\nforward_distance:%.2f\nheading_ref:%.2f",k_forward,k_rotate,std_velocity,heading_thres,dist_thres,forward_distance,heading_ref);
 
 	if(msg->behavior!=0){
 		behavior=msg->behavior;
-		ROS_INFO("Will switch to behavior %d!!",behavior);
+		//ROS_INFO("Will switch to behavior %d!!",behavior);
 	}
 
 }
@@ -267,15 +267,15 @@ double compute_angle(double *ir){ //ir[2]
 	if(ir[0]>ir[1]){ 	// going away from wall
 
 		theta = atan2(ir[0]-ir[1],ir_dist);
-		ROS_INFO("Theta: %.2f",theta);
+		//ROS_INFO("Theta: %.2f",theta);
 		return theta;	
 	}else{ 			// going against the wall
 		theta = - atan2(ir[1]-ir[0],ir_dist); //The sign of theta = (-) atan2(ir[1]-ir[0],ir_dist) is WRONG?
-		ROS_INFO("Theta: %.2f",theta);
+		//ROS_INFO("Theta: %.2f",theta);
 		return theta;
 	}
 	
-	ROS_INFO("Oops");
+	//ROS_INFO("Oops");
 	return 0;
 }
 
@@ -290,7 +290,7 @@ double compute_ir_error(int wall, double * ir_wall, double theta_ref){
 	theta_meas = compute_angle(ir_wall);
 	error_theta = theta_ref - theta_meas;
 	
-	ROS_INFO("ANGLE TO WALL: %.2f\nError: %.2f",theta_meas,error_theta);
+	//ROS_INFO("ANGLE TO WALL: %.2f\nError: %.2f",theta_meas,error_theta);
 	
 	if(wall == 1)
 		return -error_theta;
@@ -413,17 +413,17 @@ int none(ros::Rate loop_rate){
 	srv.request.A=true;
 	srv.request.stop_type=stop_type;
 
-
+	ROS_INFO("None: waiting");
 	/* Because a behavior may stay in loop while doing its thing */
-	//loop_rate.sleep();
+	loop_rate.sleep();
 	ros::spinOnce();
 
 	if(ask_logic.call(srv)){
-		ROS_INFO("Got new instruction: %d\n",srv.response.B);
+		//ROS_INFO("Got new instruction: %d\n",srv.response.B);
 
 		if(srv.response.B==2){
 			heading_ref=srv.response.heading_ref;
-			ROS_INFO("Rotation command: %.2f\n",heading_ref);
+			//ROS_INFO("Rotation command: %.2f\n",heading_ref);
 		}
 
 		//getchar();
@@ -461,11 +461,11 @@ int forward(ros::Rate loop_rate){
 	while(curr_dist<forward_distance){ 
 
 		//if(wall_in_range(1,inf_thres,ir_readings) || wall_in_range(2,inf_thres,ir_readings)){ 		// check for wall to follow
-			//ROS_INFO("Wall to follow\n");
+			////ROS_INFO("Wall to follow\n");
 			//stop_type=4; 
 			//return 0;
 		//}else{
-			//ROS_INFO("No Wall to follow\n");
+			////ROS_INFO("No Wall to follow\n");
 
 			//Distance to wall < delay_thres ---> very close! STOP
 			if(wall_in_range(3,dist_thres,ir_readings)){ //
@@ -493,7 +493,7 @@ int forward(ros::Rate loop_rate){
 					//2 yields (1/2)*std_velocity... 1 gives 0 
 					BreakingRatio_1 = ((initial_break_dist_1-ir_readings[0])/(1.2*(inf_thres-dist_thres))); 
 					control_pub(abs(std_velocity*( 1 - BreakingRatio_1 )),0);
-					//ROS_INFO("\nVelocity %.2f\n", std_velocity*(1 - BreakingRatio_1) );
+					////ROS_INFO("\nVelocity %.2f\n", std_velocity*(1 - BreakingRatio_1) );
 				}
 			}else{
 				control_pub(std_velocity,0);
@@ -510,7 +510,7 @@ int forward(ros::Rate loop_rate){
 	}
 
 	stop();
-	ROS_INFO("Finished the forward behavior successfully!\n");
+	//ROS_INFO("Finished the forward behavior successfully!\n");
 	stop_type=2;
 	count=0;
 	heading_ref=0.0;
@@ -534,20 +534,20 @@ int rotate(ros::Rate loop_rate){
 	double ir_wall[2]={0.0,0.0};
 	double theta_ref=0.0, theta_meas=0.0, error_theta=0.0;
 
-	//ROS_INFO("Debug mode. Behavior is rotation on spot. Press any key to go on\n");
+	////ROS_INFO("Debug mode. Behavior is rotation on spot. Press any key to go on\n");
 
 	// Rotation on-going
 	while(ros::ok() && !done){
 		processed_theta=correct_theta(theta,last_theta);
 		heading_error=heading_ref-(processed_theta-init_theta);
-		//ROS_INFO("Rotation on-going \nTheta: %.3f\nProcessed theta: %.3f\nInit theta: %.3f\nDisplacement: %.3f\nHeading error: %.3f\n",theta,processed_theta,init_theta,processed_theta-init_theta,heading_error);
+		////ROS_INFO("Rotation on-going \nTheta: %.3f\nProcessed theta: %.3f\nInit theta: %.3f\nDisplacement: %.3f\nHeading error: %.3f\n",theta,processed_theta,init_theta,processed_theta-init_theta,heading_error);
 
 		// If Rotation completed
 		if(std::abs(heading_error) < heading_thres){
 			done=1;
 			loop_rate.sleep();
 			stop();
-			ROS_INFO(" Rotation completed! \nerror %.2f AND (absolute value %.2f)\n",heading_error, std::abs(heading_error));
+			//ROS_INFO(" Rotation completed! \nerror %.2f AND (absolute value %.2f)\n",heading_error, std::abs(heading_error));
 		}else{
 			control_pub(0.0,k_rotate*heading_error+sign(heading_error)*u_theta_const);	
 			loop_rate.sleep();
@@ -564,16 +564,16 @@ int rotate(ros::Rate loop_rate){
 			for(int i=0; i<2; i++)
 				ir_wall[i]=ir_readings[i+2];
 			
-			ROS_INFO("Can align with wall on the left");
+			//ROS_INFO("Can align with wall on the left");
 		}else if(wall_in_range(2,inf_thres,ir_readings)){ 	// check for wall on the right
 			wall=2;
 			
 			for(int i=0; i<2; i++)
 				ir_wall[i]=ir_readings[i+4];
 			
-			ROS_INFO("Can align with wall on the right");
+			//ROS_INFO("Can align with wall on the right");
 		}else{ 	
-			ROS_INFO("Cannot align with wall");		// check for no wall
+			//ROS_INFO("Cannot align with wall");		// check for no wall
 			wall=0;
 			stop();
 			stop_type=3;
@@ -693,13 +693,13 @@ int forward_wall(ros::Rate loop_rate){
 			wall=0;
 		}
 		
-		ROS_INFO("\nwall: %d\ndist_wall_min: %.3f\n",wall, dist_wall_min);
+		//ROS_INFO("\nwall: %d\ndist_wall_min: %.3f\n",wall, dist_wall_min);
 		
 		if(wall==0){
-			//ROS_INFO("\nNO WALLS\n");
+			////ROS_INFO("\nNO WALLS\n");
 			wall=0;
 			stop();
-			ROS_INFO("Lost wall -> behavior=1!\n"); 
+			ROS_INFO("Lost wall!"); 
 			// behavior = 1:: Go straight when there is no wall. If a wall is detected then behavior = 2. 
 			return 1;
 		}
@@ -708,12 +708,12 @@ int forward_wall(ros::Rate loop_rate){
 		error_theta=compute_ir_error(wall,ir_wall,theta_ref);
 		error_dist=compute_ir_dist(wall,ir_wall,dist_ref);
 
-		//		ROS_INFO("Theta_error: %.3f\n",error_theta);
+		//		//ROS_INFO("Theta_error: %.3f\n",error_theta);
 
 		//Control velocity of the robot
 		if(wall_in_range(3,inf_thres,ir_readings)){
 			//Distance to wall <= inf_thres ---> close! Reduce velocity
-			//ROS_INFO("Wall in front: Moving Slower\n");
+			////ROS_INFO("Wall in front: Moving Slower\n");
 			if(break_dist_3 == 1){
 				break_dist_3 = 0;
 				initial_break_dist_3 = ir_readings[0]; // what if only ir_readings[1] is getting the obstacle?
@@ -723,7 +723,7 @@ int forward_wall(ros::Rate loop_rate){
 				BreakingRatio_3 = (initial_break_dist_3-ir_readings[0])/(1.2*(inf_thres-dist_thres));	//2 yields (1/2)*std_velocity... 1 gives 0 
 				velocity_fw=abs(std_velocity*( 1 - BreakingRatio_3 ));
 				control_pub(velocity_fw,u_theta);
-				//ROS_INFO("\nVelocity %.2f\n", velocity_fw);
+				////ROS_INFO("\nVelocity %.2f\n", velocity_fw);
 			}
 		}else{
 			//Distance to wall > inf_thres ---> normal
@@ -773,7 +773,7 @@ int main(int argc, char ** argv){
 	ir_sub = n.subscribe("/core_sensors_ir/ir",1,ir_proc);
 	params_sub = n.subscribe("/control_motion/params",1,update_params);
 
-	ROS_INFO("Started the control_motion node");
+	//ROS_INFO("Started the control_motion node");
 
 	// initialize ir_readings vector
 	for(int i=0;i<8;i++)
@@ -781,9 +781,9 @@ int main(int argc, char ** argv){
 
 	while(ros::ok()){
 		/*		//Check all the ir_readings
-  		ROS_INFO("\n1irleft: (%.2f,%.2f)",ir_readings[2],ir_readings[3]);
-		ROS_INFO("\n2irright: (%.2f,%.2f)",ir_readings[4],ir_readings[5]);
-		ROS_INFO("\n3irfront: (%.2f,%.2f)",ir_readings[0],ir_readings[1]);
+  		//ROS_INFO("\n1irleft: (%.2f,%.2f)",ir_readings[2],ir_readings[3]);
+		//ROS_INFO("\n2irright: (%.2f,%.2f)",ir_readings[4],ir_readings[5]);
+		//ROS_INFO("\n3irfront: (%.2f,%.2f)",ir_readings[0],ir_readings[1]);
 		 */
 		switch(behavior){
 		case 0: 
@@ -799,7 +799,7 @@ int main(int argc, char ** argv){
 			behavior = forward_wall(loop_rate);
 			break;
 		}
-
+	//ROS_INFO("\nBehavior %d", behavior);
 	}
 	
 	return 0;

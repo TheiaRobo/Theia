@@ -82,36 +82,53 @@ void go_forward() {
 	return;
 }
 
+int turn_random() {
+	int random_var = 0; 
+	int driving_var = 1;
+	random_var=rand()%10; // random_var = {1, 10}
+
+	if (random_var > 5) 
+		driving_var=2;
+	else
+		driving_var=1;
+	
+	ROS_INFO("\ndrive_mode %d", driving_var); 
+	return driving_var;
+}
+
 bool try_turn() {      // This expression assesses whether the robot has room to turn lef or right and which direction it should turn.
-	bool left = false;   // Where possible it will turn a different direction each time.
+	bool left = false;   // When possible it will turn a different direction each time.
 	bool right = false;
 	double left_avg=0.0,right_avg=0.0;
-  
+
 	if(ir[2] > sde_buffer && ir[3] > sde_buffer) left = true;
 	if(ir[4] > sde_buffer && ir[5] > sde_buffer) right = true;
 
 	if(left == true && right == false) {
+		ROS_INFO("Left true ; Right False");
 		drive_mode=2;
 		turn_left();
 		return true;
-		
+
 	} else if(left == false && right == true) {
+		ROS_INFO("Left false ; Right True");
 		drive_mode=2;
 		turn_right();
 		return true;
-		
+
 	} else if(left == true && right == true) {
-		
+		ROS_INFO("Left true ; Right true");
+
 		// First try: always turn left if possible
-		drive_mode=2;
+		//drive_mode=2;
 		/*turn_left();
 		return true;*/
-		
-		
+
+		/*
 		// Second try: turn to the side that has more space available
 		left_avg=(ir[2]+ir[3])/2;
 		right_avg=(ir[4]+ir[5])/2;
-		
+
 		if(left_avg > right_avg){
 			turn_left();
 			return true;
@@ -119,28 +136,40 @@ bool try_turn() {      // This expression assesses whether the robot has room to
 			turn_right();
 			return true;
 		}
-		
+		 */
+
 		/*if(last_turn = 0 || last_turn == 2) {
-		
+
 			turn_left();
 			return true;
-			
+
 		} else if(last_turn == 1) {
-		
+
 			turn_right();
 			return true;
-			
+
 		}*/
-		
+
+		//Third try:
+		drive_mode=turn_random();
+
 	} else 
-		return false;
+		ROS_INFO("Left False ; Right False");
+		return false; //we cannot turn!
 
 }
+
+/*
+ * 
+ * function: think
+ * Mainly the brain of the robot. It will decide that to do given certain conditions of ir and wall 
+ * 
+ * */
 bool think(control_logic::MotionCommand::Request &req, control_logic::MotionCommand::Response &res){
-  
+
 	bool turn=true;
 	int left_wall=0, right_wall=0;
-	
+
 	if(ir[0]==0 && ir[1]==0 && ir[2]==0 && ir[3]==0 && ir[4]==0 && ir[5]==0 && ir[6]==0 && ir[7]==0){
 		res.B=0;
 		return true;
@@ -156,35 +185,33 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 
 	if(ir[2] < sde_buffer && ir[3] < sde_buffer)
 		left_wall=1;
-	
+
 	if(ir[4] < sde_buffer && ir[5] < sde_buffer)
 		right_wall=1;
-	
-	
-	ROS_INFO("Stop Type: %d", req.stop_type);
-  	
-  	
-  	if(ir[0] > fwd_buffer && ir[1] > fwd_buffer){ 
-  		if(last_direction!=3){
+
+	////ROS_INFO("Stop Type: %d", req.stop_type);
+
+	if(ir[0] > fwd_buffer && ir[1] > fwd_buffer){ 
+		if(last_direction!=3){
 			go_forward();
 		}else{
 			if(left_wall==1 || right_wall==1){
 				go_forward();
 			}else{
-  				turn=try_turn();
-  			}
+				turn=try_turn();
+			}
 		}
 	}else{
 		turn=try_turn();
-  	
-  		if(turn==false){
+
+		if(turn==false){
 			drive_mode=2;
-  			turn_around();
-  		}
+			turn_around();
+		}
 	}
-  	
-  	
-  	
+
+
+
 	/*switch(req.stop_type) {	//depending on stop reason different code will run
 		case 1: 
 			drive_mode = 2;
@@ -242,7 +269,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 
 	}*/
 
-	ROS_INFO("Drive mode is %d\n Heading ref is %.2f", drive_mode, heading_ref);
+	//ROS_INFO("Drive mode is %d\n Heading ref is %.2f", drive_mode, heading_ref);
 
 
 	res.heading_ref = heading_ref;
@@ -252,27 +279,25 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 }
 
 int main(int argc, char ** argv){
-  
-  ROS_INFO("Control Logic (The Brain) has started... hold onto your butts");
 
-  ros::init(argc, argv, "control_logic");
-  ros::NodeHandle n;
-  ros::Rate loop_rate(10);
-  
+	//ROS_INFO("Control Logic (The Brain) has started... hold onto your butts");
 
-  ros::ServiceServer motion_command = n.advertiseService("control_logic/motion_command", think); //Set up service server in this node
-  ros::Subscriber ir_data = n.subscribe("/core_sensors_ir/ir", 1, readIrData);
-  
-  for(int i=0; i<8; i++)
-	  for(int j=0; j<3; j++)
-		  ir_raw[i][j]=0;
+	ros::init(argc, argv, "control_logic");
+	ros::NodeHandle n;
+	ros::Rate loop_rate(10);
 
-  while(ros::ok()){
-	  loop_rate.sleep();
-	  ros::spinOnce();
-  }
-	  
+	ros::ServiceServer motion_command = n.advertiseService("control_logic/motion_command", think); //Set up service server in this node
+	ros::Subscriber ir_data = n.subscribe("/core_sensors_ir/ir", 1, readIrData);
 
-  return 0;
+	for(int i=0; i<8; i++)
+		for(int j=0; j<3; j++)
+			ir_raw[i][j]=0;
+
+	while(ros::ok()){
+		loop_rate.sleep();
+		ros::spinOnce();
+	}
+
+	return 0;
 
 }
