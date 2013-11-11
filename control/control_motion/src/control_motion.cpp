@@ -59,7 +59,7 @@ double dist_wall_min=0.0;
 double epsilon_theta=0.09; // 5 degrees
 double epsilon_dist=0.25;
 // Maximum distance to be travelled while on 'forward' behavior
-double forward_distance=15.0;
+double forward_distance=10.0;
 
 // Threshold for the sensors
 double heading_thres=0.01;
@@ -443,7 +443,8 @@ int forward(ros::Rate loop_rate){
 	double heading_error=0.0;
 	int status_changed=0;
 	double initial_ir[8];
-	double initial_dist=std::sqrt(x*x+y*y),curr_dist=initial_dist;
+	double i_x=x, i_y=y;
+	double curr_dist=std::sqrt((x-i_x)*(x-i_x)+(y-i_y)*(y-i_y));
 
 	double BreakingRatio_1;
 
@@ -451,7 +452,7 @@ int forward(ros::Rate loop_rate){
 		initial_ir[i]=ir_readings[i];
 
 	// Will keep moving forward until sensors report obstacle or forward_distance is achieved
-	while(std::abs(curr_dist-initial_dist)<forward_distance){ 
+	while(curr_dist<forward_distance){ 
 
 		//if(wall_in_range(1,inf_thres,ir_readings) || wall_in_range(2,inf_thres,ir_readings)){ 		// check for wall to follow
 			//ROS_INFO("Wall to follow\n");
@@ -468,7 +469,7 @@ int forward(ros::Rate loop_rate){
 				return 0;
 			}
 
-			curr_dist=std::sqrt(x*x+y*y);
+			
 			heading_error=initial_theta-theta;
 
 			// Some small threshold to take into account noise
@@ -491,12 +492,14 @@ int forward(ros::Rate loop_rate){
 				control_pub(std_velocity,0);
 				break_dist_1 = 1;
 			}
-
+			
+			
 			loop_rate.sleep();
 			ros::spinOnce();
+			curr_dist=std::sqrt((x-i_x)*(x-i_x)+(y-i_y)*(y-i_y));
 		//}
 		
-		ROS_INFO("Travelled distance: %.2f",std::abs(curr_dist-initial_dist));
+		ROS_INFO("Travelled distance: %.2f",curr_dist);
 	}
 
 	stop();
