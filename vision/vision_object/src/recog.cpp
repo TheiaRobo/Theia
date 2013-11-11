@@ -51,7 +51,7 @@ bool ObjectDataScorePairPtrCompare(
 }
 
 int recogObject(
-	Mat & descriptors,
+	TheiaImageData & data,
 	ObjectTrainData_t & trainData,
 	ObjectRecogScore_t & recogScore
 ){
@@ -62,8 +62,8 @@ int recogObject(
 	*/
 	std::vector<DMatch> matches;
   	matcher.match(
-  		trainData.descriptors,
-  		descriptors,
+  		trainData.data.descriptors,
+  		data.descriptors,
   		matches
   	);
 
@@ -125,26 +125,16 @@ int recogObject(
 }
 
 int recog(
-	Mat & image,
-	std::vector<ObjectTrainData_t> & trainDataVect
+	TheiaImageData & data,
+	std::vector<ObjectTrainData_t> & trainDataVect,
+	TheiaImageContext & context
 ){
-	static SurfFeatureDetector detector(800);
-	static SurfDescriptorExtractor extractor;
 
 	std::cout << "RECOGNITION" << std::endl;
 	std::cout << " Start" << std::endl;
 
-	/**
-	* Detect features
-	*/
-	std::vector<KeyPoint> keypoints;
-	detector.detect(image, keypoints);
-
-	/**
-	* Extract descriptors
-	*/
-	Mat descriptors;
-	extractor.compute(image, keypoints, descriptors);
+	theiaImageDetectKeypoints(data, context);
+	theiaImageExtractDescriptors(data, context);
 
 	/**
 	* Match with training data
@@ -158,24 +148,29 @@ int recog(
 	size_t i;
 	for(i = 0; i < numbTrainObjects; i++){
 		recogObject(
-			descriptors,
+			data,
 			trainDataVect[i],
 			dataScorePairArr[i].recogScore
 		);
 
+/*
 		dataScorePairArr[i].trainDataPtr = &trainDataVect[i];
 		dataScorePairPtrArr[i] = &dataScorePairArr[i];
+*/
 	}
 
+/*
 	std::sort(
 		dataScorePairPtrArr,
 		dataScorePairPtrArr + numbTrainObjects,
 		ObjectDataScorePairPtrCompare
 	);
+*/
 
 	/**
 	* Show results
 	*/
+/*
 	std::cout << "RESULTS" << std::endl;
 	for(i = 0; i < numbTrainObjects; i++){
 		ObjectDataScorePair_t * pairPtr;
@@ -189,6 +184,7 @@ int recog(
 		std::cout << pairPtr->recogScore.meanSquareError;
 		std::cout << std::endl;
 	}
+*/
 
 	std::cout <<" End" << std::endl;
 

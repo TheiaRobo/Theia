@@ -4,10 +4,11 @@
 
 // ROS
 #include <ros/ros.h>
+#include <vision/image.h>
 
 // ROS messages
-#include <std_msgs/Empty.h>
 #include <sensor_msgs/Image.h>
+#include <std_msgs/Empty.h>
 
 // ROS to / from OpenCV bridge
 #include <cv_bridge/cv_bridge.h>
@@ -26,6 +27,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr & rosMsgPtr);
 void trainCallback(const std_msgs::EmptyConstPtr & rosMsgPtr);
 int trainInit();
 
+TheiaImageContext imageContext;
 vector<ObjectTrainData_t> trainDataVect;
 ros::Subscriber imageSub;
 ros::Subscriber trainSub;
@@ -37,9 +39,13 @@ void imageCallback(const sensor_msgs::ImageConstPtr & rosMsgPtr){
 	cv_bridge::CvImagePtr imagePtr;
 	imagePtr = cv_bridge::toCvCopy(rosMsgPtr, "mono8");
 
+	TheiaImageData imageData;
+	imageData.image = imagePtr->image;
+
 	recog(
-		imagePtr->image,
-		trainDataVect
+		imageData,
+		trainDataVect,
+		imageContext
 	);
 
 	cout << " End" << endl;
@@ -55,19 +61,34 @@ void trainCallback(const std_msgs::EmptyConstPtr & rosMsgPtr){
 }
 
 int trainInit(){
-	ObjectTrainConfig_t trainConfig;
-	
+	int errorCode;
+
+	string path;
 	ros::param::getCached(
 		"~config/path",
-		trainConfig.path
+		path
 	);
 
+	int surfMinHessian;
 	ros::param::getCached(
 		"~config/surfMinHessian",
-		trainConfig.surfMinHessian
+		surfMinHessian
 	);
 
-	int errorCode;
+	errorCode = theiaImageCreateContext(
+		surfMinHessian,
+		imageContext
+	);
+
+	if(errorCode){
+		cout << "Error: Could not create image context" << endl;
+		return errorCode;
+	}
+
+	ObjectTrainConfig_t trainConfig;
+	trainConfig.path = path;
+	trainConfig.imageContext = imageContext;
+	
 	errorCode = train(
 		trainConfig,
 		trainDataVect

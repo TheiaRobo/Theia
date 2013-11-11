@@ -6,6 +6,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/nonfree/features2d.hpp>
 #include <vision/file.h>
+#include <vision/image.h>
 
 #include "file.h"
 #include "train.h"
@@ -15,13 +16,13 @@ using namespace cv;
 int trainFile(
 	ObjectFileTrain_t & trainFile,
 	ObjectTrainData_t & trainData,
-	ObjectTrainConfig_t & trainConfig
+	TheiaImageContext & context
 );
 
 int trainFile(
 	ObjectFileTrain_t & trainFile,
 	ObjectTrainData_t & trainData,
-	ObjectTrainConfig_t & trainConfig
+	TheiaImageContext & context
 ){
 	std::cout << "trainFile" << std::endl;
 	std::cout << " Path: " << trainFile.path << std::endl;
@@ -29,7 +30,7 @@ int trainFile(
 	/**
 	* Read image
 	*/
-	Mat image;
+	Mat & image = trainData.data.image;
 	image = imread(trainFile.path, IMREAD_GRAYSCALE);
 
 	if(!image.data){
@@ -40,10 +41,12 @@ int trainFile(
 	/**
 	* Extract features from image
 	*/
-	SurfFeatureDetector detector(trainConfig.surfMinHessian);
-	std::vector<KeyPoint> keypoints;
-	detector.detect(image, keypoints);
+	theiaImageDetectKeypoints(
+		trainData.data,
+		context
+	);
 
+	std::vector<KeyPoint> & keypoints = trainData.data.keypoints;
 	std::cout << " # keypoints: " << keypoints.size() << std::endl;
 
 	/**
@@ -64,17 +67,15 @@ int trainFile(
 	/**
 	* Calculate corresponding descriptors
 	*/
-	SurfDescriptorExtractor extractor;
-	Mat descriptors;
-
-	extractor.compute(image, keypoints, descriptors);
+	theiaImageExtractDescriptors(
+		trainData.data,
+		context
+	);
 
 	/**
 	* Store data
 	*/
 	trainData.file = trainFile;
-	trainData.image = image;
-	trainData.descriptors = descriptors;
 
 	return 0;
 }
@@ -121,7 +122,7 @@ int train(
 		errorCode = trainFile(
 			trainFileVect[i],
 			trainData,
-			trainConfig
+			trainConfig.imageContext
 		);
 
 		if(errorCode){
