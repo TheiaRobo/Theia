@@ -36,7 +36,7 @@ double freq=10.0;
 double x=0.0,y=0.0,theta=0.0,last_theta=0.0;; // Position estimate given by the odometry
 double ir_readings[8];
 double ir_raw[8][3];
-double heading_ref=0.0; // reference for the rotate xº behavior
+double heading_ref=0.0; // ref for the rotate xº behavior
 double theta_correction=0.0;
 double initial_break_dist_1 = 0.0;
 double initial_break_dist_3 = 0.0;
@@ -47,19 +47,19 @@ int break_dist_3 = 1;
 // Control parameters
 double k_forward=1.0;
 double k_rotate=1.0;
-double k_dist=1.0/40;
+double k_dist=1.0/45;
 
 // Forward velocity
 double std_velocity=12.0;
 double velocity_fw=std_velocity;
 double u_theta=0.0;
-double u_theta_const=0.09; // to make the rotation command faster to execute (alternative: PID)
+double u_theta_const=PI/20; // to make the rotation command faster to execute (alternative: PID)
 double u_dist=0.0;
 double dist_wall_min=0.0;
 double epsilon_theta=0.09; // 5 degrees
-double epsilon_dist=1.00;
+double epsilon_dist=0.25;
 // Maximum distance to be travelled while on 'forward' behavior
-double forward_distance=20.0;
+double forward_distance=15.0;
 
 // Threshold for the sensors
 double heading_thres=0.01;
@@ -453,11 +453,11 @@ int forward(ros::Rate loop_rate){
 	// Will keep moving forward until sensors report obstacle or forward_distance is achieved
 	while(std::abs(curr_dist-initial_dist)<forward_distance){ 
 
-		if(wall_in_range(1,inf_thres,ir_readings) || wall_in_range(2,inf_thres,ir_readings)){ 		// check for wall to follow
+		//if(wall_in_range(1,inf_thres,ir_readings) || wall_in_range(2,inf_thres,ir_readings)){ 		// check for wall to follow
 			//ROS_INFO("Wall to follow\n");
-			stop_type=4; 
-			return 0;
-		}else{
+			//stop_type=4; 
+			//return 0;
+		//}else{
 			//ROS_INFO("No Wall to follow\n");
 
 			//Distance to wall < delay_thres ---> very close! STOP
@@ -494,7 +494,9 @@ int forward(ros::Rate loop_rate){
 
 			loop_rate.sleep();
 			ros::spinOnce();
-		}
+		//}
+		
+		ROS_INFO("Travelled distance: %.2f",std::abs(curr_dist-initial_dist));
 	}
 
 	stop();
@@ -596,7 +598,7 @@ int forward_wall(ros::Rate loop_rate){
 	double theta_ref=0.0, theta_meas=0.0, error_theta=0.0; 
 	double dist_ref=3.0, dist_meas=0.0, error_dist=0.0, avg_dist=0.0;
 
-	int wall=0, prev_wall=0; // 1 - left side; 2 - right side
+	int wall=0, wall_im_following=0; // 1 - left side; 2 - right side
 	WallInfo wall_min;
 	wall_min.wall_num=0;
 	wall_min.irvalue=0.0;
@@ -616,68 +618,65 @@ int forward_wall(ros::Rate loop_rate){
 		if(wall_in_range(1,inf_thres,ir_readings) || wall_in_range(2,inf_thres,ir_readings)){ 
 			//We are detecting at least one wall
 
-			if(!wall_in_range(2,inf_thres,ir_readings)){ 		// check if NOT wall on right side -> Just left wall				
-				prev_wall=wall;
-				if(prev_wall==1){
-					wall=1;
-					ir_wall[0]=ir_readings[2];
-					ir_wall[1]=ir_readings[3];
-					wall_min=dist_closest_wall(wall);
-					wall=wall_min.wall_num;
-					dist_wall_min=wall_min.irvalue;
-					//ROS_INFO("\n Left wall\n");
-				}else{
-					wall=0;
-				}
-			}else if (!wall_in_range(1,inf_thres,ir_readings)){ // check if NOT wall on left side -> Just right wall
-				prev_wall=wall;
+			if(!wall_in_range(2,inf_thres,ir_readings) && wall_im_following!=2){ 		// check if NOT wall on right side -> Just left wall			
+				wall_im_following=1;
+				ir_wall[0]=ir_readings[2];
+				ir_wall[1]=ir_readings[3];
+				wall_min=dist_closest_wall(wall);
+				wall=wall_min.wall_num;
+				dist_wall_min=wall_min.irvalue;
+				ROS_INFO("\n Left wall\n");
 				
-				if(prev_wall==2){
-					wall=2;
+			}else{
+				if (!wall_in_range(1,inf_thres,ir_readings) && wall_im_following!=1){ // check if NOT wall on left side -> Just right wall
+					wall_im_following=2;
 					ir_wall[0]=ir_readings[4];
 					ir_wall[1]=ir_readings[5];
 					wall_min=dist_closest_wall(wall);
 					wall=wall_min.wall_num;
 					dist_wall_min=wall_min.irvalue;
-					//ROS_INFO("\n Right wall\n"); 
-				}else{
-					wall=0;
+					ROS_INFO("\n Right wall\n"); 
 				}
-			}
-			else // We are detecting both walls
-			{
-				/*We select to set the reference position for driving as the average of both positions	
-				and we choose to follow the closest wall*/
-				prev_wall=wall;
+				else{
+					if(wall_in_range(1,inf_thres,ir_readings) && wall_in_range(2,inf_thres,ir_readings)){
+						ROS_INFO("Both walls\nwall= %d\n",wall);
+						/*We select to set the reference position for driving as the average of both positions	
+						and we choose to follow the closest wall*/
+						wall_min = dist_closest_wall(wall);
 				
-				if(prev_wall==12){
-					wall=12; //wall = both;
-					wall_min = dist_closest_wall(wall);
+						wall=wall_min.wall_num;
+						dist_wall_min=wall_min.irvalue;
 
-					wall=wall_min.wall_num;
-					dist_wall_min=wall_min.irvalue;
+						if(wall == 1){
+							ir_wall[0]=ir_readings[2];
+							ir_wall[1]=ir_readings[3];
+						}else if (wall == 2){
+							ir_wall[0]=ir_readings[4];
+							ir_wall[1]=ir_readings[5];
+						}
+						
+						if(wall!=wall_im_following && wall_im_following!=0) //debug
+							wall=0;
+						else
+							wall_im_following=wall;
 
-					if(wall == 1){
-						ir_wall[0]=ir_readings[2];
-						ir_wall[1]=ir_readings[3];
-					}else if (wall == 2){
-						ir_wall[0]=ir_readings[4];
-						ir_wall[1]=ir_readings[5];
+
+					}else{
+						wall=0;
 					}
-				}else{
-					wall=0;
 				}
-
-
 			}
-			//ROS_INFO("\nwall: %d\ndist_wall_min: %.3f\n",wall, dist_wall_min);
+		}else{
+			wall=0;
 		}
+		
+		ROS_INFO("\nwall: %d\ndist_wall_min: %.3f\n",wall, dist_wall_min);
 		
 		if(wall==0){
 			//ROS_INFO("\nNO WALLS\n");
 			wall=0;
 			stop();
-			//ROS_INFO("There is no wall -> behavior=1!\n"); 
+			ROS_INFO("Lost wall -> behavior=1!\n"); 
 			// behavior = 1:: Go straight when there is no wall. If a wall is detected then behavior = 3. 
 			return 1;
 		}

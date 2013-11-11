@@ -104,11 +104,12 @@ bool try_turn() {      // This expression assesses whether the robot has room to
 		
 		// First try: always turn left if possible
 		drive_mode=2;
-		turn_left();
-		return true;
+		/*turn_left();
+		return true;*/
 		
 		
-		/*left_avg=(ir[2]+ir[3])/2;
+		// Second try: turn to the side that has more space available
+		left_avg=(ir[2]+ir[3])/2;
 		right_avg=(ir[4]+ir[5])/2;
 		
 		if(left_avg > right_avg){
@@ -117,7 +118,7 @@ bool try_turn() {      // This expression assesses whether the robot has room to
 		}else{
 			turn_right();
 			return true;
-		}*/
+		}
 		
 		/*if(last_turn = 0 || last_turn == 2) {
 		
@@ -137,7 +138,8 @@ bool try_turn() {      // This expression assesses whether the robot has room to
 }
 bool think(control_logic::MotionCommand::Request &req, control_logic::MotionCommand::Response &res){
   
-	bool turn;
+	bool turn=true;
+	int left_wall=0, right_wall=0;
 	
 	if(ir[0]==0 && ir[1]==0 && ir[2]==0 && ir[3]==0 && ir[4]==0 && ir[5]==0 && ir[6]==0 && ir[7]==0){
 		res.B=0;
@@ -151,21 +153,35 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 	res.B=0; //default
 	heading_ref = 0;
 	drive_mode = 0;
+
+	if(ir[2] < sde_buffer && ir[3] < sde_buffer)
+		left_wall=1;
+	
+	if(ir[4] < sde_buffer && ir[5] < sde_buffer)
+		right_wall=1;
 	
 	
 	ROS_INFO("Stop Type: %d", req.stop_type);
   	
   	
-  	if(ir[0] > fwd_buffer && ir[1] > fwd_buffer && last_direction!=3){
-  		go_forward();
-  	}else{
-  		turn=try_turn();
-  	}
+  	if(ir[0] > fwd_buffer && ir[1] > fwd_buffer){ 
+  		if(last_direction!=3){
+			go_forward();
+		}else{
+			if(left_wall==1 || right_wall==1){
+				go_forward();
+			}else{
+  				turn=try_turn();
+  			}
+		}
+	}else{
+		turn=try_turn();
   	
-  	if(turn==false){
-		drive_mode=2;
-  		turn_around();
-  	}
+  		if(turn==false){
+			drive_mode=2;
+  			turn_around();
+  		}
+	}
   	
   	
   	
