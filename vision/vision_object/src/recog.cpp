@@ -133,7 +133,18 @@ int recog(
 	std::cout << "RECOGNITION" << std::endl;
 	std::cout << " Start" << std::endl;
 
+	std::cout << " Detect keypoints" << std::endl;
 	theiaImageDetectKeypoints(data, context);
+
+	size_t numbKeypoints;
+	numbKeypoints = data.keypoints.size();
+	
+	if(!numbKeypoints){
+		std::cout << " No keypoints found" << std::endl;
+		return -1;
+	}
+
+	std::cout << " Extract descriptors" << std::endl;
 	theiaImageExtractDescriptors(data, context);
 
 	/**
@@ -142,10 +153,9 @@ int recog(
 	size_t numbTrainObjects;
 	numbTrainObjects = trainDataVect.size();
 
-	ObjectDataScorePair_t dataScorePairArr[numbTrainObjects];
-	ObjectDataScorePair_t * dataScorePairPtrArr[numbTrainObjects];
-
 	size_t i;
+	ObjectDataScorePair_t dataScorePairArr[numbTrainObjects];
+
 	for(i = 0; i < numbTrainObjects; i++){
 		recogObject(
 			data,
@@ -153,24 +163,20 @@ int recog(
 			dataScorePairArr[i].recogScore
 		);
 
-/*
 		dataScorePairArr[i].trainDataPtr = &trainDataVect[i];
-		dataScorePairPtrArr[i] = &dataScorePairArr[i];
-*/
+
 	}
 
-/*
 	std::sort(
 		dataScorePairPtrArr,
 		dataScorePairPtrArr + numbTrainObjects,
 		ObjectDataScorePairPtrCompare
 	);
-*/
+
 
 	/**
 	* Show results
 	*/
-/*
 	std::cout << "RESULTS" << std::endl;
 	for(i = 0; i < numbTrainObjects; i++){
 		ObjectDataScorePair_t * pairPtr;
@@ -184,9 +190,8 @@ int recog(
 		std::cout << pairPtr->recogScore.meanSquareError;
 		std::cout << std::endl;
 	}
-*/
 
-	std::cout <<" End" << std::endl;
+	std::cout << " End" << std::endl;
 
 	return 0;
 }

@@ -41,10 +41,7 @@ int trainFile(
 	/**
 	* Extract features from image
 	*/
-	theiaImageDetectKeypoints(
-		trainData.data,
-		context
-	);
+	theiaImageDetectKeypoints(trainData.data, context);
 
 	std::vector<KeyPoint> & keypoints = trainData.data.keypoints;
 	std::cout << " # keypoints: " << keypoints.size() << std::endl;
@@ -67,10 +64,7 @@ int trainFile(
 	/**
 	* Calculate corresponding descriptors
 	*/
-	theiaImageExtractDescriptors(
-		trainData.data,
-		context
-	);
+	theiaImageExtractDescriptors(trainData.data, context);
 
 	/**
 	* Store data
