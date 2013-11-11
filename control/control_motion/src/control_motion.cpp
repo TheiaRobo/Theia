@@ -47,12 +47,13 @@ int break_dist_3 = 1;
 // Control parameters
 double k_forward=1.0;
 double k_rotate=1.0;
-double k_dist=1.0/50;
+double k_dist=1.0/40;
 
 // Forward velocity
 double std_velocity=12.0;
 double velocity_fw=std_velocity;
 double u_theta=0.0;
+double u_theta_const=0.09; // to make the rotation command faster to execute (alternative: PID)
 double u_dist=0.0;
 double dist_wall_min=0.0;
 double epsilon_theta=0.09; // 5 degrees
@@ -384,6 +385,16 @@ WallInfo dist_closest_wall(int wall_n){
 
 }
 
+int sign(double val){
+	
+	if(val < 0)
+		return -1;
+	else
+		return 1;
+
+	return 1;
+}
+
 /** none: Implements the 'None' behavior
  *
  *	Sends a stopping message to the core and asks for instructions to the logic node
@@ -472,7 +483,7 @@ int forward(ros::Rate loop_rate){
 					control_pub(std_velocity,0);
 				}else{
 					//2 yields (1/2)*std_velocity... 1 gives 0 
-					BreakingRatio_1 = ((initial_break_dist_1-ir_readings[0])/(1.5*(inf_thres-dist_thres))); 
+					BreakingRatio_1 = ((initial_break_dist_1-ir_readings[0])/(1.2*(inf_thres-dist_thres))); 
 					control_pub(abs(std_velocity*( 1 - BreakingRatio_1 )),0);
 					//ROS_INFO("\nVelocity %.2f\n", std_velocity*(1 - BreakingRatio_1) );
 				}
@@ -525,7 +536,7 @@ int rotate(ros::Rate loop_rate){
 			stop();
 			//ROS_INFO(" Rotation completed! \nerror %.2f AND (absolute value %.2f)\n",heading_error, std::abs(heading_error));
 		}else{
-			control_pub(0.0,k_rotate*heading_error);	
+			control_pub(0.0,k_rotate*heading_error+sign(heading_error)*u_theta_const);	
 			loop_rate.sleep();
 			ros::spinOnce();
 		}
@@ -558,7 +569,7 @@ int rotate(ros::Rate loop_rate){
 				return 0;
 			}
 
-			control_pub(0,k_rotate*error_theta);		
+			control_pub(0,k_rotate*error_theta+sign(heading_error)*u_theta_const);		
 			loop_rate.sleep();
 			ros::spinOnce();
 		}
@@ -585,7 +596,7 @@ int forward_wall(ros::Rate loop_rate){
 	double theta_ref=0.0, theta_meas=0.0, error_theta=0.0; 
 	double dist_ref=3.0, dist_meas=0.0, error_dist=0.0, avg_dist=0.0;
 
-	int wall=0; // 1 - left side; 2 - right side
+	int wall=0, prev_wall=0; // 1 - left side; 2 - right side
 	WallInfo wall_min;
 	wall_min.wall_num=0;
 	wall_min.irvalue=0.0;
@@ -605,45 +616,64 @@ int forward_wall(ros::Rate loop_rate){
 		if(wall_in_range(1,inf_thres,ir_readings) || wall_in_range(2,inf_thres,ir_readings)){ 
 			//We are detecting at least one wall
 
-			if(!wall_in_range(2,inf_thres,ir_readings)){ 		// check if NOT wall on right side -> Just left wall
-				wall=1;
-				ir_wall[0]=ir_readings[2];
-				ir_wall[1]=ir_readings[3];
-				wall_min=dist_closest_wall(wall);
-				wall=wall_min.wall_num;
-				dist_wall_min=wall_min.irvalue;
-				//ROS_INFO("\n Left wall\n");
+			if(!wall_in_range(2,inf_thres,ir_readings)){ 		// check if NOT wall on right side -> Just left wall				
+				prev_wall=wall;
+				if(prev_wall==1){
+					wall=1;
+					ir_wall[0]=ir_readings[2];
+					ir_wall[1]=ir_readings[3];
+					wall_min=dist_closest_wall(wall);
+					wall=wall_min.wall_num;
+					dist_wall_min=wall_min.irvalue;
+					//ROS_INFO("\n Left wall\n");
+				}else{
+					wall=0;
+				}
 			}else if (!wall_in_range(1,inf_thres,ir_readings)){ // check if NOT wall on left side -> Just right wall
-				wall=2;
-				ir_wall[0]=ir_readings[4];
-				ir_wall[1]=ir_readings[5];
-				wall_min=dist_closest_wall(wall);
-				wall=wall_min.wall_num;
-				dist_wall_min=wall_min.irvalue;
-				//ROS_INFO("\n Right wall\n"); 
+				prev_wall=wall;
+				
+				if(prev_wall==2){
+					wall=2;
+					ir_wall[0]=ir_readings[4];
+					ir_wall[1]=ir_readings[5];
+					wall_min=dist_closest_wall(wall);
+					wall=wall_min.wall_num;
+					dist_wall_min=wall_min.irvalue;
+					//ROS_INFO("\n Right wall\n"); 
+				}else{
+					wall=0;
+				}
 			}
 			else // We are detecting both walls
 			{
 				/*We select to set the reference position for driving as the average of both positions	
 				and we choose to follow the closest wall*/
-				wall=12; //wall = both;
-				wall_min = dist_closest_wall(wall);
+				prev_wall=wall;
+				
+				if(prev_wall==12){
+					wall=12; //wall = both;
+					wall_min = dist_closest_wall(wall);
 
-				wall=wall_min.wall_num;
-				dist_wall_min=wall_min.irvalue;
+					wall=wall_min.wall_num;
+					dist_wall_min=wall_min.irvalue;
 
-				if(wall == 1){
-					ir_wall[0]=ir_readings[2];
-					ir_wall[1]=ir_readings[3];
-				}else if (wall == 2){
-					ir_wall[0]=ir_readings[4];
-					ir_wall[1]=ir_readings[5];
+					if(wall == 1){
+						ir_wall[0]=ir_readings[2];
+						ir_wall[1]=ir_readings[3];
+					}else if (wall == 2){
+						ir_wall[0]=ir_readings[4];
+						ir_wall[1]=ir_readings[5];
+					}
+				}else{
+					wall=0;
 				}
 
 
 			}
 			//ROS_INFO("\nwall: %d\ndist_wall_min: %.3f\n",wall, dist_wall_min);
-		}else{
+		}
+		
+		if(wall==0){
 			//ROS_INFO("\nNO WALLS\n");
 			wall=0;
 			stop();
@@ -668,7 +698,7 @@ int forward_wall(ros::Rate loop_rate){
 				velocity_fw=std_velocity;
 				control_pub(velocity_fw,u_theta);
 			}else{
-				BreakingRatio_3 = (initial_break_dist_3-ir_readings[0])/(1.5*(inf_thres-dist_thres));	//2 yields (1/2)*std_velocity... 1 gives 0 
+				BreakingRatio_3 = (initial_break_dist_3-ir_readings[0])/(1.2*(inf_thres-dist_thres));	//2 yields (1/2)*std_velocity... 1 gives 0 
 				velocity_fw=abs(std_velocity*( 1 - BreakingRatio_3 ));
 				control_pub(velocity_fw,u_theta);
 				//ROS_INFO("\nVelocity %.2f\n", velocity_fw);
