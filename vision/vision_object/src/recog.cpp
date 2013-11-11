@@ -153,9 +153,10 @@ int recog(
 	size_t numbTrainObjects;
 	numbTrainObjects = trainDataVect.size();
 
-	size_t i;
 	ObjectDataScorePair_t dataScorePairArr[numbTrainObjects];
+	ObjectDataScorePair_t * dataScorePairPtrArr[numbTrainObjects];
 
+	size_t i;
 	for(i = 0; i < numbTrainObjects; i++){
 		recogObject(
 			data,
@@ -164,6 +165,7 @@ int recog(
 		);
 
 		dataScorePairArr[i].trainDataPtr = &trainDataVect[i];
+		dataScorePairPtrArr[i] = &dataScorePairArr[i];
 
 	}
 
