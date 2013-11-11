@@ -5,29 +5,30 @@
 #include <vision/image.h>
 
 int theiaImageDetectKeypoints(
-	TheiaImage & image,
+	TheiaImageData & data,
 	TheiaImageContext & context
 ){
 	context.detector.detect(
-		image.image,
-		image.keypoints
+		data.image,
+		data.keypoints
 	);
 
 	return 0;
 }
 
-int theiaImageShowKeypoints(TheiaImage & image){
+int theiaImageShowKeypoints(TheiaImageData & data){
 	return 0;
 }
 
 int theiaImageExtractDescriptors(
-	TheiaImage & image,
+	TheiaImageData & data,
 	TheiaImageContext & context
 ){
 	context.extractor.compute(
-		image.image,
-		image.keypoints,
-		image.descriptors
+		data.image,
+		data.keypoints,
+		data.descriptors
 	);
+	
 	return 0;
 }

@@ -15,17 +15,17 @@ typedef struct {
 	cv::Mat image;
 	std::vector<cv::KeyPoint> keypoints;
 	cv::Mat descriptors;
-} TheiaImage;
+} TheiaImageData;
 
 int theiaImageDetectKeypoints(
-	TheiaImage & image,
+	TheiaImageData & data,
 	TheiaImageContext & context
 );
 
-int theiaImageShowKeypoints(TheiaImage & image);
+int theiaImageShowKeypoints(TheiaImageData & data);
 
 int theiaImageExtractDescriptors(
-	TheiaImage & image,
+	TheiaImageData & data,
 	TheiaImageContext & context
 );
 
