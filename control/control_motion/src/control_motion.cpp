@@ -47,9 +47,13 @@ int break_dist_3 = 1;
 // Control parameters
 double k_forward=1.0;
 double k_rotate=1.0;
-double k_dist=1.0/50;
 double i_rotate=0.0;
 double d_rotate=0.0;
+double k_align=1.0;
+double i_align=0.0;
+double d_align=0.0;
+double k_dist=1.0/50;
+
 
 // Forward velocity
 double std_velocity=12.0;
@@ -433,7 +437,8 @@ double PID_control(double P,double I,double D,double * integrator_sum, double * 
 int none(ros::Rate loop_rate){
 	
 	int wall=0, done=0;
-	double ir_wall[2]={0.0,0.0},error_theta=0.0,theta_ref=0.0;
+	double ir_wall[2]={0.0,0.0},error_theta=0.0,theta_ref=0.0,u_theta=0.0;
+	double I_sum=0.0, last_E=0.0;
 	
 	stop();
 	
@@ -476,8 +481,10 @@ int none(ros::Rate loop_rate){
 				stop();
 				done=1;
 			}
-
-			control_pub(0,k_rotate*error_theta); //Should be PID		
+			
+			
+			u_theta=PID_control(k_align,i_align,d_align,&I_sum, &last_E,error_theta,0); //I'm passing the error directly to make my life easier
+			control_pub(0,u_theta);		
 			loop_rate.sleep();
 			ros::spinOnce();
 		}
