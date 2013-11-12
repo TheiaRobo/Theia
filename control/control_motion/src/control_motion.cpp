@@ -468,7 +468,7 @@ int none(ros::Rate loop_rate){
 			// get angle to wall
 			error_theta=compute_ir_error(wall,ir_wall,theta_ref);
 
-			ROS_INFO("error_theta: %.3f\n",error_theta);
+			//ROS_INFO("error_theta: %.3f\n",error_theta);
 
 			if(std::abs(error_theta)<2*heading_thres){
 				stop();
@@ -637,7 +637,7 @@ int forward_wall(ros::Rate loop_rate){
 	double dist_ref=4.0, dist_meas=0.0, error_dist=0.0, avg_dist=0.0;
 	double I_sum_r=0.0, last_E_r=0.0, I_sum_d=0.0, last_R_d=0.0;
 
-	int wall=0; // 1 - left side; 2 - right side
+	int wall=1; // 1 - left side; 2 - right side
 	double wall_dist=0.0;
 
 	double BreakingRatio_3; //Variable used to compute the velocity to break proportional to distance
@@ -662,14 +662,14 @@ int forward_wall(ros::Rate loop_rate){
 			ir_wall[0]=ir_readings[2];
 			ir_wall[1]=ir_readings[3];
 			wall_dist=dist_wall(wall_to_follow);
-			ROS_INFO("\n Left wall\n");
+			ROS_INFO("\n Right wall\n");
 
 		}else if (wall_in_range(1,inf_thres,ir_readings) && wall_to_follow==1){ // check if NOT wall on left side -> Just right wall
 
 			ir_wall[0]=ir_readings[4];
 			ir_wall[1]=ir_readings[5];
 			wall_dist=dist_wall(wall_to_follow);
-			ROS_INFO("\n Right wall\n"); 
+			ROS_INFO("\n Left wall\n"); 
 		}else{
 			wall=0;
 		}
@@ -778,7 +778,11 @@ int main(int argc, char ** argv){
 		case 3:
 			behavior = forward_wall(loop_rate);
 			break;
+		default:
+			behavior = 0;
+			break;
 		}
+		ROS_INFO("Behavior: %d\nWall to follow: %d",behavior,wall_to_follow);
 
 	}
 
