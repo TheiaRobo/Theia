@@ -21,6 +21,11 @@ Array<T>::Array(std::vector<T> & vector){
 }
 
 template <class T>
+Array<T>::~Array(){
+	delete[] array;
+}
+
+template <class T>
 T & Array<T>::operator[](size_t index){
 	if(index < 0) return T();
 	if(index >= arraySize) return T();
