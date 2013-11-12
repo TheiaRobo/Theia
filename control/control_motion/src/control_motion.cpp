@@ -74,6 +74,7 @@ double delay_thres=2.0; // no real time :(
 
 //0 - None; 1 - Forward; 2 - Rotate xº; 3 - Forward with wall
 int behavior=0; 
+int wall_to_follow=0;
 
 // Debug
 int count=0;
@@ -173,6 +174,7 @@ void update_params(const control_motion::params::ConstPtr msg){
 	dist_thres=msg->dist_thres;
 	forward_distance=msg->forward_distance;
 	heading_ref=msg->heading_ref;
+	wall_to_follow=msg->wall_to_follow;
 
 	////ROS_INFO("New params: k_forward: %.2f\nk_rotate: %.2f\nstd_velocity: %.2f\nheading_thres: %.2f\ndist_thres: %.2f\nforward_distance:%.2f\nheading_ref:%.2f",k_forward,k_rotate,std_velocity,heading_thres,dist_thres,forward_distance,heading_ref);
 
@@ -283,7 +285,7 @@ double compute_angle(double *ir){ //ir[2]
 		//ROS_INFO("Theta: %.2f",theta);
 		return theta;
 	}
-	
+
 	//ROS_INFO("Oops");
 	return 0;
 }
@@ -298,9 +300,9 @@ double compute_ir_error(int wall, double * ir_wall, double theta_ref){
 	// get angle to wall
 	theta_meas = compute_angle(ir_wall);
 	error_theta = theta_ref - theta_meas;
-	
+
 	//ROS_INFO("ANGLE TO WALL: %.2f\nError: %.2f",theta_meas,error_theta);
-	
+
 	if(wall == 1)
 		return -error_theta;
 	else if(wall == 2)
@@ -401,7 +403,7 @@ WallInfo dist_closest_wall(int wall_n){
 }
 
 int sign(double val){
-	
+
 	if(val < 0)
 		return -1;
 	else
@@ -411,28 +413,37 @@ int sign(double val){
 }
 
 double PID_control(double P,double I,double D,double * integrator_sum, double * previous_error,double Ref,double val){
-	
+
 	double error=Ref-val;  		
 	double P_part=0,I_part=0,D_part=0, total=0;
-	
-	
+
+
 	//integrator_sum  +=(error*dt);	// I Part
 	(*integrator_sum)+=error/freq;
-	
+
 	//differentiator_val =(error-previous error)/dt; // D Part
 	D_part=(error-(*previous_error))*freq;
 	*previous_error=error;
-	
+
 	P_part=P*error;
 	I_part=I*(*integrator_sum);
 	D_part=D*D_part;
-	
-	
+
+
 	total=P_part+I_part+D_part;
-	
-	
+
+
 	return total;
 }
+
+
+/*
+ * 
+ * 
+// STATES DEFINITIONS
+ * 
+ * 
+ */
 
 /** none: Implements the 'None' behavior
  *
@@ -440,35 +451,35 @@ double PID_control(double P,double I,double D,double * integrator_sum, double * 
  *
  **/
 int none(ros::Rate loop_rate){
-	
+
 	int wall=0, done=0;
 	double ir_wall[2]={0.0,0.0},error_theta=0.0,theta_ref=0.0,u_theta=0.0;
 	double I_sum=0.0, last_E=0.0;
-	
+
 	stop();
-	
+
 	heading_ref=0.0;
 
 	ROS_INFO("None: Align mode");
 	/* Because a behavior may stay in loop while doing its thing */
 	loop_rate.sleep();
 	ros::spinOnce();
-	
+
 	// Correction mode: we finished rotating, and now we want to align ourselves with the wall
 	while(ros::ok() && !done){	
 
 		if(wall_in_range(1,inf_thres,ir_readings)){		// check for wall on the left
 			wall=1;
-			
+
 			for(int i=0; i<2; i++)
 				ir_wall[i]=ir_readings[i+2];
-			
+
 		}else if(wall_in_range(2,inf_thres,ir_readings)){ 	// check for wall on the right
 			wall=2;
-			
+
 			for(int i=0; i<2; i++)
 				ir_wall[i]=ir_readings[i+4];
-			
+
 		}else{ 	
 			wall=0;
 			stop();
@@ -486,25 +497,27 @@ int none(ros::Rate loop_rate){
 				stop();
 				done=1;
 			}
-			
-			
+
+
 			u_theta=PID_control(k_align,i_align,d_align,&I_sum, &last_E,error_theta,0); //I'm passing the error directly to make my life easier
 			control_pub(0,u_theta);		
 			loop_rate.sleep();
 			ros::spinOnce();
 		}
 	}
-	
+
 	ROS_INFO("None: finished align mode");
-	
+
 	// Ask for directions
 	srv.request.A=true;
 	srv.request.stop_type=stop_type;
-	
+
 	if(ask_logic.call(srv)){
 
 		if(srv.response.B==2){
 			heading_ref=srv.response.heading_ref;
+		}else if(srv.response.B==3){
+			wall_to_follow=srv.response.wall_to_follow;
 		}
 
 		return srv.response.B;
@@ -539,47 +552,47 @@ int forward(ros::Rate loop_rate){
 	// Will keep moving forward until sensors report obstacle or forward_distance is achieved
 	while(curr_dist<forward_distance){ 
 
-			//Distance to wall < delay_thres ---> very close! STOP
-			if(wall_in_range(3,dist_thres,ir_readings)){ //
-				stop();
-				loop_rate.sleep();
-				return 0;
-			}
-
-			heading_error=initial_theta-theta;
-
-			// Some small threshold to take into account noise
-			if(std::abs(heading_error)<heading_thres)
-				heading_error=0.0;
-		
-			//Distance to wall < inf_thres ---> close! Reduce velocity
-			if(wall_in_range(3,inf_thres,ir_readings)){
-			
-				if(ir_readings[0] > ir_readings[1])
-					close_ir=ir_readings[1];
-				else
-					close_ir=ir_readings[0];
-			
-				if(break_dist_1 == 1){
-					initial_break_dist_1 = close_ir;
-					break_dist_1 = 0;
-					control_pub(std_velocity,0);
-				}else{
-					//2 yields (1/2)*std_velocity... 1 gives 0 
-					BreakingRatio_1 = ((initial_break_dist_1-close_ir)/(1.2*(inf_thres-dist_thres))); 
-					control_pub(abs(std_velocity*( 1 - BreakingRatio_1 )),0);
-				}
-			}else{
-				control_pub(std_velocity,0);
-				break_dist_1 = 1;
-			}
-			
-			
+		//Distance to wall < delay_thres ---> very close! STOP
+		if(wall_in_range(3,dist_thres,ir_readings)){ //
+			stop();
 			loop_rate.sleep();
-			ros::spinOnce();
-			curr_dist=std::sqrt((x-i_x)*(x-i_x)+(y-i_y)*(y-i_y));
+			return 0;
+		}
+
+		heading_error=initial_theta-theta;
+
+		// Some small threshold to take into account noise
+		if(std::abs(heading_error)<heading_thres)
+			heading_error=0.0;
+
+		//Distance to wall < inf_thres ---> close! Reduce velocity
+		if(wall_in_range(3,inf_thres,ir_readings)){
+
+			if(ir_readings[0] > ir_readings[1])
+				close_ir=ir_readings[1];
+			else
+				close_ir=ir_readings[0];
+
+			if(break_dist_1 == 1){
+				initial_break_dist_1 = close_ir;
+				break_dist_1 = 0;
+				control_pub(std_velocity,0);
+			}else{
+				//2 yields (1/2)*std_velocity... 1 gives 0 
+				BreakingRatio_1 = ((initial_break_dist_1-close_ir)/(1.2*(inf_thres-dist_thres))); 
+				control_pub(abs(std_velocity*( 1 - BreakingRatio_1 )),0);
+			}
+		}else{
+			control_pub(std_velocity,0);
+			break_dist_1 = 1;
+		}
+
+
+		loop_rate.sleep();
+		ros::spinOnce();
+		curr_dist=std::sqrt((x-i_x)*(x-i_x)+(y-i_y)*(y-i_y));
 		//}
-		
+
 		//ROS_INFO("Travelled distance: %.2f",curr_dist);
 	}
 
@@ -605,7 +618,7 @@ int rotate(ros::Rate loop_rate){
 	double ir_wall[2]={0.0,0.0};
 	double theta_ref=0.0, theta_meas=0.0, error_theta=0.0,u_theta=0.0;
 	double I_sum=0.0, last_E=0.0;
-	
+
 	ROS_INFO("Will rotate %.2f rad",heading_ref);
 	// Rotation on-going
 	while(ros::ok() && !done){
@@ -648,7 +661,7 @@ int forward_wall(ros::Rate loop_rate){
 	double dist_ref=4.0, dist_meas=0.0, error_dist=0.0, avg_dist=0.0;
 	double I_sum_r=0.0, last_E_r=0.0, I_sum_d=0.0, last_R_d=0.0;
 
-	int wall=0, wall_im_following=0; // 1 - left side; 2 - right side
+	int wall=0; // 1 - left side; 2 - right side
 	WallInfo wall_min;
 	wall_min.wall_num=0;
 	wall_min.irvalue=0.0;
@@ -663,67 +676,31 @@ int forward_wall(ros::Rate loop_rate){
 			return 0;
 		}
 
-		//Are we between closer walls?
-		if(wall_in_range(1,inf_thres,ir_readings) || wall_in_range(2,inf_thres,ir_readings)){ 
-			//We are detecting at least one wall
 
-			if(!wall_in_range(2,inf_thres,ir_readings) && wall_im_following!=2){ 		// check if NOT wall on right side -> Just left wall			
-				wall_im_following=1;
-				ir_wall[0]=ir_readings[2];
-				ir_wall[1]=ir_readings[3];
-				wall_min=dist_closest_wall(wall);
-				wall=wall_min.wall_num;
-				dist_wall_min=wall_min.irvalue;
-				ROS_INFO("\n Left wall\n");
-				
-			}else{
-				if (!wall_in_range(1,inf_thres,ir_readings) && wall_im_following!=1){ // check if NOT wall on left side -> Just right wall
-					wall_im_following=2;
-					ir_wall[0]=ir_readings[4];
-					ir_wall[1]=ir_readings[5];
-					wall_min=dist_closest_wall(wall);
-					wall=wall_min.wall_num;
-					dist_wall_min=wall_min.irvalue;
-					ROS_INFO("\n Right wall\n"); 
-				}
-				else{
-					if(wall_in_range(1,inf_thres,ir_readings) && wall_in_range(2,inf_thres,ir_readings)){
-						ROS_INFO("Both walls\nwall= %d\n",wall);
-						/*We select to set the reference position for driving as the average of both positions	
-						and we choose to follow the closest wall*/
-						wall_min = dist_closest_wall(wall);
-				
-						wall=wall_min.wall_num;
-						dist_wall_min=wall_min.irvalue;
+		if(wall_in_range(2,inf_thres,ir_readings) && wall_to_follow==2){ 		// check if NOT wall on right side -> Just left wall			
 
-						if(wall == 1){
-							ir_wall[0]=ir_readings[2];
-							ir_wall[1]=ir_readings[3];
-						}else if (wall == 2){
-							ir_wall[0]=ir_readings[4];
-							ir_wall[1]=ir_readings[5];
-						}
-						
-						if(wall!=wall_im_following && wall_im_following!=0) //debug
-							wall=0;
-						else
-							wall_im_following=wall;
+			ir_wall[0]=ir_readings[2];
+			ir_wall[1]=ir_readings[3];
+			wall_min=dist_closest_wall(wall);
+			wall=wall_min.wall_num;
+			dist_wall_min=wall_min.irvalue;
+			ROS_INFO("\n Left wall\n");
 
+		}else if (wall_in_range(1,inf_thres,ir_readings) && wall_to_follow==1){ // check if NOT wall on left side -> Just right wall
 
-					}else{
-						wall=0;
-					}
-				}
-			}
+			ir_wall[0]=ir_readings[4];
+			ir_wall[1]=ir_readings[5];
+			wall_min=dist_closest_wall(wall);
+			wall=wall_min.wall_num;
+			dist_wall_min=wall_min.irvalue;
+			ROS_INFO("\n Right wall\n"); 
 		}else{
 			wall=0;
 		}
-		
+
 		//ROS_INFO("\nwall: %d\ndist_wall_min: %.3f\n",wall, dist_wall_min);
-		
+
 		if(wall==0){
-			////ROS_INFO("\nNO WALLS\n");
-			wall=0;
 			stop();
 			ROS_INFO("Lost wall!"); 
 			return 0;
@@ -733,12 +710,10 @@ int forward_wall(ros::Rate loop_rate){
 		error_theta=compute_ir_error(wall,ir_wall,theta_ref);
 		error_dist=compute_ir_dist(wall,ir_wall,dist_ref);
 
-		//		//ROS_INFO("Theta_error: %.3f\n",error_theta);
-
 		//Control velocity of the robot
 		if(wall_in_range(3,inf_thres,ir_readings)){
 			//Distance to wall <= inf_thres ---> close! Reduce velocity
-			
+
 			if(ir_readings[0] > ir_readings[1])
 				close_ir=ir_readings[1];
 			else
@@ -767,7 +742,7 @@ int forward_wall(ros::Rate loop_rate){
 			u_theta=0;
 			control_pub(velocity_fw,u_theta+u_dist);
 		}else{
-			u_theta=PID_control(k_rotate,i_rotate,d_rotate,&I_sum_r, &last_E_r,error_theta,0);
+			u_theta=PID_control(k_align,i_align,d_align,&I_sum_r, &last_E_r,error_theta,0);
 			control_pub(velocity_fw,u_theta+u_dist);
 		}
 
@@ -809,7 +784,7 @@ int main(int argc, char ** argv){
 		ir_readings[i]=0.0;
 
 	while(ros::ok()){
-		
+
 		switch(behavior){
 		case 0: 
 			behavior = none(loop_rate);
@@ -826,7 +801,7 @@ int main(int argc, char ** argv){
 		}
 
 	}
-	
+
 	return 0;
 
 }

@@ -11,3 +11,4 @@ float64 dist_thres
 float64 forward_distance
 float64 heading_ref
 int32   behavior
+int32   wall_to_follow
