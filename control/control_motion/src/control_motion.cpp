@@ -26,10 +26,10 @@ None: Send (v,w)=(0,0) command to the core and asks for instructions to the cont
 #include <tf/transform_datatypes.h>
 #include <control_motion/params.h>
 
-typedef struct WallInfo_struct {
+/*typedef struct WallInfo_struct {
 	int wall_num;
 	double irvalue;
-}WallInfo;
+}WallInfo;*/
 
 const float PI=3.1415926f;
 double freq=10.0;
@@ -86,16 +86,6 @@ double ir_dist=20.0;
 
 double V_MAX=50;
 double W_MAX=PI/4;
-
-/* Stop motive for the brain
- * 
- * 	1 - Saw something in front of me
- * 	2 - Moved 20cm
- * 	3 - Finished rotation
- * 	4 - Started seeing a wall on the side while moving forward
- */
-
-int stop_type=0;
 
 ros::Publisher vw_pub;
 ros::ServiceClient ask_logic;
@@ -350,55 +340,42 @@ double correct_theta(double t, double l_t){
 	return processed_theta;
 }
 
-/** dist_closest_wall: Given the wall returns the closest one of both walls 
+/** dist_wall: Given the wall returns the closest one of both walls 
  *
  * wall = 1 (left); wall = 2 (right); wall = 12 (both);	
  *
  *	//Not implemented: wall_closest.irvalue=(closest_wall_left+closest_wall_right)/2;
  *
  **/
-WallInfo dist_closest_wall(int wall_n){
+double dist_wall(int wall_n){
 
-	double closest_wall_left = 0.0;
-	double closest_wall_right = 0.0;
-	WallInfo wall_closest;
-	wall_closest.wall_num=0;
-	wall_closest.irvalue=0.0;
+	double dist_wall_left = 0.0;
+	double dist_wall_right = 0.0;
+	double irvalue = 0.0;
 
 	if(ir_readings[2] < ir_readings[3]) 		// check for closest wall on left side
-		closest_wall_left=ir_readings[2];
+		dist_wall_left=ir_readings[2];
 	else
-		closest_wall_left=ir_readings[3];
+		dist_wall_left=ir_readings[3];
 
 	if(ir_readings[4] < ir_readings[5]) 		// check for closest wall on right side
-		closest_wall_right=ir_readings[4];
+		dist_wall_right=ir_readings[4];
 	else
-		closest_wall_right=ir_readings[5];
+		dist_wall_right=ir_readings[5];
 
-	if(closest_wall_left < closest_wall_right){ // check for closest wall
-		wall_closest.irvalue=closest_wall_left;
-		wall_closest.wall_num=1;
-	}else{
-		wall_closest.irvalue=closest_wall_right;
-		wall_closest.wall_num=2;
-	}
 
 	switch (wall_n){
 
 	case 1:
-		wall_closest.irvalue=closest_wall_left;
-		wall_closest.wall_num=1;
+		return dist_wall_left;
 		break;
 	case 2:
-		wall_closest.irvalue=closest_wall_right;
-		wall_closest.wall_num=2;
-		break;
-	case 12:
+		return dist_wall_right;
 		break;
 	default:
+		return -1;
 		break;
 	}
-	return wall_closest;
 
 }
 
@@ -510,14 +487,13 @@ int none(ros::Rate loop_rate){
 
 	// Ask for directions
 	srv.request.A=true;
-	srv.request.stop_type=stop_type;
 
 	if(ask_logic.call(srv)){
 
 		if(srv.response.B==2){
-			heading_ref=srv.response.heading_ref;
+			heading_ref=srv.response.parameter;
 		}else if(srv.response.B==3){
-			wall_to_follow=srv.response.wall_to_follow;
+			wall_to_follow=(int) srv.response.parameter;
 		}
 
 		return srv.response.B;
@@ -662,11 +638,15 @@ int forward_wall(ros::Rate loop_rate){
 	double I_sum_r=0.0, last_E_r=0.0, I_sum_d=0.0, last_R_d=0.0;
 
 	int wall=0; // 1 - left side; 2 - right side
-	WallInfo wall_min;
-	wall_min.wall_num=0;
-	wall_min.irvalue=0.0;
+	double wall_dist=0.0;
 
 	double BreakingRatio_3; //Variable used to compute the velocity to break proportional to distance
+
+
+	if(wall_to_follow!=1 && wall_to_follow!=2){
+		ROS_INFO("WALL_TO_FOLLOW IS %.2f!!!!!",wall_to_follow);
+		getchar();
+	}
 
 	while(ros::ok()){
 
@@ -681,24 +661,24 @@ int forward_wall(ros::Rate loop_rate){
 
 			ir_wall[0]=ir_readings[2];
 			ir_wall[1]=ir_readings[3];
-			wall_min=dist_closest_wall(wall);
-			wall=wall_min.wall_num;
-			dist_wall_min=wall_min.irvalue;
+			wall_dist=dist_wall(wall_to_follow);
 			ROS_INFO("\n Left wall\n");
 
 		}else if (wall_in_range(1,inf_thres,ir_readings) && wall_to_follow==1){ // check if NOT wall on left side -> Just right wall
 
 			ir_wall[0]=ir_readings[4];
 			ir_wall[1]=ir_readings[5];
-			wall_min=dist_closest_wall(wall);
-			wall=wall_min.wall_num;
-			dist_wall_min=wall_min.irvalue;
+			wall_dist=dist_wall(wall_to_follow);
 			ROS_INFO("\n Right wall\n"); 
 		}else{
 			wall=0;
 		}
 
-		//ROS_INFO("\nwall: %d\ndist_wall_min: %.3f\n",wall, dist_wall_min);
+		if(wall_dist==-1){
+			stop();
+			ROS_INFO("Error wall_dist==-1!"); 
+			return 0;
+		}
 
 		if(wall==0){
 			stop();
@@ -707,8 +687,8 @@ int forward_wall(ros::Rate loop_rate){
 		}
 
 		// get angle to wall
-		error_theta=compute_ir_error(wall,ir_wall,theta_ref);
-		error_dist=compute_ir_dist(wall,ir_wall,dist_ref);
+		error_theta=compute_ir_error(wall_to_follow,ir_wall,theta_ref);
+		error_dist=compute_ir_dist(wall_to_follow,ir_wall,dist_ref);
 
 		//Control velocity of the robot
 		if(wall_in_range(3,inf_thres,ir_readings)){
@@ -751,7 +731,7 @@ int forward_wall(ros::Rate loop_rate){
 			u_dist=0;
 			control_pub(velocity_fw,u_theta+u_dist);
 		}else{
-			if (wall==1)
+			if (wall_to_follow==1)
 				u_dist=-k_dist*error_dist;
 			else
 				u_dist=k_dist*error_dist;

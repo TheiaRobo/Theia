@@ -1,6 +1,4 @@
 bool A
-int32 stop_type
 ---
 int32 B
-float64 heading_ref
-int32 wall_to_follow
+float64 parameter
