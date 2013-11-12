@@ -5,6 +5,9 @@ float64 d_rotate
 float64 k_align
 float64 i_align
 float64 d_align
+float64 k_dist
+float64 i_dist
+float64 d_dist
 float64 std_velocity
 float64 heading_thres
 float64 dist_thres

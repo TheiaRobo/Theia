@@ -12,7 +12,7 @@ const float PI = 3.1415926f;
 
 //IR distance thresholds
 double front_max = 20.0;
-double front_min = 5.0;
+double front_min = 7.5;
 double side_max = 20.0;
 double side_min = 4.0;
 double side_ref = 4.0;
@@ -22,7 +22,7 @@ int last_direction = 0; //0 - null, 1 - left, 2 - right, 3 - forward
 double range_exc = 20.0;
 double heading_ref = 0;
 double drive_mode = 0;
-const int hist_size = 10;
+const int hist_size = 100;
 const int ir_size = 8;
 const int median_size = 3;
 
@@ -95,7 +95,7 @@ void initialize_ir_raw(void){
 		}
 	}
 
-return;
+	return;
 }
 
 /* 
@@ -136,7 +136,7 @@ int wall_in_range(int side, double thres){
  * turn_TYPE: possible turning options
  **/
 void turn_left() {
-	
+
 	history[0].driving_mode=2;
 	history[0].driving_parameters=PI/2;
 	ROS_INFO("TURNING LEFT");
@@ -164,7 +164,7 @@ void turn_random() {
 		history[0].driving_parameters=-PI/2;
 	}
 	ROS_INFO("\ndrive_mode %d", history[0].driving_mode); 
-	
+
 	return;
 }
 
@@ -251,7 +251,7 @@ int last_wall_followed(void){
 		{
 			//history[0].driving_mode = 3;
 			//history[0].driving_parameters = history[i].driving_parameters; //Keep the last wall followed
-			return i;
+			return (int) history[i].driving_parameters;
 		}
 	}
 
@@ -266,7 +266,7 @@ int last_wall_followed(void){
  */ 
 int * consecutive_rotations(void){
 
-	int	rotations=0; 
+	int rotations=0; 
 	int direction=0;
 	int i=0;
 	int * return_vec=0;
@@ -282,7 +282,7 @@ int * consecutive_rotations(void){
 				else
 					break;
 			}else if(!direction){
-				
+
 				if(history[i].driving_parameters>0){
 					direction=1;
 				}else{
@@ -297,16 +297,16 @@ int * consecutive_rotations(void){
 					break;
 			}
 		}
-		
+
 		if(rotations==3)
 			break;
-		
+
 	}
-	
+
 	return_vec[0]=rotations;
-				
-				
-			
+
+
+
 	return return_vec;
 }
 
@@ -335,13 +335,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 	//Get empty space in history vector
 	shift_history();
 
-	/*
-	double front_max = 20.0;
-	double front_min = 5.0;
-	double side_max = 20.0;
-	double side_min = 4.0;
-	double side_ref = 4.0;
-	 */
+
 
 
 	///////////////////////////////////////////////////
@@ -349,9 +343,43 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 	///////////////////////////////////////////////////
 
 	if ( !wall_in_range(1, side_max) && !wall_in_range(2, side_max) && !wall_in_range(3, front_min) ){
-		history[0].driving_mode = 1;
-		history[0].driving_parameters = 0;
-		flag_turning_around = 0;
+
+		if(history[1].driving_mode==3){ // we were following the wall and stopped seeing it!
+			flag_turning_around=1;
+		}
+
+		if(!flag_turning_around){
+			history[0].driving_mode = 1;
+			history[0].driving_parameters = 0.0;
+			flag_turning_around=0;
+		}else{
+			//Check just the back sensor value to be sure that we stop precisely when we see or not see the value of the wall
+
+			if(history[1].driving_mode != 1){
+				//ROS_INFO("Last mode wasn't forward");
+				//Independent of previous driving modes
+				history[0].driving_mode = 1;
+				history[0].driving_parameters = 0.0;
+				flag_turning_around = 1;
+			}else{
+				ROS_INFO("Last mode was forward");
+				history[0].driving_mode = 2;
+				if(history[2].driving_mode==2){
+					history[0].driving_parameters=history[2].driving_parameters;
+				}else if(history[2].driving_mode==3){
+					if(history[2].driving_parameters==1){
+						history[0].driving_parameters=PI/2;
+					}else{
+						history[0].driving_parameters=-PI/2;
+					}
+				}
+
+				//Keep the sign of rotation
+				flag_turning_around = 1;
+			}
+		}
+
+		//flag_turning_around = flag_turning_around;
 	}
 
 	///////////////////////////////////////////////////
@@ -372,7 +400,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 			if (flag_turning_around){
 				if ((wall_in_range(last_wall_followed(), side_max))){
 					history[0].driving_mode = 3;
-					history[0].driving_parameters = last_wall_followed();				//Follow the closest wall
+					history[0].driving_parameters = last_wall_followed();				//Follow the last wall
 					flag_turning_around = 0;										//Finish turning
 				}else{
 					if(last_wall_followed()==1)
@@ -395,7 +423,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 			}else{
 				if ((wall_in_range(last_wall_followed(), side_max))){
 					history[0].driving_mode = 3;
-					history[0].driving_parameters = last_wall_followed();				//Follow the closest wall
+					history[0].driving_parameters = last_wall_followed();				//Follow the last wall
 					flag_turning_around = 0;										//Finish turning
 				}else{
 					history[0].driving_mode = 1;
@@ -419,24 +447,45 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 			}
 		}
 
+		//COMING FROM NOWHERE
+		if(history[1].driving_mode==0){
+			ROS_INFO("Nowhere");
+			history[0].driving_mode = 3;
+			history[0].driving_parameters = closest_wall();					   //Follow the closest wall
+			flag_turning_around = 0;
+		}
+
 	}
 
 	///////////////////////////////////////////////////
-	//CASE 2: If I am seeing at least one wall AND there is a wall very close at the front
+	//CASE 2: If I am seeing at least one wall to the side AND there is a wall very close at the front
 	///////////////////////////////////////////////////
 	if (((wall_in_range(1, side_max) || wall_in_range(2, side_max)) ) && (wall_in_range(3, front_min))){
-		if(last_wall_followed()==1)
-			turn_right();
-		else
-			turn_left();
-		
-		flag_turning_around=0;
+		if (!flag_turning_around){
+			if(last_wall_followed()==1)
+				turn_right();
+			else
+				turn_left();
+			flag_turning_around=0;	
+		}else{
+			if(last_wall_followed()==1)
+				turn_left();
+			else
+				turn_right();
+			flag_turning_around=1;	
+		}
+
 	}
 
 	///////////////////////////////////////////////////
-	//CASE 3: If I am seeing no walls AND there is a wall very close at the front
+	//CASE 3: If I am seeing no walls to the side AND there is a wall very close at the front
 	///////////////////////////////////////////////////
 	if (((!wall_in_range(1, side_max) && !wall_in_range(2, side_max)) ) && (wall_in_range(3, front_min))){
+
+		if(history[1].driving_mode==3){
+			flag_turning_around=1;
+		}
+
 		rot_count=consecutive_rotations(); 
 
 		switch (rot_count[0]){ // rot_count[0] -> num of rotations; rot_count[1] -> index of last rotation
@@ -457,7 +506,14 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 
 		delete [] rot_count;
 	}
-	
+
+	ROS_INFO("Last wall: %.1f",last_wall_followed);
+	ROS_INFO("Turn flag: %d",flag_turning_around);
+
+	for(int i=1; i<10;i++){
+		printf("Mode at i=%d : %d  ",i,history[i].driving_mode);
+	}
+	printf("\n");
 	switch(history[0].driving_mode){
 	case 1:
 		ROS_INFO("GO FORWARD");
@@ -466,16 +522,18 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 		ROS_INFO("TURN %.2f",history[0].driving_parameters);
 		break;
 	case 3:
-		ROS_INFO("FOLLOW WALL: %f",history[0].driving_mode);
+		ROS_INFO("FOLLOW WALL: %.0f",history[0].driving_parameters);
 		break;
 	default:
 		ROS_INFO("ERROR");
 		break;
 	}
-	
+
+	getchar();
+
 	res.B = history[0].driving_mode;
 	res.parameter = history[0].driving_parameters;
-	
+
 	//Update in history vector
 	return true;
 }
@@ -497,7 +555,7 @@ int main(int argc, char ** argv){
 
 	initialize_history();
 	initialize_ir_raw();
-	
+
 
 	while(ros::ok()){
 		loop_rate.sleep();
