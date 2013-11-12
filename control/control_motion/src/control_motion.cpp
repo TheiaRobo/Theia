@@ -66,7 +66,7 @@ double epsilon_dist=1.00;
 double forward_distance=25.0;
 
 // Threshold for the sensors
-double heading_thres=0.01;
+double heading_thres=0.02;
 double dist_thres=7.5;
 double inf_thres=20.0;
 double rotation_error_thres=0.10;
@@ -163,6 +163,11 @@ void update_params(const control_motion::params::ConstPtr msg){
 
 	k_forward=msg->k_forward;
 	k_rotate=msg->k_rotate;
+	i_rotate=msg->i_rotate;
+	d_rotate=msg->d_rotate;
+	k_align=msg->k_align;
+	i_align=msg->i_align;
+	d_align=msg->d_align;
 	std_velocity=msg->std_velocity;
 	heading_thres=msg->heading_thres;
 	dist_thres=msg->dist_thres;
@@ -600,11 +605,12 @@ int rotate(ros::Rate loop_rate){
 	double ir_wall[2]={0.0,0.0};
 	double theta_ref=0.0, theta_meas=0.0, error_theta=0.0,u_theta=0.0;
 	double I_sum=0.0, last_E=0.0;
-
+	
+	ROS_INFO("Will rotate %.2f rad",heading_ref);
 	// Rotation on-going
 	while(ros::ok() && !done){
 		processed_theta=correct_theta(theta,last_theta);
-		
+		heading_error=heading_ref-(processed_theta-init_theta);
 		// If Rotation completed
 		if(std::abs(heading_error) < heading_thres){
 			done=1;
@@ -617,6 +623,7 @@ int rotate(ros::Rate loop_rate){
 			ros::spinOnce();
 		}
 	} 
+	ROS_INFO("Finished rotating");
 
 	return 0;
 }
