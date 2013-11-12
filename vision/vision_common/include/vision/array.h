@@ -13,8 +13,9 @@ class Array {
 	public:
 		Array(size_t size);
 		Array(std::vector<T> & vector);
-		size_t size();
 		T & operator[](size_t index);
+		size_t size();
+		void sort(bool (* compFunc)(T & one, T & two));
 };
 
 #endif
