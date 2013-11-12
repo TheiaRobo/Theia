@@ -11,6 +11,7 @@ class Array {
 		size_t arraySize;
 
 	public:
+		Array();
 		Array(size_t size);
 		Array(std::vector<T> & vector);
 		~Array();
