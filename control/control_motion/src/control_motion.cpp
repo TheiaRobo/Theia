@@ -48,12 +48,12 @@ int break_dist_3 = 1;
 double k_forward=1.0;
 double k_rotate=1.0;
 double k_dist=1.0/50;
+double i_rotate=0.0;
+double d_rotate=0.0;
 
 // Forward velocity
 double std_velocity=12.0;
 double velocity_fw=std_velocity;
-double u_theta=0.0;
-double u_theta_const=PI/30; // to make the rotation command faster to execute (alternative: PID)
 double u_dist=0.0;
 double dist_wall_min=0.0;
 double epsilon_theta=0.09; // 5 degrees
@@ -401,6 +401,30 @@ int sign(double val){
 	return 1;
 }
 
+double PID_control(double P,double I,double D,double * integrator_sum, double * previous_error,double Ref,double val){
+	
+	double error=Ref-val;  		
+	double P_part=0,I_part=0,D_part=0, total=0;
+	
+	
+	//integrator_sum  +=(error*dt);	// I Part
+	(*integrator_sum)+=error/freq;
+	
+	//differentiator_val =(error-previous error)/dt; // D Part
+	D_part=(error-(*previous_error))*freq;
+	*previous_error=error;
+	
+	P_part=P*error;
+	I_part=I*(*integrator_sum);
+	D_part=D*D_part;
+	
+	
+	total=P_part+I_part+D_part;
+	
+	
+	return total;
+}
+
 /** none: Implements the 'None' behavior
  *
  *	Sends a stopping message to the core and asks for instructions to the logic node
@@ -429,16 +453,13 @@ int none(ros::Rate loop_rate){
 			for(int i=0; i<2; i++)
 				ir_wall[i]=ir_readings[i+2];
 			
-			//ROS_INFO("Can align with wall on the left");
 		}else if(wall_in_range(2,inf_thres,ir_readings)){ 	// check for wall on the right
 			wall=2;
 			
 			for(int i=0; i<2; i++)
 				ir_wall[i]=ir_readings[i+4];
 			
-			//ROS_INFO("Can align with wall on the right");
 		}else{ 	
-			//ROS_INFO("Cannot align with wall");		// check for no wall
 			wall=0;
 			stop();
 			done=1;
@@ -456,7 +477,7 @@ int none(ros::Rate loop_rate){
 				done=1;
 			}
 
-			control_pub(0,k_rotate*error_theta+sign(error_theta)*u_theta_const);		
+			control_pub(0,k_rotate*error_theta); //Should be PID		
 			loop_rate.sleep();
 			ros::spinOnce();
 		}
@@ -469,16 +490,12 @@ int none(ros::Rate loop_rate){
 	srv.request.stop_type=stop_type;
 	
 	if(ask_logic.call(srv)){
-		//ROS_INFO("Got new instruction: %d\n",srv.response.B);
 
 		if(srv.response.B==2){
 			heading_ref=srv.response.heading_ref;
-			//ROS_INFO("Rotation command: %.2f\n",heading_ref);
 		}
 
-		//getchar();
-
-		return srv.response.B; // Temporary. Will get instruction from control_logic
+		return srv.response.B;
 
 	} else {
 
@@ -574,12 +591,12 @@ int rotate(ros::Rate loop_rate){
 	double init_error=heading_ref-(processed_theta-init_theta); //Why now is different than in Forward?
 	int done=0, wall=1;
 	double ir_wall[2]={0.0,0.0};
-	double theta_ref=0.0, theta_meas=0.0, error_theta=0.0;
+	double theta_ref=0.0, theta_meas=0.0, error_theta=0.0,u_theta=0.0;
+	double I_sum=0.0, last_E=0.0;
 
 	// Rotation on-going
 	while(ros::ok() && !done){
 		processed_theta=correct_theta(theta,last_theta);
-		heading_error=heading_ref-(processed_theta-init_theta);
 		
 		// If Rotation completed
 		if(std::abs(heading_error) < heading_thres){
@@ -587,7 +604,8 @@ int rotate(ros::Rate loop_rate){
 			loop_rate.sleep();
 			stop();
 		}else{
-			control_pub(0.0,k_rotate*heading_error+sign(heading_error)*u_theta_const); // u_theta should be a PID controller result
+			u_theta=PID_control(k_rotate,i_rotate,d_rotate,&I_sum, &last_E,heading_ref,processed_theta-init_theta);
+			control_pub(0.0,u_theta);
 			loop_rate.sleep();
 			ros::spinOnce();
 		}
@@ -612,7 +630,7 @@ int rotate(ros::Rate loop_rate){
 int forward_wall(ros::Rate loop_rate){
 
 	double ir_wall[2]={0.0,0.0}, close_ir=0.0;
-	double theta_ref=0.0, theta_meas=0.0, error_theta=0.0; 
+	double theta_ref=0.0, theta_meas=0.0, error_theta=0.0,u_theta=0.0; 
 	double dist_ref=4.0, dist_meas=0.0, error_dist=0.0, avg_dist=0.0;
 
 	int wall=0, wall_im_following=0; // 1 - left side; 2 - right side
