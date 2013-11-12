@@ -51,114 +51,6 @@ void readIrData(core_sensors::ir::ConstPtr ir_msg){
 }
 
 
-void turn_left() {
-	heading_ref = PI/2;  //set to turn left
-	last_turn = 1;
-	last_direction = last_turn;
-	ROS_INFO("TURNING LEFT");
-	return;
-}
-
-void turn_right() {
-	heading_ref = -PI/2;  //set to turn right
-	last_turn = 2;
-	last_direction = last_turn;
-	ROS_INFO("TURNING RIGHT");
-	return;
-}
-
-void turn_around() {
-	heading_ref = PI;
-	ROS_INFO("TURNING AROUND");
-	last_direction=0;
-	return;
-}
-
-void go_forward() {
-	heading_ref = 0;
-	drive_mode = 3;
-	last_direction = 3;
-	ROS_INFO("GOING FORWARD");
-	return;
-}
-
-int turn_random() {
-	int random_var = 0; 
-	int driving_var = 1;
-	random_var=rand()%10; // random_var = {1, 10}
-
-	if (random_var > 5) 
-		driving_var=2;
-	else
-		driving_var=1;
-	
-	ROS_INFO("\ndrive_mode %d", driving_var); 
-	return driving_var;
-}
-
-bool try_turn() {      // This expression assesses whether the robot has room to turn lef or right and which direction it should turn.
-	bool left = false;   // When possible it will turn a different direction each time.
-	bool right = false;
-	double left_avg=0.0,right_avg=0.0;
-
-	if(ir[2] > sde_buffer && ir[3] > sde_buffer) left = true;
-	if(ir[4] > sde_buffer && ir[5] > sde_buffer) right = true;
-
-	if(left == true && right == false) {
-		ROS_INFO("Left true ; Right False");
-		drive_mode=2;
-		turn_left();
-		return true;
-
-	} else if(left == false && right == true) {
-		ROS_INFO("Left false ; Right True");
-		drive_mode=2;
-		turn_right();
-		return true;
-
-	} else if(left == true && right == true) {
-		ROS_INFO("Left true ; Right true");
-
-		// First try: always turn left if possible
-		//drive_mode=2;
-		/*turn_left();
-		return true;*/
-
-		/*
-		// Second try: turn to the side that has more space available
-		left_avg=(ir[2]+ir[3])/2;
-		right_avg=(ir[4]+ir[5])/2;
-
-		if(left_avg > right_avg){
-			turn_left();
-			return true;
-		}else{
-			turn_right();
-			return true;
-		}
-		 */
-
-		/*if(last_turn = 0 || last_turn == 2) {
-
-			turn_left();
-			return true;
-
-		} else if(last_turn == 1) {
-
-			turn_right();
-			return true;
-
-		}*/
-
-		//Third try:
-		drive_mode=turn_random();
-
-	} else 
-		ROS_INFO("Left False ; Right False");
-		return false; //we cannot turn!
-
-}
-
 /*
  * 
  * function: think
@@ -168,7 +60,6 @@ bool try_turn() {      // This expression assesses whether the robot has room to
 bool think(control_logic::MotionCommand::Request &req, control_logic::MotionCommand::Response &res){
 
 	bool turn=true;
-	int left_wall=0, right_wall=0;
 
 	if(ir[0]==0 && ir[1]==0 && ir[2]==0 && ir[3]==0 && ir[4]==0 && ir[5]==0 && ir[6]==0 && ir[7]==0){
 		res.B=0;
@@ -179,97 +70,6 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 
 	refresh.sleep(); // wait a bit before sending new orders
 
-	res.B=0; //default
-	heading_ref = 0;
-	drive_mode = 0;
-
-	if(ir[2] < sde_buffer && ir[3] < sde_buffer)
-		left_wall=1;
-
-	if(ir[4] < sde_buffer && ir[5] < sde_buffer)
-		right_wall=1;
-
-	////ROS_INFO("Stop Type: %d", req.stop_type);
-
-	if(ir[0] > fwd_buffer && ir[1] > fwd_buffer){ 
-		if(last_direction!=3){
-			go_forward();
-		}else{
-			if(left_wall==1 || right_wall==1){
-				go_forward();
-			}else{
-				turn=try_turn();
-			}
-		}
-	}else{
-		turn=try_turn();
-
-		if(turn==false){
-			drive_mode=2;
-			turn_around();
-		}
-	}
-
-
-
-	/*switch(req.stop_type) {	//depending on stop reason different code will run
-		case 1: 
-			drive_mode = 2;
-			if(try_turn()) {  //if it's possible to turn left or right it will, direction based on opposite of previous turn
-				break;
-			} //else 
-				//turn_around();	//if can't turn left or right robot will turn 180 degrees
-			//break;
-		case 2: 
-			//if(last_direction == 3) {  // if last direction was forward
-			if(last_direction!=3){
-				if(try_turn()) {        // then lets see if we can turn
-					drive_mode = 2;
-					break;
-				} else {
-					go_forward();         // if for some reason we can't turn we'll just continue forward
-				  	break;
-				}
-			}
-		case 3: 
-			if(ir[0] > fwd_buffer && ir[1] > fwd_buffer) { // if we can go forward we will
-				go_forward();
-				break;
-			} else {                                      // else we'll try turning
-				if(try_turn()) {
-				  drive_mode = 2;
-				  break;
-				}
-			}
-		case 4: 
-			if(ir[0] < range_exc || ir[1] < range_exc) {         // Basically if we're in open space we'll just find the nearest
-				go_forward();                                      // wall and then start following it. If everything is out of range 
-				break;                                             // then we'll zigzag until we find something.
-				} else if(ir[2] < range_exc || ir[3] < range_exc) {
-					drive_mode = 2;
-					turn_left();
-					break;
-				} else if(ir[4] < range_exc || ir[5] < range_exc) {
-					drive_mode = 2;
-					turn_right();
-					break;
-				} else {
-					if(last_direction == 3) {
-					  if(try_turn()) {
-					    drive_mode = 2;
-					    break;
-					  }
-					} else {
-						go_forward();
-						break;
-					}
-				}
-		default: 
-			go_forward();
-
-	}*/
-
-	//ROS_INFO("Drive mode is %d\n Heading ref is %.2f", drive_mode, heading_ref);
 
 
 	res.heading_ref = heading_ref;
@@ -279,8 +79,6 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 }
 
 int main(int argc, char ** argv){
-
-	//ROS_INFO("Control Logic (The Brain) has started... hold onto your butts");
 
 	ros::init(argc, argv, "control_logic");
 	ros::NodeHandle n;
