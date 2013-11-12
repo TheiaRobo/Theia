@@ -639,6 +639,7 @@ int forward_wall(ros::Rate loop_rate){
 	double ir_wall[2]={0.0,0.0}, close_ir=0.0;
 	double theta_ref=0.0, theta_meas=0.0, error_theta=0.0,u_theta=0.0; 
 	double dist_ref=4.0, dist_meas=0.0, error_dist=0.0, avg_dist=0.0;
+	double I_sum_r=0.0, last_E_r=0.0, I_sum_d=0.0, last_R_d=0.0;
 
 	int wall=0, wall_im_following=0; // 1 - left side; 2 - right side
 	WallInfo wall_min;
@@ -759,7 +760,7 @@ int forward_wall(ros::Rate loop_rate){
 			u_theta=0;
 			control_pub(velocity_fw,u_theta+u_dist);
 		}else{
-			u_theta=k_rotate*error_theta;
+			u_theta=PID_control(k_rotate,i_rotate,d_rotate,&I_sum_r, &last_E_r,error_theta,0);
 			control_pub(velocity_fw,u_theta+u_dist);
 		}
 
