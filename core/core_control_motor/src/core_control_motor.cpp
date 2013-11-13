@@ -18,7 +18,7 @@ double L=21.35/2,R1=5.0,R2=5.0; 	// length between the wheels(L) and diameter of
 
 /* PID controller values */
 
-double P1=6.0,P2=6.0,I1=100.0,I2=100.0,D1=0.0,D2=0.0; // This values should be allowed to change after receiving a debug msg
+double P1=8.0,P2=8.0,I1=50.0,I2=50.0,D1=0.0,D2=0.0; // This values should be allowed to change after receiving a debug msg
 
 double v_left=0;
 double v_right=0;

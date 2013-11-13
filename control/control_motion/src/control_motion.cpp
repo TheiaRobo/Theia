@@ -33,7 +33,7 @@ None: Send (v,w)=(0,0) command to the core and asks for instructions to the cont
  **/
 
 const float PI=3.1415926f;
-double freq=10.0;
+double freq=100.0;
 double x=0.0,y=0.0,theta=0.0,last_theta=0.0;; // Position estimate given by the odometry
 double ir_readings[8];
 double ir_raw[8][3];
@@ -47,8 +47,8 @@ int flag_dist2break_3 = 1;
 
 // Control parameters
 double k_forward=1.0;
-double k_rotate=1.2;
-double i_rotate=0.3;
+double k_rotate=1.7;
+double i_rotate=0.0;
 double d_rotate=0.01;
 double k_align=2.0;
 double i_align=0.1;
@@ -56,17 +56,17 @@ double d_align=0.6;
 double k_dist=0.04;
 double i_dist=0.0;
 double d_dist=0.0;
-double k_paralel=1.0;
+double k_paralel=1.6;
 double i_paralel=0.0;
-double d_paralel=0.0;
+double d_paralel=0.065;
 
 
 // Forward velocity
 double std_velocity=10.0;
 double velocity_fw=std_velocity;
 double dist_wall_min=0.0;
-double epsilon_theta=0.09; // 5 degrees
-double epsilon_dist=0.50;
+double epsilon_theta=0.00; // 5 degrees
+double epsilon_dist=0.00;
 double last_angle = 0.0;
 
 // Maximum distance to be travelled while on 'forward' behavior
@@ -74,8 +74,8 @@ double forward_distance=25.0;
 
 // Threshold for the sensors
 double heading_thres=0.01;
-double align_thres=0.003;
-double dist_thres=7.5;
+double align_thres=1.02;//0.003;
+double dist_thres=10.0;
 double inf_thres=20.0;
 double rotation_error_thres=0.10;
 double delay_thres=2.0; // no real time :(
@@ -372,12 +372,14 @@ double compute_ir_dist(int wall, double ir_wall[2], double dist_ref){
 
 	double dist_meas,error_dist;
 	// get dist to wall
-	if(ir_wall[0]>ir_wall[1])
+	/*if(ir_wall[0]>ir_wall[1])
 		dist_meas = ir_wall[1];
 	else
 		dist_meas = ir_wall[0];
 
-	error_dist= dist_ref - dist_meas;
+	error_dist= dist_ref - dist_meas;*/
+
+	error_dist=dist_ref-(ir_wall[0]+ir_wall[1])/2;
 
 	return error_dist;
 }
@@ -709,7 +711,7 @@ int forward_wall(ros::Rate loop_rate){
 
 	double ir_wall[2]={0.0,0.0}, close_ir=0.0;
 	double theta_ref=0.0, theta_meas=0.0, error_theta=0.0,u_theta=0.0,u_dist=0.0; 
-	double dist_ref=2.5, dist_meas=0.0, error_dist=0.0, avg_dist=0.0;
+	double dist_ref=4.0, dist_meas=0.0, error_dist=0.0, avg_dist=0.0;
 	double I_sum_r=0.0, last_E_r=0.0, I_sum_d=0.0, last_R_d=0.0;
 	int wall=1; // 1 - left side; 2 - right side
 	double wall_dist=0.0;
