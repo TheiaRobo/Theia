@@ -1,10 +1,9 @@
 #include <iostream>
 #include <opencv2/core/core.hpp>
-#include <opencv2/features2d/features2d.hpp>
-#include <opencv2/nonfree/features2d.hpp>
 #include <vector>
 #include <vision/array.h>
 
+#include "file.h"
 #include "recog.h"
 #include "train.h"
 
@@ -67,7 +66,8 @@ class ObjectDataScorePair {
 int recogObject(
 	TheiaImageData & data,
 	ObjectTrainData_t & trainData,
-	ObjectRecogScore & recogScore
+	ObjectRecogScore & recogScore,
+	ObjectFileTrain_t ** recognized
 ){
 	static BFMatcher matcher(NORM_L2);
 
@@ -131,7 +131,8 @@ int recogObject(
 int recog(
 	TheiaImageData & data,
 	Array<ObjectTrainData_t> & trainDataArr,
-	ObjectRecogContext & context
+	ObjectRecogContext & context,
+
 ){
 	std::cout << "RECOGNITION" << std::endl;
 	std::cout << " Start" << std::endl;
@@ -191,23 +192,15 @@ int recog(
 	size_t numbFilteredTrainObjects;
 	numbFilteredTrainObjects = filteredDataScorePairVect.size();
 
-	// show results
-	std::cout << " RESULTS" << std::endl;
-	for(size_t i = 0; i < numbFilteredTrainObjects; i++){
-		ObjectDataScorePair & dataScorePair = filteredDataScorePairVect[i];
-		ObjectTrainData_t & trainData = *dataScorePair.trainDataPtr;
-		ObjectRecogScore & recogScore = *dataScorePair.recogScorePtr;
+	if(!numbFilteredTrainObjects){
+		*recognized = NULL;
+	}else{
+		ObjectDataScorePair & bestScorePair = filteredDataScorePairVect[0];
+		ObjectTrainData_t & bestTrainData = *bestScorePair.trainDataPtr;
+		ObjectFileTrain_t & bestFile = bestTrainData.file;
 
-		std::cout << "  Object: ";
-		std::cout << trainData.file.object;
-		std::cout << std::endl;
-
-		std::cout << "  Mean square error: ";
-		std::cout << recogScore.meanSquareError;
-		std::cout << std::endl;
+		*recognized = &bestFile;
 	}
-
-	std::cout << " End" << std::endl;
 
 	return 0;
 }

@@ -5,6 +5,7 @@
 #include <vision/array.h>
 #include <vision/image.h>
 
+#include "file.h"
 #include "train.h"
 
 typedef struct {
@@ -15,7 +16,8 @@ typedef struct {
 int recog(
 	TheiaImageData & data,
 	Array<ObjectTrainData_t> & trainDataArr,
-	ObjectRecogContext & context
+	ObjectRecogContext & context,
+	ObjectFileTrain_t ** recognized
 );
 
 #endif
