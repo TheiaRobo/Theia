@@ -66,8 +66,7 @@ class ObjectDataScorePair {
 int recogObject(
 	TheiaImageData & data,
 	ObjectTrainData_t & trainData,
-	ObjectRecogScore & recogScore,
-	ObjectFileTrain_t ** recognized
+	ObjectRecogScore & recogScore
 ){
 	static BFMatcher matcher(NORM_L2);
 
@@ -132,7 +131,7 @@ int recog(
 	TheiaImageData & data,
 	Array<ObjectTrainData_t> & trainDataArr,
 	ObjectRecogContext & context,
-
+	ObjectFileTrain_t ** recognizedPtrPtr
 ){
 	std::cout << "RECOGNITION" << std::endl;
 	std::cout << " Start" << std::endl;
@@ -193,13 +192,13 @@ int recog(
 	numbFilteredTrainObjects = filteredDataScorePairVect.size();
 
 	if(!numbFilteredTrainObjects){
-		*recognized = NULL;
+		*recognizedPtrPtr = NULL;
 	}else{
 		ObjectDataScorePair & bestScorePair = filteredDataScorePairVect[0];
 		ObjectTrainData_t & bestTrainData = *bestScorePair.trainDataPtr;
 		ObjectFileTrain_t & bestFile = bestTrainData.file;
 
-		*recognized = &bestFile;
+		*recognizedPtrPtr = &bestFile;
 	}
 
 	return 0;

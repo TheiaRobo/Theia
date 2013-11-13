@@ -17,7 +17,7 @@ int recog(
 	TheiaImageData & data,
 	Array<ObjectTrainData_t> & trainDataArr,
 	ObjectRecogContext & context,
-	ObjectFileTrain_t ** recognized
+	ObjectFileTrain_t ** recognizedPtrPtr
 );
 
 #endif

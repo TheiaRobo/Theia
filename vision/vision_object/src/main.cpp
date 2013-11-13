@@ -15,6 +15,7 @@
 #include <cv_bridge/cv_bridge.h>
 
 // Sub modules
+#include "file.h"
 #include "recog.h"
 #include "train.h"
 
@@ -94,7 +95,19 @@ void imageCallback(const sensor_msgs::ImageConstPtr & rosMsgPtr){
 	recogContext.minScore = minScore;
 	recogContext.imageContextPtr = &imageContext;
 
-	recog(imageData, trainDataArr, recogContext);
+	ObjectFileTrain_t * recognizedPtr;
+	recog(
+		imageData,
+		trainDataArr,
+		recogContext,
+		&recognizedPtr
+	);
+
+	if(recognizedPtr){
+		cout << recognizedPtr->object << " recognized" << endl;
+	}else{
+		cout << " No object recognized" << endl;
+	}
 
 	cout << " End" << endl;
 }
