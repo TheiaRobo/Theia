@@ -16,6 +16,14 @@ class ObjectRecogScore {
 		double meanSquareError;
 		double variance;
 
+		bool operator<(double scalar) const {
+			if(meanSquareError < scalar){
+				return true;
+			}else{
+				return false;
+			}
+		}
+
 		bool operator<(const ObjectRecogScore & that) const {
 			if(meanSquareError < that.meanSquareError){
 				return true;
@@ -29,6 +37,16 @@ class ObjectDataScorePair {
 	public:
 		ObjectTrainData_t * trainDataPtr;
 		ObjectRecogScore * recogScorePtr;
+
+		bool operator<(double scalar) const {
+			ObjectRecogScore & scoreThis = *recogScorePtr;
+
+			if(scoreThis < scalar){
+				return true;
+			}else{
+				return false;
+			}
+		}
 
 		bool operator<(const ObjectDataScorePair & that) const {
 			ObjectRecogScore & scoreThis = *recogScorePtr;
