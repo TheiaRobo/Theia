@@ -1,59 +1,55 @@
-#include <algorithm>
 #include <iostream>
-#include <vector>
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/nonfree/features2d.hpp>
+#include <vector>
+#include <vision/array.h>
 
 #include "recog.h"
 #include "train.h"
 
 using namespace cv;
 
-typedef struct {
-	double meanError;
-	double meanSquareError;
-	double variance;
-} ObjectRecogScore_t;
+class ObjectRecogScore {
+	public:
+		double meanError;
+		double meanSquareError;
+		double variance;
 
-typedef struct {
-	ObjectTrainData_t * trainDataPtr;
-	ObjectRecogScore_t recogScore;
-} ObjectDataScorePair_t;
+		bool operator<(const ObjectRecogScore & that) const {
+			if(meanSquareError < that.meanSquareError){
+				return true;
+			}else{
+				return false;
+			}
+		}
+};
 
-bool ObjectDataScorePairPtrCompare(
-	ObjectDataScorePair_t * one,
-	ObjectDataScorePair_t * two
-);
+class ObjectDataScorePair {
+	public:
+		ObjectTrainData_t * trainDataPtr;
+		ObjectRecogScore * recogScorePtr;
 
-int recogObject(
-	Mat & descriptors,
-	ObjectTrainData_t & trainData,
-	ObjectRecogScore_t & recogScore
-);
+		bool operator<(const ObjectDataScorePair & that) const {
+			ObjectRecogScore & scoreThis = *recogScorePtr;
+			ObjectRecogScore & scoreThat = *that.recogScorePtr;
+
+			if(scoreThis < scoreThat){
+				return true;
+			}else{
+				return false;
+			}
+		}
+};
 
 /**
-* True if one is bettern than two
+* Compare sample data to training data
+* and calculate a score.
 */
-bool ObjectDataScorePairPtrCompare(
-	ObjectDataScorePair_t * one,
-	ObjectDataScorePair_t * two
-){
-	double errors[2];
-	errors[0] = one->recogScore.meanSquareError;
-	errors[1] = two->recogScore.meanSquareError;
-
-	if(errors[0] < errors[1]){
-		return true;
-	}else{
-		return false;
-	}
-}
-
 int recogObject(
 	TheiaImageData & data,
 	ObjectTrainData_t & trainData,
-	ObjectRecogScore_t & recogScore
+	ObjectRecogScore & recogScore
 ){
 	static BFMatcher matcher(NORM_L2);
 
@@ -111,28 +107,19 @@ int recogObject(
   	recogScore.meanSquareError = meanSquareError;
   	recogScore.variance = variance;
 
-  	/**
-  	* Show statistics
-  	*/
-  	std::cout << "Statistics for ";
-  	std::cout << trainData.file.object << std::endl;
-  	std::cout << " Mean error: " << meanError << std::endl;
-  	std::cout << " Mean square error: " << meanSquareError << std::endl;
-  	std::cout << " Variance " << variance << std::endl;
-  	std::cout << std::endl;
-
   	return 0;
 }
 
 int recog(
 	TheiaImageData & data,
-	std::vector<ObjectTrainData_t> & trainDataVect,
+	Array<ObjectTrainData_t> & trainDataArr,
 	TheiaImageContext & context
 ){
 
 	std::cout << "RECOGNITION" << std::endl;
 	std::cout << " Start" << std::endl;
 
+	// detect keypoints
 	std::cout << " Detect keypoints" << std::endl;
 	theiaImageDetectKeypoints(data, context);
 
@@ -144,52 +131,45 @@ int recog(
 		return -1;
 	}
 
+	// extract descriptors
 	std::cout << " Extract descriptors" << std::endl;
 	theiaImageExtractDescriptors(data, context);
 
-	/**
-	* Match with training data
-	*/
 	size_t numbTrainObjects;
-	numbTrainObjects = trainDataVect.size();
+	numbTrainObjects = trainDataArr.size();
 
-	ObjectDataScorePair_t dataScorePairArr[numbTrainObjects];
-	ObjectDataScorePair_t * dataScorePairPtrArr[numbTrainObjects];
+	// calculate score
+	std::cout << " Calculate score" << std::endl;
+	Array<ObjectRecogScore> recogScoreArr(numbTrainObjects);
 
-	size_t i;
-	for(i = 0; i < numbTrainObjects; i++){
-		recogObject(
-			data,
-			trainDataVect[i],
-			dataScorePairArr[i].recogScore
-		);
-
-		dataScorePairArr[i].trainDataPtr = &trainDataVect[i];
-		dataScorePairPtrArr[i] = &dataScorePairArr[i];
-
+	for(size_t i = 0; i < numbTrainObjects; i++){
+		recogObject(data, trainDataArr[i], recogScoreArr[i]);
 	}
 
-	std::sort(
-		dataScorePairPtrArr,
-		dataScorePairPtrArr + numbTrainObjects,
-		ObjectDataScorePairPtrCompare
-	);
+	// generate ranklist
+	std::cout << " Generate ranklist" << std::endl;
+	Array<ObjectDataScorePair> dataScorePairArr(numbTrainObjects);
 
+	for(size_t i = 0; i < numbTrainObjects; i++){
+		dataScorePairArr[i].trainDataPtr = &trainDataArr[i];
+		dataScorePairArr[i].recogScorePtr = &recogScoreArr[i];
+	}
 
-	/**
-	* Show results
-	*/
-	std::cout << "RESULTS" << std::endl;
-	for(i = 0; i < numbTrainObjects; i++){
-		ObjectDataScorePair_t * pairPtr;
-		pairPtr = dataScorePairPtrArr[i];
+	dataScorePairArr.sort();
 
-		std::cout << " Object: ";
-		std::cout << pairPtr->trainDataPtr->file.object;
+	// show results
+	std::cout << " RESULTS" << std::endl;
+	for(size_t i = 0; i < numbTrainObjects; i++){
+		ObjectDataScorePair & dataScorePair = dataScorePairArr[i];
+		ObjectTrainData_t & trainData = *dataScorePair.trainDataPtr;
+		ObjectRecogScore & recogScore = *dataScorePair.recogScorePtr;
+
+		std::cout << "  Object: ";
+		std::cout << trainData.file.object;
 		std::cout << std::endl;
 
-		std::cout << " Mean square error: ";
-		std::cout << pairPtr->recogScore.meanSquareError;
+		std::cout << "  Mean square error: ";
+		std::cout << recogScore.meanSquareError;
 		std::cout << std::endl;
 	}
 

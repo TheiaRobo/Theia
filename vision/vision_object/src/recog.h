@@ -2,6 +2,7 @@
 #define VISION_OBJECT_RECOG
 
 #include <vector>
+#include <vision/array.h>
 #include <vision/image.h>
 #include <opencv2/core/core.hpp>
 
@@ -9,7 +10,7 @@
 
 int recog(
 	TheiaImageData & data,
-	std::vector<ObjectTrainData_t> & trainDataVect,
+	Array<ObjectTrainData_t> & trainDataArr,
 	TheiaImageContext & context
 );
 

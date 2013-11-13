@@ -4,6 +4,7 @@
 
 // ROS
 #include <ros/ros.h>
+#include <vision/array.h>
 #include <vision/image.h>
 
 // ROS messages
@@ -28,7 +29,7 @@ void trainCallback(const std_msgs::EmptyConstPtr & rosMsgPtr);
 int trainInit();
 
 TheiaImageContext imageContext;
-vector<ObjectTrainData_t> trainDataVect;
+Array<ObjectTrainData_t> trainDataArr;
 ros::Subscriber imageSub;
 ros::Subscriber trainSub;
 
@@ -44,7 +45,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr & rosMsgPtr){
 
 	recog(
 		imageData,
-		trainDataVect,
+		trainDataArr,
 		imageContext
 	);
 
@@ -61,8 +62,6 @@ void trainCallback(const std_msgs::EmptyConstPtr & rosMsgPtr){
 }
 
 int trainInit(){
-	int errorCode;
-
 	string path;
 	ros::param::getCached(
 		"~config/path",
@@ -75,6 +74,7 @@ int trainInit(){
 		surfMinHessian
 	);
 
+	int errorCode;
 	errorCode = theiaImageCreateContext(
 		surfMinHessian,
 		imageContext
@@ -88,7 +88,8 @@ int trainInit(){
 	ObjectTrainConfig_t trainConfig;
 	trainConfig.path = path;
 	trainConfig.imageContext = imageContext;
-	
+
+	vector<ObjectTrainData_t> trainDataVect;
 	errorCode = train(
 		trainConfig,
 		trainDataVect
@@ -98,6 +99,9 @@ int trainInit(){
 		cout << "Error: Training failed" << endl;
 		return errorCode;
 	}
+
+	// to array
+	trainDataArr = Array<ObjectTrainData_t>(trainDataVect);
 
 	return 0;
 }
