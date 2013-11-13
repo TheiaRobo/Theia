@@ -22,7 +22,7 @@ int last_direction = 0; //0 - null, 1 - left, 2 - right, 3 - forward
 double range_exc = 20.0;
 double heading_ref = 0;
 double drive_mode = 0;
-double forward_standard = 25.0;
+double forward_standard = 20.0;
 const int hist_size = 100;
 const int ir_size = 8;
 const int median_size = 3;
@@ -183,7 +183,7 @@ void initialize_history(void){
 	int i;
 	for (i=0; i < hist_size; i++){
 		history[i].driving_mode=0;
-		history[i].driving_parameters=forward_standard;
+		history[i].driving_parameters=0;
 	}
 	return;
 }
@@ -352,15 +352,18 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 			//Check just the back sensor value to be sure that we stop precisely when we see or not see the value of the wall
 
 			if(history[1].driving_mode != 1){
-				//ROS_INFO("Last mode wasn't forward");
+				ROS_INFO("Last mode wasn't forward");
 				//Independent of previous driving modes
 				history[0].driving_mode = 1;
 				
 				if(history[2].driving_parameters==forward_standard)
 					history[0].driving_parameters = 30.0;
-				else
+				else if(history[2].driving_parameters>forward_standard)
 					history[0].driving_parameters = 35.0;
+				else
+					history[0].driving_parameters = forward_standard;
 				
+				ROS_INFO("CHOSEN DISTANCE: %.2f",history[0].driving_parameters);
 				flag_turning_around = 1;
 			}else{
 				ROS_INFO("Last mode was forward");
