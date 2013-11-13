@@ -252,7 +252,7 @@ int last_wall_followed(void){
 	}
 
 	//history[0].driving_parameters = closest_wall(); //Keep the last wall followed
-	return -1;	
+	return 0;	
 
 }
 
@@ -350,7 +350,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 			flag_turning_around=0;
 		}else{
 			//Check just the back sensor value to be sure that we stop precisely when we see or not see the value of the wall
-
+			flag_turning_around=1;
 			if(history[1].driving_mode != 1){
 				ROS_INFO("Last mode wasn't forward");
 				//Independent of previous driving modes
@@ -358,13 +358,16 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 				
 				if(history[2].driving_parameters==forward_standard)
 					history[0].driving_parameters = 30.0;
-				else if(history[2].driving_parameters>forward_standard)
+				else if(history[2].driving_parameters==30.0)
 					history[0].driving_parameters = 35.0;
+				else if(history[2].driving_parameters==35){ // failed to find wall -> im lost
+					history[0].driving_parameters = forward_standard;
+					flag_turning_around=0;
+				}
 				else
 					history[0].driving_parameters = forward_standard;
 				
 				ROS_INFO("CHOSEN DISTANCE: %.2f",history[0].driving_parameters);
-				flag_turning_around = 1;
 			}else{
 				ROS_INFO("Last mode was forward");
 				history[0].driving_mode = 2;
@@ -377,10 +380,9 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 						history[0].driving_parameters=-PI/2;
 					}
 				}
-
-				//Keep the sign of rotation
-				flag_turning_around = 1;
 			}
+
+
 		}
 
 		//flag_turning_around = flag_turning_around;
@@ -504,8 +506,13 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 		default:
 			if (flag_turning_around){
 				history[0].driving_mode = 2;
-				history[0].driving_parameters = history[rot_count[1]].driving_parameters; //Keep the sign of rotation
-				flag_turning_around = 1;
+				//history[0].driving_parameters = history[rot_count[1]].driving_parameters; //Keep the sign of rotation
+				if(last_wall_followed()==1)
+					turn_left();
+				else
+					turn_right();
+				
+				flag_turning_around=1;	
 			}else{
 				turn_random();
 				flag_turning_around = 0;
@@ -537,7 +544,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 		break;
 	}
 
-	getchar();
+	//getchar();
 
 	res.B = history[0].driving_mode;
 	res.parameter = history[0].driving_parameters;

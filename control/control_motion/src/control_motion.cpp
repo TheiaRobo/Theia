@@ -47,12 +47,12 @@ int flag_dist2break_3 = 1;
 
 // Control parameters
 double k_forward=1.0;
-double k_rotate=1.7;
-double i_rotate=0.0;
-double d_rotate=0.3;
-double k_align=1.0;
-double i_align=0.0;
-double d_align=0.0;
+double k_rotate=1.2;
+double i_rotate=0.3;
+double d_rotate=0.01;
+double k_align=2.0;
+double i_align=0.1;
+double d_align=0.6;
 double k_dist=0.04;
 double i_dist=0.0;
 double d_dist=0.0;
@@ -73,7 +73,8 @@ double last_angle = 0.0;
 double forward_distance=25.0;
 
 // Threshold for the sensors
-double heading_thres=0.02;
+double heading_thres=0.01;
+double align_thres=0.003;
 double dist_thres=7.5;
 double inf_thres=20.0;
 double rotation_error_thres=0.10;
@@ -464,7 +465,7 @@ int none(ros::Rate loop_rate){
 
 	heading_ref=0.0;
 
-	ROS_INFO("None: Align mode");
+	ROS_INFO("None: Align mode\nLast Angle: %.2f",last_angle);
 	/* Because a behavior may stay in loop while doing its thing */
 	loop_rate.sleep();
 	ros::spinOnce();
@@ -532,20 +533,21 @@ int none(ros::Rate loop_rate){
 			error_theta=compute_ir_error(wall,ir_wall,theta_ref);
 			//ROS_INFO("error_theta: %.3f\n",error_theta);
 
-			if(std::abs(error_theta)<2*heading_thres){
+			if(std::abs(error_theta)<align_thres){
 				stop();
 				done=1;
 			}
 			u_theta=PID_control(k_align,i_align,d_align,&I_sum, &last_E,error_theta,0);
 			control_pub(0,u_theta);
 
-			loop_rate.sleep();
-			ros::spinOnce();
+			
+			
 
 		}else{ 
 			// if (wall == 0) which is equivalent to if ((wall != 1 && wall != 2))
 			if (last_angle != 0){
-				heading_ref=-last_theta;
+				//heading_ref=-last_angle;
+				heading_ref=0;
 				stop();
 				loop_rate.sleep();
 				ros::spinOnce();
@@ -557,8 +559,11 @@ int none(ros::Rate loop_rate){
 				done=1;
 			}
 		}
+		loop_rate.sleep();
+		ros::spinOnce();
 	}
-
+	
+	last_angle = 0;
 	//Out of the while. Finished align mode
 	ROS_INFO("None: finished align mode");
 
@@ -652,6 +657,7 @@ int forward(ros::Rate loop_rate){
 
 	stop();
 	ROS_INFO("Finished the forward behavior successfully!\n");
+	last_angle = 0;
 	return 0;
 
 }
@@ -691,6 +697,7 @@ int rotate(ros::Rate loop_rate){
 		}
 	} 
 	ROS_INFO("Finished rotating");
+	last_angle = 0;
 	return 0;
 }
 
@@ -717,6 +724,7 @@ int forward_wall(ros::Rate loop_rate){
 
 		if(wall_in_range(3,dist_thres,ir_readings)){ 		// check if obstacle ahead
 			stop();
+			last_angle=0;
 			ROS_INFO("Stop! Obstacle ahead!\n");
 			return 0;
 		}
@@ -741,7 +749,7 @@ int forward_wall(ros::Rate loop_rate){
 		//Lost wall
 		if(wall==0){
 			stop();
-			ROS_INFO("Lost wall!"); 
+			ROS_INFO("Lost wall!\nLast_angle: %.2f",last_angle); 
 			return 0;
 		}
 
