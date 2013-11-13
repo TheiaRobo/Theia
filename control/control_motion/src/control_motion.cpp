@@ -55,6 +55,9 @@ double d_align=0.0;
 double k_dist=0.04;
 double i_dist=0.0;
 double d_dist=0.0;
+double k_paralel=1.0;
+double i_paralel=0.0;
+double d_paralel=0.0;
 
 
 // Forward velocity
@@ -165,6 +168,9 @@ void update_params(const control_motion::params::ConstPtr msg){
 	k_dist=msg->k_dist;
 	i_dist=msg->i_dist;
 	d_dist=msg->d_dist;
+	k_paralel=msg->k_paralel;
+	i_paralel=msg->i_paralel;
+	d_paralel=msg->d_paralel;
 	std_velocity=msg->std_velocity;
 	heading_thres=msg->heading_thres;
 	dist_thres=msg->dist_thres;
@@ -508,6 +514,8 @@ int none(ros::Rate loop_rate){
 			heading_ref=srv.response.parameter;
 		}else if(srv.response.B==3){
 			wall_to_follow=(int) srv.response.parameter;
+		}else{ // forward
+			forward_distance=srv.response.parameter;
 		}
 
 		return srv.response.B;
@@ -735,7 +743,7 @@ int forward_wall(ros::Rate loop_rate){
 			u_theta=0;
 			control_pub(velocity_fw,u_theta+u_dist);
 		}else{
-			u_theta=PID_control(k_align,i_align,d_align,&I_sum_r, &last_E_r,error_theta,0);
+			u_theta=PID_control(k_paralel,i_paralel,d_paralel,&I_sum_r, &last_E_r,error_theta,0);
 			control_pub(velocity_fw,u_theta+u_dist);
 		}
 

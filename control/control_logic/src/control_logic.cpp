@@ -22,6 +22,7 @@ int last_direction = 0; //0 - null, 1 - left, 2 - right, 3 - forward
 double range_exc = 20.0;
 double heading_ref = 0;
 double drive_mode = 0;
+double forward_standard = 25.0;
 const int hist_size = 100;
 const int ir_size = 8;
 const int median_size = 3;
@@ -139,7 +140,6 @@ void turn_left() {
 
 	history[0].driving_mode=2;
 	history[0].driving_parameters=PI/2;
-	ROS_INFO("TURNING LEFT");
 	return;
 }
 
@@ -147,7 +147,6 @@ void turn_right() {
 
 	history[0].driving_mode=2;
 	history[0].driving_parameters=-PI/2;
-	ROS_INFO("TURNING RIGHT");
 	return;
 }
 
@@ -163,8 +162,6 @@ void turn_random() {
 		history[0].driving_mode=2;
 		history[0].driving_parameters=-PI/2;
 	}
-	ROS_INFO("\ndrive_mode %d", history[0].driving_mode); 
-
 	return;
 }
 
@@ -175,7 +172,6 @@ void go_forward() {
 	heading_ref = 0;
 	drive_mode = 3;
 	last_direction = 3;
-	ROS_INFO("GOING FORWARD");
 	return;
 }
 
@@ -187,7 +183,7 @@ void initialize_history(void){
 	int i;
 	for (i=0; i < hist_size; i++){
 		history[i].driving_mode=0;
-		history[i].driving_parameters=0.0;
+		history[i].driving_parameters=forward_standard;
 	}
 	return;
 }
@@ -350,7 +346,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 
 		if(!flag_turning_around){
 			history[0].driving_mode = 1;
-			history[0].driving_parameters = 0.0;
+			history[0].driving_parameters = forward_standard;
 			flag_turning_around=0;
 		}else{
 			//Check just the back sensor value to be sure that we stop precisely when we see or not see the value of the wall
@@ -359,7 +355,12 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 				//ROS_INFO("Last mode wasn't forward");
 				//Independent of previous driving modes
 				history[0].driving_mode = 1;
-				history[0].driving_parameters = 0.0;
+				
+				if(history[2].driving_parameters==forward_standard)
+					history[0].driving_parameters = 30.0;
+				else
+					history[0].driving_parameters = 35.0;
+				
 				flag_turning_around = 1;
 			}else{
 				ROS_INFO("Last mode was forward");
@@ -427,7 +428,11 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 					flag_turning_around = 0;										//Finish turning
 				}else{
 					history[0].driving_mode = 1;
-					history[0].driving_parameters = 0;
+					if(history[2].driving_parameters==forward_standard)
+						history[0].driving_parameters = 30.0;
+					else
+						history[0].driving_parameters = 35.0;
+					
 					flag_turning_around = 1;
 				}
 			}
@@ -442,7 +447,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 				flag_turning_around = 0;										//Finish turning
 			}else{
 				history[0].driving_mode = 1;
-				history[0].driving_parameters = 0;
+				history[0].driving_parameters = forward_standard;
 				flag_turning_around = 1;
 			}
 		}
