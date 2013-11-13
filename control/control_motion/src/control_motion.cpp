@@ -47,18 +47,18 @@ int flag_dist2break_3 = 1;
 
 // Control parameters
 double k_forward=1.0;
-double k_rotate=1.7;
+double k_rotate=1.873;
 double i_rotate=0.0;
-double d_rotate=0.01;
-double k_align=2.0;
-double i_align=0.1;
-double d_align=0.6;
+double d_rotate=0.0198;
+double k_align=1.5;
+double i_align=0.0;
+double d_align=0.04;
 double k_dist=0.04;
 double i_dist=0.0;
 double d_dist=0.0;
 double k_paralel=1.6;
 double i_paralel=0.0;
-double d_paralel=0.065;
+double d_paralel=0.0;
 
 
 // Forward velocity
@@ -89,6 +89,10 @@ int count=0;
 
 // distance between ir sensors
 double ir_dist=20.0;
+
+// PID AUX
+
+const double PID_INIT=123456789.0;
 
 // Thresholds for the velocities
 
@@ -434,7 +438,10 @@ double PID_control(double P,double I,double D,double * integrator_sum, double * 
 
 	//integrator_sum  +=(error*dt);	// I Part
 	(*integrator_sum)+=error/freq;
-
+	
+	if(*previous_error==PID_INIT){ // initialization
+		*previous_error=error;
+	}
 	//differentiator_val =(error-previous error)/dt; // D Part
 	D_part=(error-(*previous_error))*freq;
 	*previous_error=error;
@@ -463,7 +470,7 @@ int none(ros::Rate loop_rate){
 
 	int wall=0, done=0;
 	double ir_wall[2]={0.0,0.0},error_theta=0.0,theta_ref=0.0,u_theta=0.0;
-	double I_sum=0.0, last_E=0.0;
+	double I_sum=0.0, last_E=PID_INIT;
 
 	stop();
 
@@ -679,7 +686,7 @@ int rotate(ros::Rate loop_rate){
 	int done=0, wall=1;
 	double ir_wall[2]={0.0,0.0};
 	double theta_ref=0.0, theta_meas=0.0, error_theta=0.0,u_theta=0.0;
-	double I_sum=0.0, last_E=0.0;
+	double I_sum=0.0, last_E=PID_INIT;
 
 	ROS_INFO("Will rotate %.2f rad",heading_ref);
 	// Rotation on-going
@@ -712,7 +719,7 @@ int forward_wall(ros::Rate loop_rate){
 	double ir_wall[2]={0.0,0.0}, close_ir=0.0;
 	double theta_ref=0.0, theta_meas=0.0, error_theta=0.0,u_theta=0.0,u_dist=0.0; 
 	double dist_ref=4.0, dist_meas=0.0, error_dist=0.0, avg_dist=0.0;
-	double I_sum_r=0.0, last_E_r=0.0, I_sum_d=0.0, last_R_d=0.0;
+	double I_sum_r=0.0, last_E_r=PID_INIT, I_sum_d=0.0, last_R_d=PID_INIT;
 	int wall=1; // 1 - left side; 2 - right side
 	double wall_dist=0.0;
 	double BreakingRatio_3; //Variable used to compute the velocity to break proportional to distance
