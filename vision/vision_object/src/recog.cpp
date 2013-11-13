@@ -1,5 +1,8 @@
 #include <iostream>
+#include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/core/core.hpp>
+#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <vector>
 #include <vision/array.h>
 
@@ -14,6 +17,7 @@ class ObjectRecogScore {
 		double meanError;
 		double meanSquareError;
 		double variance;
+		std::vector<DMatch> matches;
 
 		bool operator<(double scalar) const {
 			if(meanSquareError < scalar){
@@ -123,8 +127,64 @@ int recogObject(
   	recogScore.meanError = meanError;
   	recogScore.meanSquareError = meanSquareError;
   	recogScore.variance = variance;
+  	recogScore.matches = matches;
 
   	return 0;
+}
+
+int recogFindHomography(
+	TheiaImageData & sampleData,
+	ObjectTrainData_t & trainData,
+	ObjectRecogScore & recogScore,
+	Mat & homography
+){
+  	std::vector<KeyPoint> & sampleKeypoints = sampleData.keypoints;
+  	std::vector<KeyPoint> & trainKeypoints = trainData.data.keypoints;
+
+  	std::vector<Point2f> samplePoints;
+  	std::vector<Point2f> trainPoints;
+
+  	std::vector<DMatch> & matches = recogScore.matches;
+
+  	size_t numbMatches;
+  	numbMatches = matches.size();
+
+  	for(size_t i = 0; i < numbMatches; i++ ){
+  		trainPoints.push_back(trainKeypoints[matches[i].queryIdx].pt);
+  		samplePoints.push_back(sampleKeypoints[matches[i].trainIdx].pt);
+  	}
+
+  	homography = findHomography(trainPoints, sampleKeypoints);
+  	// homography = findHomography(trainPoints, sampleKeypoints, CV_RANSAC);
+
+  	return 0;
+}
+
+int recogShowHomography(
+	TheiaImageData & sampleData,
+	Mat & homography
+){
+	std::vector<Point2f> corners;
+	corners[0] = cvPoint(0, 0);
+	corners[1] = cvPoint(sampleData.image.cols, 0);
+	corners[2] = cvPoint(sampleData.image.cols, sampleData.image.rows);
+	corners[3] = cvPoint(0, sampleData.image.rows);
+
+	std::vector<Point2f> transformedCorners;
+	perspectiveTransform(corners, transformedCorners, homography);
+
+	Mat image;
+	for(size_t i; i < 4; i++){
+		line(
+			image,
+			transformedCorners[i] + Point2f(sampleData.image.cols, 0),
+			transformedCorners[(i + 1) % 4] + Point2f(sampleData.image.cols, 0),
+			Scalar(0, 255, 0),
+			4
+		);
+	}
+
+	imshow("Object", image);
 }
 
 int recog(
@@ -193,13 +253,28 @@ int recog(
 
 	if(!numbFilteredTrainObjects){
 		*recognizedPtrPtr = NULL;
-	}else{
-		ObjectDataScorePair & bestScorePair = filteredDataScorePairVect[0];
-		ObjectTrainData_t & bestTrainData = *bestScorePair.trainDataPtr;
-		ObjectFileTrain_t & bestFile = bestTrainData.file;
-
-		*recognizedPtrPtr = &bestFile;
+		return 0;
 	}
+
+	ObjectDataScorePair & bestScorePair = filteredDataScorePairVect[0];
+	ObjectTrainData_t & bestTrainData = *bestScorePair.trainDataPtr;
+	ObjectRecogScore & bestRecogScore = *bestScorePair.recogScorePtr;
+	ObjectFileTrain_t & bestFile = bestTrainData.file;
+
+	// find homography
+	Mat homography;
+	recogFindHomography(
+		data,
+		bestTrainData,
+		bestRecogScore,
+		homography
+	);
+
+	// show homography
+	recogShowHomography(data, homography);
+
+	// return result
+	*recognizedPtrPtr = &bestFile;
 
 	return 0;
 }
