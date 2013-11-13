@@ -23,6 +23,8 @@ double range_exc = 20.0;
 double heading_ref = 0;
 double drive_mode = 0;
 double forward_standard = 20.0;
+double forward_medium = 30.0;
+double forward_extended = 35.0;
 const int hist_size = 100;
 const int ir_size = 8;
 const int median_size = 3;
@@ -37,7 +39,7 @@ typedef struct history_struct{
 
 driving_history history[hist_size];
 
-int flag_turning_around = 0; 
+int flag_turning = 0; 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
@@ -150,19 +152,17 @@ void turn_right() {
 	return;
 }
 
-void turn_random() {
+double turn_random() {
 	int random_var = 0; 
 	int driving_var = 1;
 	random_var=rand()%10; // random_var = {1, 10}
-
+	double d_param = 0;
 	if (random_var > 5){ 
-		history[0].driving_mode=2;
-		history[0].driving_parameters=PI/2;
+		d_param=PI/2;
 	}else{
-		history[0].driving_mode=2;
-		history[0].driving_parameters=-PI/2;
+		d_param=-PI/2;
 	}
-	return;
+	return d_param;
 }
 
 /** 
@@ -248,7 +248,10 @@ int last_wall_followed(void){
 			//history[0].driving_mode = 3;
 			//history[0].driving_parameters = history[i].driving_parameters; //Keep the last wall followed
 			return (int) history[i].driving_parameters;
-		}
+		}else{
+			//Default: Empty driving history
+			return closest_wall();
+		}	
 	}
 
 	//history[0].driving_parameters = closest_wall(); //Keep the last wall followed
@@ -301,8 +304,6 @@ int * consecutive_rotations(void){
 
 	return_vec[0]=rotations;
 
-
-
 	return return_vec;
 }
 
@@ -331,202 +332,455 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 	//Get empty space in history vector
 	shift_history();
 
-
-
-
 	///////////////////////////////////////////////////
 	//CASE 0: I am not seeing walls
 	///////////////////////////////////////////////////
 
 	if ( !wall_in_range(1, side_max) && !wall_in_range(2, side_max) && !wall_in_range(3, front_min) ){
 
-		if(history[1].driving_mode==3){ // we were following the wall and stopped seeing it!
-			flag_turning_around=1;
-		}
+		if(!flag_turning){
 
-		if(!flag_turning_around){
-			history[0].driving_mode = 1;
-			history[0].driving_parameters = forward_standard;
-			flag_turning_around=0;
-		}else{
-			//Check just the back sensor value to be sure that we stop precisely when we see or not see the value of the wall
-			flag_turning_around=1;
-			if(history[1].driving_mode != 1){
-				ROS_INFO("Last mode wasn't forward");
-				//Independent of previous driving modes
+			if(history[1].driving_mode == 1){
+				//Going forward trying to find a wall
+				//Might want to go infinite distance
 				history[0].driving_mode = 1;
-				
-				if(history[2].driving_parameters==forward_standard)
-					history[0].driving_parameters = 30.0;
-				else if(history[2].driving_parameters==30.0)
-					history[0].driving_parameters = 35.0;
-				else if(history[2].driving_parameters==35){ // failed to find wall -> im lost
-					history[0].driving_parameters = forward_standard;
-					flag_turning_around=0;
-				}
-				else
-					history[0].driving_parameters = forward_standard;
-				
-				ROS_INFO("CHOSEN DISTANCE: %.2f",history[0].driving_parameters);
+				history[0].driving_parameters = forward_standard;
+				flag_turning=0;
+			}
+
+			else if(history[1].driving_mode == 2){
+				/*We rotated because we saw a wall in the front and after rotated 
+				we stopped seeing it. We want now to go around it. FWD... then ROTATE*/
+				history[0].driving_mode = 1;
+				history[0].driving_parameters = forward_standard;
+				flag_turning=1;
+			}
+
+			else if(history[1].driving_mode == 3){
+				//I was following a wall and I lost it
+				history[0].driving_mode = 1;
+				history[0].driving_parameters = forward_standard;
+				flag_turning=1;
+
 			}else{
-				ROS_INFO("Last mode was forward");
-				history[0].driving_mode = 2;
-				if(history[2].driving_mode==2){
-					history[0].driving_parameters=history[2].driving_parameters;
-				}else if(history[2].driving_mode==3){
+				//COMING FROM NOWHERE
+				if(history[1].driving_mode==0){
+					ROS_INFO("Coming from nowhere");
+					history[0].driving_mode = 3;
+					history[0].driving_parameters = closest_wall();					   //Follow the closest wall
+					flag_turning = 0;
+				}else{
+					ROS_INFO("Impossible case flag_turning=0 and coming driving_mode = %d", history[1].driving_mode);
+				}
+			}
+
+
+		}else{
+			// flag_turning = 1
+			// flag_turning = 1
+
+			//Same code as in the case of at least 1 wall when I am detecting the wall I 
+			//was not following
+			if(history[1].driving_mode == 1){
+
+				if(history[1].driving_parameters==forward_standard){
+					history[0].driving_mode = 2;
+					if(history[2].driving_parameters==PI/2){
+						history[0].driving_parameters=PI/2;
+					}else if(history[2].driving_parameters==-PI/2){
+						history[0].driving_parameters=-PI/2;
+					}else{
+						ROS_INFO("ERROR I was not turning correctly. history[0].driving_parameters = %.2f",history[0].driving_parameters);
+					}
+
+				}else if(history[1].driving_parameters==forward_medium){
+					history[0].driving_mode = 2;
+					if(history[2].driving_parameters==PI/2){
+						history[0].driving_parameters=PI/2;
+					}else if(history[2].driving_parameters==-PI/2){
+						history[0].driving_parameters=-PI/2;
+					}else{
+						ROS_INFO("ERROR I was not turning correctly. history[2].driving_parameters = %.2f",history[0].driving_parameters);
+					}
+
+				}else if(history[1].driving_parameters==forward_extended){
+					ROS_INFO("\nI did not find a wall to follow\nImpossible case history[1].driving_parameters = %.2f",history[1].driving_parameters);
+				}else{
+					ROS_INFO("Error: history[1].driving_parameters = %.2f",history[1].driving_parameters);
+				}
+			}
+
+			else if(history[1].driving_mode == 2){
+				history[0].driving_mode = 1;
+				if(history[2].driving_parameters==forward_standard){
+					history[0].driving_parameters = forward_medium;
+				}else{
+					history[0].driving_parameters = forward_extended;
+					flag_turning = 0;
+				}
+
+			}else if(history[1].driving_mode == 3){
+				ROS_INFO("Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
+			}else{
+				ROS_INFO("Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
+			}
+
+
+			/*
+			//flag_turning=1
+			//flag_turning=1
+
+			if(history[1].driving_mode == 1){
+				//Check how was the parameter of going FWD
+				if(history[1].driving_parameters==forward_standard){
+					history[0].driving_mode = 2;
 					if(history[2].driving_parameters==1){
 						history[0].driving_parameters=PI/2;
 					}else{
 						history[0].driving_parameters=-PI/2;
+					}	
+				}else if(history[1].driving_parameters==forward_medium){
+					if (wall_in_range(last_wall_followed(), side_max)){
+						//I will follow a wall to the side I was following. It was a corner
+						history[0].driving_mode = 3;
+						history[0].driving_parameters=last_wall_followed();
+					}else{
+						//I will rotate again if I am in a U turn
+						if(history[2].driving_parameters==PI/2){
+							history[0].driving_parameters=PI/2;
+						}else if(history[2].driving_parameters==-PI/2){
+							history[0].driving_parameters=-PI/2;
+						}else{
+							//ERROR!
+							ROS_INFO("ERROR IT IS NOT U-TURNING");
+						}
+					}
+				}else if(history[1].driving_parameters==forward_extended){
+					ROS_INFO("Impossible case history[1].driving_parameters = %.2f",history[1].driving_parameters);
+				}else{
+					ROS_INFO("Impossible case history[1].driving_parameters = %.2f",history[1].driving_parameters);
+				}
+			}
+
+			else if(history[1].driving_mode == 2){
+				//PROBLEM What if I was going FWD lost and I rotate and stop seeing a wall??
+
+				history[0].driving_mode = 1;
+				if(history[2].driving_mode==3){
+					//*We rotated because we saw a wall in the front and after rotated 
+					 //* we stopped seeing it. We want now to go around it. FWD... then ROTATE					
+					history[0].driving_parameters = forward_standard;
+				}else if(history[2].driving_mode==1){
+					//Check parameters of FWD
+					if(history[2].driving_parameters==forward_standard){
+						history[0].driving_parameters = forward_medium;
+					}else if(history[2].driving_parameters==forward_medium){
+						history[0].driving_parameters = forward_extended;
+						//We finish rotation
+						flag_turning=0;
+					}else if(history[2].driving_parameters==forward_extended){ // failed to find wall -> im lost
+						history[0].driving_parameters = forward_standard;
+						flag_turning=0;				
+					}else{
+						ROS_INFO("Impossible case history[2].driving_parameters = %.2f",history[2].driving_parameters);
+					}
+				}else{
+					//Case where there is no previous info. Or maybe 2 consecutive rotations while turning around
+					ROS_INFO("Impossible case history[2].driving_parameters = %.2f",history[2].driving_parameters);
+				}
+
+			}else if(history[1].driving_mode == 3){
+				//We are starting to rotate!
+				ROS_INFO("Impossible case: When turning we cannot come from history[1].driving_mode = %.2f",history[2].driving_mode);
+				//history[0].driving_mode = 1;
+				//history[0].driving_parameters = forward_standard;
+
+			}else{
+				ROS_INFO("Impossible case flag_turning=1. I have to come from somewhere. history[1].driving_mode = %d", history[1].driving_mode);
+			}*/
+		}
+
+
+
+		///////////////////////////////////////////////////
+		//CASE 1: If I am seeing at least one wall AND there is no wall very close at the front
+		///////////////////////////////////////////////////
+	}else if (((wall_in_range(1, side_max) || wall_in_range(2, side_max)) ) && (!wall_in_range(3, front_min))){
+
+		// flag_turning = 0
+		// flag_turning = 0
+		if (!flag_turning){
+			if(history[1].driving_mode == 1){
+				//Follow the wall if I am not turning around
+				history[0].driving_mode = 3;
+				history[0].driving_parameters = closest_wall();					   //Follow the closest wall
+				flag_turning=0;
+
+			}else if(history[1].driving_mode == 2){
+				//We might be in a corner
+				history[0].driving_mode = 3;
+				history[0].driving_parameters = last_wall_followed();					   //Follow the closest wall
+				flag_turning=0;
+
+			}else if(history[1].driving_mode == 3){
+				//I was following a wall and I lost it. Start to turn around
+				history[0].driving_mode = 1;
+				history[0].driving_parameters = forward_standard;
+				flag_turning=1;
+
+			}else{
+				//COMING FROM NOWHERE
+				if(history[1].driving_mode==0){
+					ROS_INFO("Coming from nowhere");
+					history[0].driving_mode = 3;
+					history[0].driving_parameters = closest_wall();					   //Follow the closest wall
+					flag_turning = 0;
+				}else{
+					ROS_INFO("Impossible case flag_turning=0 and coming driving_mode = %d", history[1].driving_mode);
+				}
+			}
+
+
+		}else{
+			// flag_turning = 1
+			// flag_turning = 1
+
+			if (wall_in_range(last_wall_followed(), side_max)){
+				/*Then it means that I am seeing the wall I following before I started turning*/
+				history[0].driving_mode = 3;
+				history[0].driving_parameters=last_wall_followed();
+				flag_turning = 0;	
+			}else{
+
+				if(history[1].driving_mode == 1){
+
+					if(history[1].driving_parameters==forward_standard){
+						history[0].driving_mode = 2;
+						if(history[2].driving_parameters==PI/2){
+							history[0].driving_parameters=PI/2;
+						}else if(history[2].driving_parameters==-PI/2){
+							history[0].driving_parameters=-PI/2;
+						}else{
+							ROS_INFO("ERROR I was not turning correctly. history[2].driving_parameters = %.2f",history[2].driving_parameters);
+						}
+
+					}else if(history[1].driving_parameters==forward_medium){
+						history[0].driving_mode = 2;
+						if(history[2].driving_parameters==PI/2){
+							history[0].driving_parameters=PI/2;
+						}else if(history[2].driving_parameters==-PI/2){
+							history[0].driving_parameters=-PI/2;
+						}else{
+							ROS_INFO("ERROR I was not turning correctly. history[2].driving_parameters = %.2f",history[0].driving_parameters);
+						}
+
+					}else if(history[1].driving_parameters==forward_extended){
+						ROS_INFO("\nI did not find a wall to follow\nImpossible case history[1].driving_parameters = %.2f",history[1].driving_parameters);
+					}else{
+						ROS_INFO("Error: history[1].driving_parameters = %.2f",history[1].driving_parameters);
+					}
+				}
+
+				else if(history[1].driving_mode == 2){
+					history[0].driving_mode = 1;
+					if(history[2].driving_parameters==forward_standard){
+						history[0].driving_parameters = forward_medium;
+					}else{
+						history[0].driving_parameters = forward_extended;
+						flag_turning = 0;
+					}
+
+				}else if(history[1].driving_mode == 3){
+					ROS_INFO("Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
+				}else{
+					ROS_INFO("Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
+				}
+			}
+		}
+
+		///////////////////////////////////////////////////
+		//CASE 2: If I am seeing at least one wall to the side AND there is a wall very close at the front
+		///////////////////////////////////////////////////
+	}else if (((wall_in_range(1, side_max) || wall_in_range(2, side_max)) ) && (wall_in_range(3, front_min))){
+
+		if (!flag_turning){
+			if(history[1].driving_mode == 1){
+				//e.g. when we finished turning around and we face a wall
+				history[0].driving_mode = 2;
+				if(history[2].driving_parameters==PI/2){
+					history[0].driving_parameters=-PI/2;
+				}else if(history[2].driving_parameters==-PI/2){
+					history[0].driving_parameters=PI/2;
+				}else{
+					ROS_INFO("ERROR I was not turning correctly. history[2].driving_parameters = %.2f",history[0].driving_parameters);
+				}
+
+			}else if(history[1].driving_mode == 2){
+				//e.g. when we rotate in an internal corner in a narrow path
+				history[0].driving_mode = 2;
+				if(history[1].driving_parameters==PI/2){
+					history[0].driving_parameters=PI/2;
+				}else if(history[1].driving_parameters==-PI/2){
+					history[0].driving_parameters=-PI/2;
+				}else{
+					ROS_INFO("ERROR I was not turning correctly. history[2].driving_parameters = %.2f",history[0].driving_parameters);
+				}
+
+			}else if(history[1].driving_mode == 3){
+				//Internal corner
+				history[0].driving_mode = 2;
+				if(history[1].driving_parameters==1){
+					history[0].driving_parameters=PI/2;
+				}else if(history[1].driving_parameters==2){
+					history[0].driving_parameters=-PI/2;
+				}else{
+					ROS_INFO("ERROR I was not turning correctly. history[1].driving_parameters = %.2f",history[0].driving_parameters);
+				}
+
+			}else{
+				ROS_INFO("Impossible case flag_turning=0 and coming driving_mode = %d", history[1].driving_mode);
+			}
+		}
+
+
+		else{
+
+			if (wall_in_range(last_wall_followed(), side_max)){
+				/*Then it means that I am seeing the wall I following before I started turning*/
+				history[0].driving_mode = 2;
+				if(last_wall_followed()==1){
+					history[0].driving_parameters=-PI/2;
+				}else if(last_wall_followed()==2){
+					history[0].driving_parameters=PI/2;
+				}else{
+					ROS_INFO("ERROR I was following last_wall_followed() = %.2f",last_wall_followed());
+				}
+				flag_turning = 0;	
+			}
+
+			else{
+				if(history[1].driving_mode == 1){
+					history[0].driving_mode = 2;
+					if(last_wall_followed()==1){
+						history[0].driving_parameters=PI/2;
+					}else if(last_wall_followed()==2){
+						history[0].driving_parameters=-PI/2;
+					}else{
+						ROS_INFO("ERROR I was following last_wall_followed() = %.2f",last_wall_followed());
+					}
+					flag_turning = 0;					
+
+				}else if(history[1].driving_mode == 2){
+					history[0].driving_mode = 2;
+					if(last_wall_followed()==1){
+						history[0].driving_parameters=PI/2;
+					}else if(last_wall_followed()==2){
+						history[0].driving_parameters=-PI/2;
+					}else{
+						ROS_INFO("ERROR I was following last_wall_followed() = %.2f",last_wall_followed());
+					}
+					flag_turning = 0;
+
+				}else if(history[1].driving_mode == 3){
+					ROS_INFO("Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
+				}else{
+					ROS_INFO("Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
+				}
+			}
+		}
+
+		///////////////////////////////////////////////////
+		//CASE 3: If I am seeing no walls to the side AND there is a wall very close at the front
+		///////////////////////////////////////////////////
+	}else if (((!wall_in_range(1, side_max) && !wall_in_range(2, side_max)) ) && (wall_in_range(3, front_min))){
+
+		rot_count=consecutive_rotations(); 
+
+		if (!flag_turning){
+			if(history[1].driving_mode == 1){
+
+				if(rot_count[0]==3){
+					history[0].driving_mode = 2;
+					history[0].driving_parameters = -history[rot_count[1]].driving_parameters; //Change the sign of rotation
+				}else{
+					history[0].driving_mode = 2;
+					if(last_wall_followed()==1){
+						history[0].driving_parameters=PI/2;
+					}else if(last_wall_followed()==2){
+						history[0].driving_parameters=-PI/2;
+					}else if(last_wall_followed()==0){
+						history[0].driving_parameters=turn_random();
+						ROS_INFO("ERROR I was following last_wall_followed() = %d",last_wall_followed());
 					}
 				}
 			}
 
-
-		}
-
-		//flag_turning_around = flag_turning_around;
-	}
-
-	///////////////////////////////////////////////////
-	//CASE 1: If I am seeing at least one wall AND there is no wall very close at the front
-	///////////////////////////////////////////////////
-
-	if (((wall_in_range(1, side_max) || wall_in_range(2, side_max)) ) && (!wall_in_range(3, front_min))){
-
-		//COMING FROM FORWARD
-		if(history[1].driving_mode == 1){
-			//Follow the wall if I am not turning around
-			if (!flag_turning_around){
-				history[0].driving_mode = 3;
-				history[0].driving_parameters = closest_wall();					   //Follow the closest wall
-				flag_turning_around=0;
-			}
-			//Follow the wall that I am was following when turning around
-			if (flag_turning_around){
-				if ((wall_in_range(last_wall_followed(), side_max))){
-					history[0].driving_mode = 3;
-					history[0].driving_parameters = last_wall_followed();				//Follow the last wall
-					flag_turning_around = 0;										//Finish turning
-				}else{
-					if(last_wall_followed()==1)
-						turn_left();
-					else
-						turn_right();
-					flag_turning_around = 1;
-				}
-			}
-
-		}
-		//COMING FROM ROTATION
-		if(history[1].driving_mode == 2){
-
-			if (!flag_turning_around){
-				//We might be in a corner
-				history[0].driving_mode = 3;
-				history[0].driving_parameters = closest_wall();					   //Follow the closest wall
-				flag_turning_around=0;
-			}else{
-				if ((wall_in_range(last_wall_followed(), side_max))){
-					history[0].driving_mode = 3;
-					history[0].driving_parameters = last_wall_followed();				//Follow the last wall
-					flag_turning_around = 0;										//Finish turning
-				}else{
-					history[0].driving_mode = 1;
-					if(history[2].driving_parameters==forward_standard)
-						history[0].driving_parameters = 30.0;
-					else
-						history[0].driving_parameters = 35.0;
-					
-					flag_turning_around = 1;
-				}
-			}
-		}
-
-		//COMING FROM FOLLOWING WALL
-		if(history[1].driving_mode == 3){
-
-			if ((wall_in_range(last_wall_followed(), side_max))){
-				history[0].driving_mode = 3;
-				history[0].driving_parameters = last_wall_followed();				//Follow the closest wall
-				flag_turning_around = 0;										//Finish turning
-			}else{
-				history[0].driving_mode = 1;
-				history[0].driving_parameters = forward_standard;
-				flag_turning_around = 1;
-			}
-		}
-
-		//COMING FROM NOWHERE
-		if(history[1].driving_mode==0){
-			ROS_INFO("Nowhere");
-			history[0].driving_mode = 3;
-			history[0].driving_parameters = closest_wall();					   //Follow the closest wall
-			flag_turning_around = 0;
-		}
-
-	}
-
-	///////////////////////////////////////////////////
-	//CASE 2: If I am seeing at least one wall to the side AND there is a wall very close at the front
-	///////////////////////////////////////////////////
-	if (((wall_in_range(1, side_max) || wall_in_range(2, side_max)) ) && (wall_in_range(3, front_min))){
-		if (!flag_turning_around){
-			if(last_wall_followed()==1)
-				turn_right();
-			else
-				turn_left();
-			flag_turning_around=0;	
-		}else{
-			if(last_wall_followed()==1)
-				turn_left();
-			else
-				turn_right();
-			flag_turning_around=1;	
-		}
-
-	}
-
-	///////////////////////////////////////////////////
-	//CASE 3: If I am seeing no walls to the side AND there is a wall very close at the front
-	///////////////////////////////////////////////////
-	if (((!wall_in_range(1, side_max) && !wall_in_range(2, side_max)) ) && (wall_in_range(3, front_min))){
-
-		if(history[1].driving_mode==3){
-			flag_turning_around=1;
-		}
-
-		rot_count=consecutive_rotations(); 
-
-		switch (rot_count[0]){ // rot_count[0] -> num of rotations; rot_count[1] -> index of last rotation
-		case 3:
-			history[0].driving_mode = 2;
-			history[0].driving_parameters = -history[rot_count[1]].driving_parameters; //Change the sign of rotation
-			flag_turning_around = 0;
-		default:
-			if (flag_turning_around){
+			else if(history[1].driving_mode == 2){
+				//Turning in a corner in a narrow path
 				history[0].driving_mode = 2;
-				//history[0].driving_parameters = history[rot_count[1]].driving_parameters; //Keep the sign of rotation
-				if(last_wall_followed()==1)
-					turn_left();
-				else
-					turn_right();
-				
-				flag_turning_around=1;	
+				if(last_wall_followed()==1){
+					history[0].driving_parameters=PI/2;
+				}else if(last_wall_followed()==2){
+					history[0].driving_parameters=-PI/2;
+				}else{
+					ROS_INFO("ERROR I was following last_wall_followed() = %d",last_wall_followed());
+				}
+
+			}else if(history[1].driving_mode == 3){
+				ROS_INFO("Error flag_turning has to be 1");
 			}else{
-				turn_random();
-				flag_turning_around = 0;
+				ROS_INFO("Impossible case flag_turning=0 and coming driving_mode = %d", history[1].driving_mode);
+			}
+		}
+
+		else{
+			if(history[1].driving_mode == 1){
+				history[0].driving_mode = 2;
+				if(last_wall_followed()==1){
+					history[0].driving_parameters=PI/2;
+				}else if(last_wall_followed()==2){
+					history[0].driving_parameters=-PI/2;
+				}else if(last_wall_followed()==0){
+					history[0].driving_parameters=turn_random();
+					ROS_INFO("ERROR I was following last_wall_followed() = %d",last_wall_followed());
+				}
+
+			}else if(history[1].driving_mode == 2){
+
+				if(history[1].driving_parameters==PI/2){
+					history[0].driving_parameters=PI/2;
+				}else if(history[1].driving_parameters==-PI/2){
+					history[0].driving_parameters=-PI/2;
+				}else{
+					ROS_INFO("ERROR I was not turning correctly. history[1].driving_parameters = %.2f",history[1].driving_parameters);
+				}
+
+			}else if(history[1].driving_mode == 3){
+				ROS_INFO("ERROR I cannot be in history[1].driving_mode = %d and flag=1",history[1].driving_mode);
+			}else{
+				ROS_INFO("Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
 			}
 		}
 
 		delete [] rot_count;
 	}
 
-	ROS_INFO("Last wall: %.1f",last_wall_followed);
-	ROS_INFO("Turn flag: %d",flag_turning_around);
+	///////////////////////////////////////////////////
+	//CASE default: No defined case
+	///////////////////////////////////////////////////
+	else {
+		ROS_INFO("\nI am not in any case =(");
+	}
+
+	///////////////////////////////////////////////////
+	//Finished cases. Debug
+	///////////////////////////////////////////////////
+
+	/*ROS_INFO("Last wall: %.1f",last_wall_followed);
+	ROS_INFO("Turn flag: %d",flag_turning);
 
 	for(int i=1; i<10;i++){
-		printf("Mode at i=%d : %d  ",i,history[i].driving_mode);
+		printf("Mode at i=%d : %d ",i,history[i].driving_mode);
 	}
 	printf("\n");
 	switch(history[0].driving_mode){
@@ -542,7 +796,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 	default:
 		ROS_INFO("ERROR");
 		break;
-	}
+	}*/
 
 	//getchar();
 
