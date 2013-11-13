@@ -131,15 +131,16 @@ int recogObject(
 int recog(
 	TheiaImageData & data,
 	Array<ObjectTrainData_t> & trainDataArr,
-	TheiaImageContext & context
+	ObjectRecogContext & context
 ){
-
 	std::cout << "RECOGNITION" << std::endl;
 	std::cout << " Start" << std::endl;
 
 	// detect keypoints
 	std::cout << " Detect keypoints" << std::endl;
-	theiaImageDetectKeypoints(data, context);
+
+	TheiaImageContext & imageContext = *context.imageContextPtr;
+	theiaImageDetectKeypoints(data, imageContext);
 
 	size_t numbKeypoints;
 	numbKeypoints = data.keypoints.size();
@@ -151,7 +152,7 @@ int recog(
 
 	// extract descriptors
 	std::cout << " Extract descriptors" << std::endl;
-	theiaImageExtractDescriptors(data, context);
+	theiaImageExtractDescriptors(data, imageContext);
 
 	size_t numbTrainObjects;
 	numbTrainObjects = trainDataArr.size();
@@ -175,10 +176,25 @@ int recog(
 
 	dataScorePairArr.sort();
 
-	// show results
-	std::cout << " RESULTS" << std::endl;
+	// filter ranklist
+	std::cout << " Filter ranklist" << std::endl;
+	std::vector<ObjectDataScorePair> filteredDataScorePairVect;
+
 	for(size_t i = 0; i < numbTrainObjects; i++){
 		ObjectDataScorePair & dataScorePair = dataScorePairArr[i];
+
+		if(dataScorePair < context.minScore){
+			filteredDataScorePairVect.push_back(dataScorePair);
+		}
+	}
+
+	size_t numbFilteredTrainObjects;
+	numbFilteredTrainObjects = filteredDataScorePairVect.size();
+
+	// show results
+	std::cout << " RESULTS" << std::endl;
+	for(size_t i = 0; i < numbFilteredTrainObjects; i++){
+		ObjectDataScorePair & dataScorePair = filteredDataScorePairVect[i];
 		ObjectTrainData_t & trainData = *dataScorePair.trainDataPtr;
 		ObjectRecogScore & recogScore = *dataScorePair.recogScorePtr;
 

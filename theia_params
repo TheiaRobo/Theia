@@ -4,6 +4,7 @@ vision_object:
   config:
     path: /home/amotta/Documents/Theia/vision/vision_object/train
     surfMinHessian: 800
+    recogMinScore: 0.25
 vision_plane:
   config:
     crop: {maxX: 20, maxY: 0.1, maxZ: 20, minX: -20, minY: -0.1, minZ: 0}

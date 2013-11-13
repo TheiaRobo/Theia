@@ -24,42 +24,10 @@
 
 using namespace std;
 
-void imageCallback(const sensor_msgs::ImageConstPtr & rosMsgPtr);
-void trainCallback(const std_msgs::EmptyConstPtr & rosMsgPtr);
-int trainInit();
-
 TheiaImageContext imageContext;
 Array<ObjectTrainData_t> trainDataArr;
 ros::Subscriber imageSub;
 ros::Subscriber trainSub;
-
-void imageCallback(const sensor_msgs::ImageConstPtr & rosMsgPtr){
-	cout << "Image Callback" << endl;
-	cout << " Start" << endl;
-
-	cv_bridge::CvImagePtr imagePtr;
-	imagePtr = cv_bridge::toCvCopy(rosMsgPtr, "mono8");
-
-	TheiaImageData imageData;
-	imageData.image = imagePtr->image;
-
-	recog(
-		imageData,
-		trainDataArr,
-		imageContext
-	);
-
-	cout << " End" << endl;
-}
-
-void trainCallback(const std_msgs::EmptyConstPtr & rosMsgPtr){
-	cout << "Training Callback" << endl;
-	cout << " Start" << endl;
-	
-	trainInit();
-
-	cout << " End" << endl;
-}
 
 int trainInit(){
 	string path;
@@ -104,6 +72,40 @@ int trainInit(){
 	trainDataArr = Array<ObjectTrainData_t>(trainDataVect);
 
 	return 0;
+}
+
+void imageCallback(const sensor_msgs::ImageConstPtr & rosMsgPtr){
+	cout << "Image Callback" << endl;
+	cout << " Start" << endl;
+
+	cv_bridge::CvImagePtr imagePtr;
+	imagePtr = cv_bridge::toCvCopy(rosMsgPtr, "mono8");
+
+	TheiaImageData imageData;
+	imageData.image = imagePtr->image;
+
+	double minScore;
+	ros::param::getCached(
+		"~config/recogMinScore",
+		minScore
+	);
+
+	ObjectRecogContext recogContext;
+	recogContext.minScore = minScore;
+	recogContext.imageContextPtr = &imageContext;
+
+	recog(imageData, trainDataArr, recogContext);
+
+	cout << " End" << endl;
+}
+
+void trainCallback(const std_msgs::EmptyConstPtr & rosMsgPtr){
+	cout << "Training Callback" << endl;
+	cout << " Start" << endl;
+	
+	trainInit();
+
+	cout << " End" << endl;
 }
 
 int main(int argc, char ** argv){

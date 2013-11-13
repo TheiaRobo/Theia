@@ -4,14 +4,18 @@
 #include <vector>
 #include <vision/array.h>
 #include <vision/image.h>
-#include <opencv2/core/core.hpp>
 
 #include "train.h"
+
+typedef struct {
+	double minScore;
+	TheiaImageContext * imageContextPtr;
+} ObjectRecogContext;
 
 int recog(
 	TheiaImageData & data,
 	Array<ObjectTrainData_t> & trainDataArr,
-	TheiaImageContext & context
+	ObjectRecogContext & context
 );
 
 #endif
