@@ -34,7 +34,7 @@ None: Send (v,w)=(0,0) command to the core and asks for instructions to the cont
 
 const float PI=3.1415926f;
 double freq=100.0;
-double x=0.0,y=0.0,theta=0.0,last_theta=0.0;; // Position estimate given by the odometry
+double x=0.0,y=0.0,theta=0.0,last_theta=0.0,processed_theta=0.0; // Position estimate given by the odometry
 double ir_readings[8];
 double ir_raw[8][3];
 double heading_ref=0.0; // ref for the rotate xº behavior
@@ -111,6 +111,24 @@ ros::Subscriber params_sub;
 //  
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+/** 
+ *	correct_theta: Adds an offset to the heading estimate to make for discontinuities. t -> theta, l_t -> last_theta
+ **/
+double correct_theta(double t, double l_t){
+
+	if(std::abs(t-l_t)>=PI){
+		if(t>l_t)
+			theta_correction+=-2*PI;
+		else
+			theta_correction+=2*PI;
+	}
+
+	processed_theta=theta+theta_correction;
+	
+	return processed_theta;
+}
+
 double median(double ir[3]){ // Simple 3-value median filter
 	double temp, ir_temp[3];
 
@@ -140,6 +158,7 @@ void odo_proc(nav_msgs::Odometry::ConstPtr odo_msg){
 	y=odo_msg->pose.pose.position.y*100;
 	last_theta=theta;
 	theta=tf::getYaw(pose.getRotation());
+	processed_theta=correct_theta(theta,last_theta);
 
 	//Debug
 	////ROS_INFO("Got Pose: (x,y,theta)=(%.2f,%.2f,%.2f)",x,y,theta);
@@ -384,24 +403,7 @@ double compute_ir_dist(int wall, double ir_wall[2], double dist_ref){
 	return error_dist;
 }
 
-/** 
- *	correct_theta: Adds an offset to the heading estimate to make for discontinuities. t -> theta, l_t -> last_theta
- **/
-double correct_theta(double t, double l_t){
 
-	double processed_theta=0.0;
-
-	if(std::abs(t-l_t)>=PI){
-		if(t>l_t)
-			theta_correction+=-2*PI;
-		else
-			theta_correction+=2*PI;
-	}
-
-	processed_theta=theta+theta_correction;
-
-	return processed_theta;
-}
 
 /** 
  *	sign: Compute the sign of val
@@ -467,7 +469,7 @@ int none(ros::Rate loop_rate){
 
 	heading_ref=0.0;
 
-	ROS_INFO("None: Align mode\nLast Angle: %.2f",last_angle);
+	//ROS_INFO("None: Align mode\nLast Angle: %.2f",last_angle);
 	/* Because a behavior may stay in loop while doing its thing */
 	loop_rate.sleep();
 	ros::spinOnce();
@@ -567,7 +569,7 @@ int none(ros::Rate loop_rate){
 	
 	last_angle = 0;
 	//Out of the while. Finished align mode
-	ROS_INFO("None: finished align mode");
+	//ROS_INFO("None: finished align mode");
 
 	/*
 	 *	Ask for directions
@@ -586,7 +588,7 @@ int none(ros::Rate loop_rate){
 		return srv.response.B;
 
 	} else {
-
+		stop();
 		// to allow change in behavior from external message
 		return behavior;
 	}
@@ -672,7 +674,6 @@ int forward(ros::Rate loop_rate){
 int rotate(ros::Rate loop_rate){
 
 	double heading_error=0.0;
-	double processed_theta=theta+theta_correction; // will have corrections for the pi to -pi jump
 	double init_theta=processed_theta;
 	double init_error=heading_ref-(processed_theta-init_theta); //Why now is different than in Forward?
 	int done=0, wall=1;
@@ -683,7 +684,6 @@ int rotate(ros::Rate loop_rate){
 	ROS_INFO("Will rotate %.2f rad",heading_ref);
 	// Rotation on-going
 	while(ros::ok() && !done){
-		processed_theta=correct_theta(theta,last_theta);
 		heading_error=heading_ref-(processed_theta-init_theta);
 		// If Rotation completed
 		if(std::abs(heading_error) < heading_thres){
