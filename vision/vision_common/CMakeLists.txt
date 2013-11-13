@@ -22,7 +22,6 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_gensrv()
 
 #common commands for building c++ executables and libraries
-rosbuild_add_library(${PROJECT_NAME}_array src/array.cpp)
 rosbuild_add_library(${PROJECT_NAME}_cloud src/cloud.cpp)
 rosbuild_add_library(${PROJECT_NAME}_file src/file.cpp)
 rosbuild_add_library(${PROJECT_NAME}_image src/image.cpp)
