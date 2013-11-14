@@ -799,27 +799,28 @@ int forward_wall(ros::Rate loop_rate){
 		}
 
 		//Control the angle to the wall
-		if(std::abs(error_theta) < epsilon_theta){ //Small epsilon
+		if(std::abs(error_theta) < epsilon_theta || error_dist < 0 ){ //Small epsilon OR wall too close
 
 			u_theta=0;
-			control_pub(velocity_fw,u_theta+u_dist);
+			//control_pub(velocity_fw,u_theta+u_dist);
 		}else{
 			u_theta=PID_control(k_paralel,i_paralel,d_paralel,&I_sum_r, &last_E_r,error_theta,0);
-			control_pub(velocity_fw,u_theta+u_dist);
+			//control_pub(velocity_fw,u_theta+u_dist);
 		}
 
 		//Control the distance to the wall
 		if(std::abs(error_dist) < epsilon_dist){ //Small epsilon
 			u_dist=0;
-			control_pub(velocity_fw,u_theta+u_dist);
+			//control_pub(velocity_fw,u_theta+u_dist);
 		}else{
 			if (wall_to_follow==1)
 				u_dist=-PID_control(k_dist,i_dist,d_dist,&I_sum_d,&last_R_d,error_dist,0);
 			else
 				u_dist=PID_control(k_dist,i_dist,d_dist,&I_sum_d,&last_R_d,error_dist,0);
 
-			control_pub(velocity_fw,u_theta+u_dist);
+			//control_pub(velocity_fw,u_theta+u_dist);
 		}
+		control_pub(velocity_fw,u_theta+u_dist);
 
 		loop_rate.sleep();
 		ros::spinOnce();
