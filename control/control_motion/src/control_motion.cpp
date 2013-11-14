@@ -62,7 +62,7 @@ double d_paralel=0.0;
 
 
 // Forward velocity
-double std_velocity=10.0;
+double std_velocity=20.0;
 double velocity_fw=std_velocity;
 double dist_wall_min=0.0;
 double epsilon_theta=0.00; // 5 degrees
@@ -74,7 +74,7 @@ double forward_distance=25.0;
 
 // Threshold for the sensors
 double heading_thres=0.01;
-double align_thres=1.02;//0.003;
+double align_thres=0.003;
 double dist_thres=10.0;
 double inf_thres=20.0;
 double rotation_error_thres=0.10;
