@@ -53,12 +53,12 @@ double d_rotate=0.0198;
 double k_align=1.5;
 double i_align=0.0;
 double d_align=0.04;
-double k_dist=0.04;
+double k_dist=0.02;
 double i_dist=0.0;
 double d_dist=0.0;
-double k_paralel=1.6;
+double k_paralel=1.5;
 double i_paralel=0.0;
-double d_paralel=0.0;
+double d_paralel=0.015;
 
 
 // Forward velocity
@@ -74,7 +74,7 @@ double forward_distance=25.0;
 
 // Threshold for the sensors
 double heading_thres=0.01;
-double align_thres=0.003;
+double align_thres=10;//0.003;
 double dist_thres=10.0;
 double inf_thres=20.0;
 double rotation_error_thres=0.10;
@@ -797,11 +797,12 @@ int forward_wall(ros::Rate loop_rate){
 			control_pub(velocity_fw,u_theta); // u_theta should be the result of a PID controller
 			flag_dist2break_3 = 1;
 		}
-
+		
+		ROS_INFO("erros_dist: %.2f",error_dist);
 		//Control the angle to the wall
-		if(std::abs(error_theta) < epsilon_theta || error_dist < 0 ){ //Small epsilon OR wall too close
+		if(std::abs(error_theta) < epsilon_theta || error_dist > 0 ){ //Small epsilon OR wall too close
 
-			u_theta=0;
+			u_theta=PID_control(k_paralel,i_paralel,d_paralel,&I_sum_r,&last_E_r,error_theta,0)/2;
 			//control_pub(velocity_fw,u_theta+u_dist);
 		}else{
 			u_theta=PID_control(k_paralel,i_paralel,d_paralel,&I_sum_r, &last_E_r,error_theta,0);
