@@ -337,7 +337,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 		return true;
 	}
 
-	ros::Duration refresh(0.5);
+	ros::Duration refresh(0.1);
 	refresh.sleep(); // wait a bit before sending new orders
 
 	//Get empty space in history vector
@@ -621,13 +621,26 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 					history[0].driving_parameters=-PI/2;
 				}else if(history[2].driving_parameters==-PI/2){
 					history[0].driving_parameters=PI/2;
-				}else if(last_wall_followed()==-1){
-					history[0].driving_parameters=turn_random();
+				}else {
+
+					switch(last_wall_followed()){
+						case 1:
+							history[0].driving_parameters=-PI/2;
+							break;
+						case 2:
+							history[0].driving_parameters=PI/2;
+							break;
+						default:
+							ROS_INFO("Case 2a: wtf");
+							history[0].driving_parameters=turn_random();
+					}
+				}
+				/*
 					ROS_INFO("Case 2a: Should not happen! Turn random. No last_wall_followed() = %d",last_wall_followed());
 				}else {
 					ROS_INFO("Case 2a: ERROR I was following last_wall_followed() = %d",last_wall_followed());
 				}
-
+				*/
 			}else if(history[1].driving_mode == 2){
 				//e.g. when we rotate in an internal corner in a narrow path
 				history[0].driving_mode = 2;
@@ -820,7 +833,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 		break;
 	}
 
-	getchar();
+	//getchar();
 
 	res.B = history[0].driving_mode;
 	res.parameter = history[0].driving_parameters;
