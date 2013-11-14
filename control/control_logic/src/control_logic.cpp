@@ -30,7 +30,7 @@ const int ir_size = 8;
 const int median_size = 3;
 
 double ir[ir_size] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
-double ir_raw[ir_size][3];
+double ir_raw[ir_size][median_size];
 
 typedef struct history_struct{
 	int driving_mode; //0:None 1:FWD 2:ROTATE 3:FOLLOW_W
@@ -326,7 +326,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 		return true;
 	}
 
-	ros::Duration refresh(0.1);
+	ros::Duration refresh(0.5);
 	refresh.sleep(); // wait a bit before sending new orders
 
 	//Get empty space in history vector
