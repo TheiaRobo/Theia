@@ -12,7 +12,7 @@ const float PI = 3.1415926f;
 
 //IR distance thresholds
 double front_max = 20.0;
-double front_min = 7.5;
+double front_min = 10.0;
 double side_max = 20.0;
 double side_min = 4.0;
 double side_ref = 4.0;
