@@ -338,8 +338,6 @@ double dist_wall(int wall_n){
 		return dist_wall_right;
 		break;
 	default:
-		//wall!=1 && wall!=2
-		ROS_INFO("Error wall!=1 && wall!=2. dist_wall = %d", wall_n);
 		return -1;
 		break;
 	}
@@ -397,13 +395,6 @@ double compute_ir_error(int wall, double * ir_wall, double theta_ref){
 double compute_ir_dist(int wall, double ir_wall[2], double dist_ref){
 
 	double dist_meas,error_dist;
-	// get dist to wall
-	/*if(ir_wall[0]>ir_wall[1])
-		dist_meas = ir_wall[1];
-	else
-		dist_meas = ir_wall[0];
-
-	error_dist= dist_ref - dist_meas;*/
 
 	error_dist=dist_ref-(ir_wall[0]+ir_wall[1])/2;
 
@@ -636,6 +627,8 @@ int forward(ros::Rate loop_rate){
 	double i_x=x, i_y=y;
 	double curr_dist=std::sqrt((x-i_x)*(x-i_x)+(y-i_y)*(y-i_y));
 	double BreakingRatio_1;
+	double last_E_r=PID_INIT,I_sum_r=0.0,last_R_d=PID_INIT,I_sum_d=0.0;
+	double ir_wall[2]={0.0,0.0},u_theta=0.0,theta_ref=0.0;
 
 	for(int i=0; i<8; i++)
 		initial_ir[i]=ir_readings[i];
@@ -655,7 +648,48 @@ int forward(ros::Rate loop_rate){
 		// Some small threshold to take into account noise
 		if(std::abs(heading_error)<heading_thres)
 			heading_error=0.0;
-
+		
+		
+		if(dist_wall(1) != -1){
+			if(dist_wall(2) != -1){
+				if(dist_wall(1) < dist_wall(2)){
+					for(int i=0; i<2; i++)
+						ir_wall[i]=ir_readings[i+2];
+				}else
+					for(int i=0; i<2; i++)
+						ir_wall[i]=ir_readings[i+4];
+			}else{
+				for(int i=0; i<2; i++)
+					ir_wall[i]=ir_readings[i+2];
+			}
+		}else{
+			for(int i=0; i<2; i++)
+				ir_wall[i]=ir_readings[i+4];
+		}
+		
+		if(dist_wall(1)==-1 && dist_wall(2)==-1){
+			if(ir_readings[2] < dist_thres && ir_readings[4] < dist_thres){
+				if(ir_readings[2] < ir_readings[4]){
+					for(int i=0; i<2; i++)
+						ir_wall[i]=ir_readings[2];
+				}else{
+					for(int i=0; i<2; i++)
+						ir_wall[i]=ir_readings[4];
+				}
+			}else if(ir_readings[2] < dist_thres){
+				for(int i=0; i<2; i++)
+					ir_wall[i] = ir_readings[2];
+			}else if(ir_readings[4] < dist_thres){
+				for(int i=0; i<2; i++)
+					ir_wall[i] = ir_readings[4];
+			}
+		}
+		
+		if(ir_wall[0]!=0 && ir_wall[1]!=0)
+			u_theta=paralel_controller(wall_to_follow,ir_wall,theta_ref,dist_ref,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
+		else
+			u_theta=0;		
+		
 		//Distance to wall < inf_thres ---> close! Reduce velocity
 		if(wall_in_range(3,inf_thres,ir_readings)){
 
@@ -667,14 +701,14 @@ int forward(ros::Rate loop_rate){
 			if(flag_dist2break_1 == 1){
 				initial_flag_dist2break_1 = close_ir;
 				flag_dist2break_1 = 0;
-				control_pub(std_velocity,0);
+				control_pub(std_velocity,u_theta);
 			}else{
 				//2 yields (1/2)*std_velocity... 1 gives 0 
 				BreakingRatio_1 = ((initial_flag_dist2break_1-close_ir)/(1.05*(inf_thres-dist_thres))); 
-				control_pub(abs(std_velocity*( 1 - BreakingRatio_1 )),0);
+				control_pub(abs(std_velocity*( 1 - BreakingRatio_1 )),u_theta);
 			}
 		}else{
-			control_pub(std_velocity,0);
+			control_pub(std_velocity,u_theta);
 			flag_dist2break_1 = 1;
 		}
 
