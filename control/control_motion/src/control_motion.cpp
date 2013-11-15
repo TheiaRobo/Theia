@@ -77,6 +77,7 @@ double forward_distance=20.0;
 double heading_thres=0.01;
 double align_thres=100;//0.003;
 double dist_thres=10.0;
+double dist_ref=3.0;
 double inf_thres=20.0;
 double rotation_error_thres=0.10;
 double delay_thres=2.0; // no real time :(
@@ -458,6 +459,47 @@ double PID_control(double P,double I,double D,double * integrator_sum, double * 
 }
 
 
+
+/* PARALEL CONTROLLER 
+* Controller that tries to keep a distance and an angle towards a wall
+*/		
+double paralel_controller(int wall,double ir_wall[2],double t_ref,double d_ref,double * last_E_r, double * I_sum_r, double * last_R_d, double * I_sum_d){
+
+	double error_theta=0.0, error_dist=0.0,u_theta=0.0,u_dist=0.0;
+	// get angle and distance to wall
+	error_theta=compute_ir_error(wall,ir_wall,t_ref);
+	error_dist=compute_ir_dist(wall,ir_wall,d_ref);
+	
+	//Control the angle to the wall
+	if(std::abs(error_theta) < epsilon_theta || error_dist > 0 ){ //Small epsilon OR wall too close
+
+		u_theta=PID_control(k_paralel,i_paralel,d_paralel,I_sum_r,last_E_r,error_theta,0)/4;
+		//control_pub(velocity_fw,u_theta+u_dist);
+	}else{
+		u_theta=PID_control(k_paralel,i_paralel,d_paralel,I_sum_r,last_E_r,error_theta,0);
+		//control_pub(velocity_fw,u_theta+u_dist);
+	}
+
+	//Control the distance to the wall
+	if(std::abs(error_dist) < epsilon_dist){ //Small epsilon
+		u_dist=0;
+		//control_pub(velocity_fw,u_theta+u_dist);
+	}else{
+		if (wall==1)
+			u_dist=-PID_control(k_dist,i_dist,d_dist,I_sum_d,last_R_d,error_dist,0);
+		else
+			u_dist=PID_control(k_dist,i_dist,d_dist,I_sum_d,last_R_d,error_dist,0);
+
+		//control_pub(velocity_fw,u_theta+u_dist);
+	}
+
+	if(error_dist > 0){ // too close to wall
+		u_dist=4*u_dist;
+	}
+	
+	return u_theta+u_dist;		
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
 // STATES DEFINITION
@@ -517,29 +559,6 @@ int none(ros::Rate loop_rate){
 			wall=0;
 		}
 
-		/*	
-		//Calculate the closest wall!!!! INSTEAD this give me 1 and ignores 2!!!!!!!!!!!!!!!!!!1
-		if(wall_in_range(1,inf_thres,ir_readings)){		
-					// Wall on the left
-					wall=1;
-					for(int i=0; i<2; i++)
-						ir_wall[i]=ir_readings[i+2];
-
-				}else if(wall_in_range(2,inf_thres,ir_readings)){ 	
-					// Wall on the right
-					wall=2;
-					for(int i=0; i<2; i++)
-						ir_wall[i]=ir_readings[i+4];
-				}else{ 
-					//No walls on the sides
-
-				}
-		 */
-		/*
-		 *	wall tells me which wall I can use for alignment 
-		 *	If there is a wall I align to the closest one. 
-		 *	If no wall then compensate for the last angle 
-		 */	
 
 		if (wall == 1 || wall == 2){
 			// get angle to wall
@@ -720,7 +739,7 @@ int forward_wall(ros::Rate loop_rate){
 
 	double ir_wall[2]={0.0,0.0}, close_ir=0.0;
 	double theta_ref=0.0, theta_meas=0.0, error_theta=0.0,u_theta=0.0,u_dist=0.0; 
-	double dist_ref=3.0, dist_meas=0.0, error_dist=0.0, avg_dist=0.0;
+	double dist_meas=0.0, error_dist=0.0, avg_dist=0.0;
 	double I_sum_r=0.0, last_E_r=PID_INIT, I_sum_d=0.0, last_R_d=PID_INIT;
 	int wall=1; // 1 - left side; 2 - right side
 	double wall_dist=0.0;
@@ -770,11 +789,11 @@ int forward_wall(ros::Rate loop_rate){
 			ROS_INFO("Error wall_dist==-1!"); 
 			return 0;
 		}
-
-		// get angle and distance to wall
-		error_theta=compute_ir_error(wall_to_follow,ir_wall,theta_ref);
-		error_dist=compute_ir_dist(wall_to_follow,ir_wall,dist_ref);
-
+		
+		//double * last_E_r, double * I_sum_r, double * last_R_d, double * I_sum_d
+		
+		u_theta=paralel_controller(wall_to_follow,ir_wall,theta_ref,dist_ref,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
+		
 		//Control velocity of the robot
 		if(wall_in_range(3,inf_thres,ir_readings)){
 			//Distance to wall <= inf_thres ---> close! Reduce velocity
@@ -799,35 +818,6 @@ int forward_wall(ros::Rate loop_rate){
 			control_pub(velocity_fw,u_theta); // u_theta should be the result of a PID controller
 			flag_dist2break_3 = 1;
 		}
-		
-		ROS_INFO("erros_dist: %.2f",error_dist);
-		//Control the angle to the wall
-		if(std::abs(error_theta) < epsilon_theta || error_dist > 0 ){ //Small epsilon OR wall too close
-
-			u_theta=PID_control(k_paralel,i_paralel,d_paralel,&I_sum_r,&last_E_r,error_theta,0)/4;
-			//control_pub(velocity_fw,u_theta+u_dist);
-		}else{
-			u_theta=PID_control(k_paralel,i_paralel,d_paralel,&I_sum_r, &last_E_r,error_theta,0);
-			//control_pub(velocity_fw,u_theta+u_dist);
-		}
-
-		//Control the distance to the wall
-		if(std::abs(error_dist) < epsilon_dist){ //Small epsilon
-			u_dist=0;
-			//control_pub(velocity_fw,u_theta+u_dist);
-		}else{
-			if (wall_to_follow==1)
-				u_dist=-PID_control(k_dist,i_dist,d_dist,&I_sum_d,&last_R_d,error_dist,0);
-			else
-				u_dist=PID_control(k_dist,i_dist,d_dist,&I_sum_d,&last_R_d,error_dist,0);
-
-			//control_pub(velocity_fw,u_theta+u_dist);
-		}
-
-		if(error_dist > 0){ // too close to wall
-			u_dist=4*u_dist;
-		}
-		control_pub(velocity_fw,u_theta+u_dist);
 
 		loop_rate.sleep();
 		ros::spinOnce();
