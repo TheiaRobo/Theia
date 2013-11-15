@@ -47,9 +47,10 @@ int flag_dist2break_3 = 1;
 
 // Control parameters
 double k_forward=1.0;
-double k_rotate=1.5;
+double k_rotate=0.7;
 double i_rotate=0.0;
-double d_rotate=0.028;
+double d_rotate=0.02;
+double cte_rotate=0.5;
 double k_align=0.0;//1.5;
 double i_align=0.0;
 double d_align=0.0;//0.04;
@@ -193,6 +194,7 @@ void update_params(const control_motion::params::ConstPtr msg){
 	k_rotate=msg->k_rotate;
 	i_rotate=msg->i_rotate;
 	d_rotate=msg->d_rotate;
+	cte_rotate=msg->cte_rotate;
 	k_align=msg->k_align;
 	i_align=msg->i_align;
 	d_align=msg->d_align;
@@ -649,7 +651,7 @@ int forward(ros::Rate loop_rate){
 				control_pub(std_velocity,0);
 			}else{
 				//2 yields (1/2)*std_velocity... 1 gives 0 
-				BreakingRatio_1 = ((initial_flag_dist2break_1-close_ir)/(1.2*(inf_thres-dist_thres))); 
+				BreakingRatio_1 = ((initial_flag_dist2break_1-close_ir)/(1.05*(inf_thres-dist_thres))); 
 				control_pub(abs(std_velocity*( 1 - BreakingRatio_1 )),0);
 			}
 		}else{
@@ -700,7 +702,7 @@ int rotate(ros::Rate loop_rate){
 			ros::spinOnce();
 		}else{
 			u_theta=PID_control(k_rotate,i_rotate,d_rotate,&I_sum, &last_E,heading_ref,processed_theta-init_theta);
-			control_pub(0.0,u_theta);
+			control_pub(0.0,u_theta+sign(heading_error)*cte_rotate);
 			loop_rate.sleep();
 			ros::spinOnce();
 		}
@@ -787,7 +789,7 @@ int forward_wall(ros::Rate loop_rate){
 				velocity_fw=std_velocity;
 				control_pub(velocity_fw,u_theta);
 			}else{
-				BreakingRatio_3 = (initial_flag_dist2break_3-close_ir)/(1.2*(inf_thres-dist_thres));	//2 yields (1/2)*std_velocity... 1 gives 0 
+				BreakingRatio_3 = (initial_flag_dist2break_3-close_ir)/(1.05*(inf_thres-dist_thres));	//2 yields (1/2)*std_velocity... 1 gives 0 
 				velocity_fw=abs(std_velocity*( 1 - BreakingRatio_3 ));
 				control_pub(velocity_fw,u_theta); // u_theta should be the result of a PID controller
 			}
