@@ -63,7 +63,7 @@ void test_odometry(){ // for test purpose only
 		boolean =rand() % 4;
 		theashold =rand() % 13+3;
 		counter=0;
-		ROS_INFO("****** Random value:(%i) ******",boolean);
+		//ROS_INFO("****** Random value:(%i) ******",boolean);
 
 	}
 
@@ -79,7 +79,7 @@ void test_odometry(){ // for test purpose only
 	else
 		y_Current_Pose --;
 
-	ROS_INFO("Random value:(%i) (%i,%i)",boolean,x_Current_Pose,y_Current_Pose);
+	//ROS_INFO("Random value:(%i) (%i,%i)",boolean,x_Current_Pose,y_Current_Pose);
 	counter ++;
 
 }
@@ -90,11 +90,11 @@ void Robot_odometry_size(int x_position, int y_position) {
 	for (int x=(x_position*x_matrix);x<((x_position*x_matrix)+(x_matrix*robot_size));x){
 		for (int y=y_position; y< (y_position+robot_size); y++){
 			Occupancy_Grid[x+y]=0;
-			ROS_INFO("matrix: (%i,%i) vector cell(%i)",x,y,(x+y));
+			//ROS_INFO("matrix: (%i,%i) vector cell(%i)",x,y,(x+y));
 		}
 		x=x+x_matrix;
 	}
-	ROS_INFO("############### For LOOP ended ###################");
+	//ROS_INFO("############### For LOOP ended ###################");
 }
 
 
@@ -124,16 +124,14 @@ void Send_Message(){
 	
 
 	occ_pub.publish(occ_msg);
-	ROS_INFO("Publish: occ_msg");
+	//ROS_INFO("Publish: occ_msg");
 }
 
 void Receive_Camera(int x_position, int y_position) {
 
-	ROS_INFO("############### Recive Camera ###################");
 }
 void Receive_Wall(int x_position, int y_position) {
 
-	ROS_INFO("############### Recive Wall ###################");
 }
 
 
@@ -161,7 +159,7 @@ int main(int argc, char **argv)
 
 	struct timeval start, end;
 	while(ros::ok()){
-		ROS_INFO("ROS OK!");
+		//ROS_INFO("ROS OK!");
 		
 		
 		//test_odometry();
