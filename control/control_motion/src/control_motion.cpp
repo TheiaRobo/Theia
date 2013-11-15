@@ -622,7 +622,7 @@ int forward(ros::Rate loop_rate){
 
 	double initial_theta=heading_ref; // needs to receive rotation angle from logic node
 	double heading_error=0.0;
-	int status_changed=0;
+	int status_changed=0,wall=0;
 	double initial_ir[8], close_ir=0.0;
 	double i_x=x, i_y=y;
 	double curr_dist=std::sqrt((x-i_x)*(x-i_x)+(y-i_y)*(y-i_y));
@@ -653,40 +653,49 @@ int forward(ros::Rate loop_rate){
 		if(dist_wall(1) != -1){
 			if(dist_wall(2) != -1){
 				if(dist_wall(1) < dist_wall(2)){
+					wall=1;
 					for(int i=0; i<2; i++)
 						ir_wall[i]=ir_readings[i+2];
-				}else
+				}else{
+					wall=2;
 					for(int i=0; i<2; i++)
 						ir_wall[i]=ir_readings[i+4];
+				}
 			}else{
+				wall=1;
 				for(int i=0; i<2; i++)
 					ir_wall[i]=ir_readings[i+2];
 			}
-		}else{
+		}else if(dist_wall(2) != -1){
+			wall=2;
 			for(int i=0; i<2; i++)
 				ir_wall[i]=ir_readings[i+4];
-		}
-		
-		if(dist_wall(1)==-1 && dist_wall(2)==-1){
+		}else if(dist_wall(1)==-1 && dist_wall(2)==-1){
 			if(ir_readings[2] < dist_thres && ir_readings[4] < dist_thres){
 				if(ir_readings[2] < ir_readings[4]){
+					wall=1;
 					for(int i=0; i<2; i++)
 						ir_wall[i]=ir_readings[2];
 				}else{
+					wall=2;
 					for(int i=0; i<2; i++)
 						ir_wall[i]=ir_readings[4];
 				}
 			}else if(ir_readings[2] < dist_thres){
+				wall=1;
 				for(int i=0; i<2; i++)
 					ir_wall[i] = ir_readings[2];
 			}else if(ir_readings[4] < dist_thres){
+				wall=2;
 				for(int i=0; i<2; i++)
 					ir_wall[i] = ir_readings[4];
+			}else{
+				wall=0;
 			}
 		}
 		
-		if(ir_wall[0]!=0 && ir_wall[1]!=0)
-			u_theta=paralel_controller(wall_to_follow,ir_wall,theta_ref,dist_ref,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
+		if(wall)
+			u_theta=paralel_controller(wall,ir_wall,theta_ref,dist_ref,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
 		else
 			u_theta=0;		
 		
