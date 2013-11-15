@@ -47,9 +47,9 @@ int flag_dist2break_3 = 1;
 
 // Control parameters
 double k_forward=1.0;
-double k_rotate=0.7;
+double k_rotate=0.3;
 double i_rotate=0.0;
-double d_rotate=0.02;
+double d_rotate=0.01;
 double cte_rotate=0.30;
 double k_align=0.0;//1.5;
 double i_align=0.0;
@@ -634,17 +634,20 @@ int forward(ros::Rate loop_rate){
 	double curr_dist=std::sqrt((x-i_x)*(x-i_x)+(y-i_y)*(y-i_y));
 	double BreakingRatio_1;
 	double last_E_r=PID_INIT,I_sum_r=0.0,last_R_d=PID_INIT,I_sum_d=0.0;
-	double ir_wall[2]={0.0,0.0},u_theta=0.0,theta_ref=0.0,temp_k=0,temp_s=0;
+	double ir_wall[2]={0.0,0.0},u_theta=0.0,theta_ref=0.0,temp_k=k_dist,temp_s=std_velocity;
 
 	for(int i=0; i<8; i++)
 		initial_ir[i]=ir_readings[i];
 
 	// Will keep moving forward until sensors report obstacle or forward_distance is achieved
 	while(curr_dist<forward_distance){ 
+		std_velocity=15.0; // sorry :(
 
 		//Distance to wall < delay_thres ---> very close! STOP
 		if(wall_in_range(3,dist_thres,ir_readings)){ //
 			stop();
+			std_velocity=temp_s;
+			k_dist=temp_k;
 			loop_rate.sleep();
 			return 0;
 		}
@@ -727,13 +730,9 @@ int forward(ros::Rate loop_rate){
 		if(wall){
 			if(avoid_flag){
 				if(ir_wall[0]<1.0){
-					temp_s=std_velocity;
-					temp_k=k_dist;
 					k_dist=0.06; // OH THE SORROW
 					std_velocity=5.0; // OH SO SORRY
 					u_theta=paralel_controller(wall,ir_wall,theta_ref,2.0,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
-					k_dist=temp_k;
-					std_velocity=temp_s;
 				}else{
 					u_theta=0;
 				}
@@ -742,11 +741,9 @@ int forward(ros::Rate loop_rate){
 					u_theta=paralel_controller(wall,ir_wall,theta_ref,dist_ref,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
 				}else{
 					
-					temp_k=k_dist;
 					if(wall!=wall_to_follow)
 						k_dist=0.0; // OH SO DIRTY
 					u_theta=paralel_controller(wall,ir_wall,theta_ref,dist_ref,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
-					k_dist=temp_k;
 				}
 			}
 		}else
@@ -766,10 +763,9 @@ int forward(ros::Rate loop_rate){
 				flag_dist2break_1 = 0;
 				
 				if(!wall){
-					temp_s=std_velocity;
-					std_velocity=15.0; // OH SO SAD
+					if(std_velocity==temp_s)
+						std_velocity=5.0; // OH SO SAD
 					control_pub(std_velocity,u_theta);
-					std_velocity=temp_s;
 				}else{
 					control_pub(std_velocity,u_theta);
 				}
@@ -783,7 +779,8 @@ int forward(ros::Rate loop_rate){
 			flag_dist2break_1 = 1;
 		}
 
-
+		std_velocity=temp_s;
+		k_dist=temp_k;
 		loop_rate.sleep();
 		ros::spinOnce();
 		curr_dist=std::sqrt((x-i_x)*(x-i_x)+(y-i_y)*(y-i_y));
@@ -793,6 +790,8 @@ int forward(ros::Rate loop_rate){
 	}
 
 	stop();
+	std_velocity=temp_s;
+	k_dist=temp_k;
 	ROS_INFO("Finished the forward behavior successfully!\n");
 	last_angle = 0;
 	return 0;
