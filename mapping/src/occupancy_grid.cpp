@@ -1,3 +1,199 @@
+
+
+#include "ros/ros.h"
+#include "std_msgs/String.h"
+#include <stdio.h>
+#include <cmath>
+#include <core_control_motor/vw.h>
+#include <nav_msgs/Odometry.h>
+#include <nav_msgs/OccupancyGrid.h>
+#include <nav_msgs/MapMetaData.h>
+#include <vector>
+
+
+
+
+ //Initialize
+const unsigned int x_matrix=100; 
+const unsigned int y_matrix=100;
+const unsigned int robot_size=3; // square or symetrical when its turns!!
+const float resolution_matrix=0.01; // in meter!
+int x_Current_Pose=50; //x,y coordinates
+int y_Current_Pose=50; //x,y coordinates
+
+// some shit for the simulation!
+int counter=0;
+int theashold=10;
+int boolean;
+
+
+std::vector<signed char>  Occupancy_Grid(x_matrix*y_matrix,50);
+ros::Publisher occ_pub;
+ros::Publisher map_pub;
+ros::Subscriber	odometry_sub;
+ros::Subscriber	camera_sub;
+ros::Subscriber	wall_sub;
+
+
+
+// Super simple since the other thing did not work
+void Get_Readings_Odometry(nav_msgs::Odometry::ConstPtr odometry_msg){
+
+	float x_Pose_Odometry=odometry_msg->pose.pose.position.x; //hopefully this will work directly
+	float y_Pose_Odometry=odometry_msg->pose.pose.position.y;
+
+	ROS_INFO("Odometry Coordinates(x,y): (%f,%f)",x_Pose_Odometry,y_Pose_Odometry);
+	
+	//Start in the middle of the grid
+	x_Current_Pose = (int)(x_Pose_Odometry + round(x_matrix/2));
+	y_Current_Pose = (int)(y_Pose_Odometry + round(y_matrix/2));
+
+	ROS_INFO("Grid coordinates from odometry readings: (%,%i)",x_Current_Pose,y_Current_Pose);
+}
+
+
+
+
+void test_odometry(){ // for test purpose only
+	
+
+	if (counter>=theashold)
+	{
+
+		boolean =rand() % 4;
+		theashold =rand() % 13+3;
+		counter=0;
+		ROS_INFO("****** Random value:(%i) ******",boolean);
+
+	}
+
+	if (boolean ==0)
+		x_Current_Pose ++;
+
+	else if (boolean==1)
+		x_Current_Pose --;
+
+	else if (boolean==2)
+		y_Current_Pose ++;
+
+	else
+		y_Current_Pose --;
+
+	ROS_INFO("Random value:(%i) (%i,%i)",boolean,x_Current_Pose,y_Current_Pose);
+	counter ++;
+
+}
+
+
+void Robot_odometry_size(int x_position, int y_position) {
+
+	for (int x=(x_position*x_matrix);x<((x_position*x_matrix)+(x_matrix*robot_size));x){
+		for (int y=y_position; y< (y_position+robot_size); y++){
+			Occupancy_Grid[x+y]=0;
+			ROS_INFO("matrix: (%i,%i) vector cell(%i)",x,y,(x+y));
+		}
+		x=x+x_matrix;
+	}
+	ROS_INFO("############### For LOOP ended ###################");
+}
+
+
+void Send_Message(){
+
+	nav_msgs::OccupancyGrid occ_msg;
+	nav_msgs::MapMetaData map_msg;
+
+
+	
+	occ_msg.header.stamp=ros::Time::now();
+	occ_msg.header.frame_id= "/map";
+
+	map_msg.map_load_time=ros::Time::now();
+	map_msg.resolution=resolution_matrix;
+	map_msg.width=x_matrix;
+	map_msg.height=y_matrix;
+	//occ_msg.MapMetaData.geometry_msgs.Point
+	//occ_msg.MapMetaData.geometry_msgs.Quaternion
+
+	occ_msg.info=map_msg;
+	
+
+	occ_msg.data=Occupancy_Grid;
+
+
+	
+
+	occ_pub.publish(occ_msg);
+	ROS_INFO("Publish: occ_msg");
+}
+
+void Receive_Camera(int x_position, int y_position) {
+
+	ROS_INFO("############### Recive Camera ###################");
+}
+void Receive_Wall(int x_position, int y_position) {
+
+	ROS_INFO("############### Recive Wall ###################");
+}
+
+
+// ########################## MAIN ################################
+
+int main(int argc, char **argv)
+{
+	ros::init(argc, argv, "occupancy_grid");
+	ros::NodeHandle n;
+
+    
+	//IR_sub = n.subscribe("/core_sensors_ir/ir",1,);
+	odometry_sub = n.subscribe("/core_sensors_odometry/odometry",1,Get_Readings_Odometry);
+	
+	occ_pub = n.advertise<nav_msgs::OccupancyGrid>("/occupancy_grid/occ",1);
+	map_pub = n.advertise<nav_msgs::MapMetaData>("occupancy_grid/map",1);
+
+	//Pose_pub = n.advertise<occupancy_grid::pose>("/occupancy_grid/pose",1);
+	//camera_sub = n.subscribe("", 1000, Receive_Camera);
+	//wall_sub= n.subcribe("",1000,Receive_Wall);
+
+	ROS_INFO("Started the occupancy_grid Node");
+
+	ros::Rate loop_rate(5);
+
+	struct timeval start, end;
+	while(ros::ok()){
+		ROS_INFO("ROS OK!");
+		
+		
+		//test_odometry();
+		Robot_odometry_size(x_Current_Pose,y_Current_Pose);
+		Send_Message();
+
+		loop_rate.sleep();
+		ros::spinOnce();
+
+
+	}
+	return 0;
+}
+
+
+//ros::Subscriber IR_sub;
+
+
+// for later used in the backward model!
+// matrix distance elements from  the robot
+// int Max_Sensor_Range_IR= 30; 
+// int Max_Sensor_Range_Camera=30;
+// int Max_Sensor_Range_Wall=15;
+
+// for later used in both approches backward and forward occupancy models
+// float Past_Wieght_L;
+// float Current_Wieght_L;
+// float Measurment_IR[8];
+
+
+//int Occupancy_Grid[x_matrix][y_matrix]; //Occupancy_grid_Matrix maybe should be a float since 
+
 	// ################### The approach ##########################
 
 	// 1: Get measurements (IR (core),Camera(Image node?), Wall(motion_control), Odomentry(motion Control))
@@ -33,107 +229,6 @@
 // Scaled Grid system?
 
 // Occupied will be 1 and free will be 0 in the grid,
-
-#include "ros/ros.h"
-#include "std_msgs/String.h"
-#include <stdio.h>
-
-//#include <stlib.h>
-#include <cmath>
-#include <core_control_motor/vw.h>
-#include <nav_msgs/Odometry.h>
-#include <nav_msgs/OccupancyGrid.h>
-#include <nav_msgs/MapMetaData.h>
-#include <vector>
-
-#include <core_sensors/ir.h>
-
-//#include <tf/transform_datatypes.h>
-
-
-
-
- //Initialize
-const unsigned int x_matrix=100;
-const unsigned int y_matrix=100;
-const float resolution_matrix=0.001; // in meter!
-float Current_Pose[1]; //x,y coordinates
-int threshold_Occupied=90;
-
-// for later used in the backward model!
-// matrix distance elements from  the robot
-// int Max_Sensor_Range_IR= 30; 
-// int Max_Sensor_Range_Camera=30;
-// int Max_Sensor_Range_Wall=15;
-
-// for later used in both approches backward and forward occupancy models
-// float Past_Wieght_L;
-// float Current_Wieght_L;
-// float Measurment_IR[8];
-
-
-//int Occupancy_Grid[x_matrix][y_matrix]; //Occupancy_grid_Matrix maybe should be a float since 
-std::vector<signed char>  Occupancy_Grid(x_matrix*y_matrix,50);
-ros::Publisher occ_pub;
-ros::Publisher map_pub;
-ros::Subscriber	odometry_sub;
-//ros::Subscriber IR_sub;
-
-
-// Super simple since the other thing did not work
-void Get_Readings_Odometry(nav_msgs::Odometry::ConstPtr odometry_msg){
-
-	Current_Pose[0]=odometry_msg->pose.pose.position.x; //hopefully this will work directly
-	Current_Pose[1]=odometry_msg->pose.pose.position.y;
-
-	ROS_INFO("Odometry Coordinates(x,y): (%d,%d)",Current_Pose[0],Current_Pose[1]);
-	//Start in the middle of the grid
-	int x_grid=int (Current_Pose[0] + round(x_matrix/2));
-	int y_grid=int(Current_Pose[1] + round(y_matrix/2));
-	
-	
-	//put it to occupied in the grid more advanced is the forward model for occuancy
-	// bacause we want to have valuse Between 0-100 depending on how likely it is that it is a obsticle
-	
-	Occupancy_Grid[x_grid*y_grid]=0;
-
-	ROS_INFO("Grid coordinates that is change to occupied: (%d,%d)",x_grid,y_grid);
-}
-
-void Send_Message(){
-
-	nav_msgs::OccupancyGrid occ_msg;
-	nav_msgs::MapMetaData map_msg;
-
-
-	
-	occ_msg.header.stamp=ros::Time::now();
-	occ_msg.header.frame_id= "/map";
-
-	map_msg.map_load_time=ros::Time::now();
-	map_msg.resolution=resolution_matrix;
-	map_msg.width=x_matrix;
-	map_msg.height=y_matrix;
-	//occ_msg.MapMetaData.geometry_msgs.Point
-	//occ_msg.MapMetaData.geometry_msgs.Quaternion
-
-	occ_msg.info=map_msg;
-	//PROBLEM NOT WORKNING!!!!!!!! :@ :@
-	//occ_msg.data = Occupancy_Grid;
-	ROS_INFO("OK");
-
-
-	occ_msg.data=Occupancy_Grid;
-
-
-	ROS_INFO("OK?");
-
-	occ_pub.publish(occ_msg);
-	map_pub.publish(map_msg);
-	ROS_INFO("Publish: occ and map");
-
-
-}
 
 
 // Did this stuff below maybe we could use it.... 12/11/2013  jimmy
@@ -245,38 +340,3 @@ for(int X=0, X<x_matrix,  X++) // covers the nearest area in X
 
 //}
 
-
-
-// ########################## MAIN ################################
-
-int main(int argc, char **argv)
-{
-	ros::init(argc, argv, "occupancy_grid");
-	ros::NodeHandle n;
-
-    
-	//IR_sub = n.subscribe("/core_sensors_ir/ir",1,);
-	odometry_sub = n.subscribe("/core_sensors_odometry/odometry",1,Get_Readings_Odometry);
-	
-	occ_pub = n.advertise<nav_msgs::OccupancyGrid>("/occupancy_grid/occ",1);
-	map_pub = n.advertise<nav_msgs::MapMetaData>("occupancy_grid/map",1);
-
-	//Pose_pub = n.advertise<occupancy_grid::pose>("/occupancy_grid/pose",1);
-	//Camera_sub = n.subscribe("", 1000, Receive_Camera_readings);
-	//Motion_control_wall= n.subcribe("",1000,Receive_Wall);
-
-	ROS_INFO("Started the occupancy_grid Node");
-
-	ros::Rate loop_rate(100);
-
-	struct timeval start, end;
-	while(ros::ok()){
-		ROS_INFO("Working? ROS OK!");
-		Send_Message();
-
-		loop_rate.sleep();
-		ros::spinOnce();
-
-	}
-	return 0;
-}
