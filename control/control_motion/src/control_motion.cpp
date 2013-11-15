@@ -50,7 +50,7 @@ double k_forward=1.0;
 double k_rotate=0.7;
 double i_rotate=0.0;
 double d_rotate=0.02;
-double cte_rotate=0.5;
+double cte_rotate=0.30;
 double k_align=0.0;//1.5;
 double i_align=0.0;
 double d_align=0.0;//0.04;
@@ -74,7 +74,7 @@ double last_angle = 0.0;
 double forward_distance=20.0;
 
 // Threshold for the sensors
-double heading_thres=0.01;
+double heading_thres=0.005;
 double align_thres=100;//0.003;
 double dist_thres=10.0;
 double dist_ref=3.0;
@@ -332,10 +332,16 @@ double dist_wall(int wall_n){
 	switch (wall_n){
 
 	case 1:
-		return dist_wall_left;
+		if(ir_readings[2] < inf_thres && ir_readings[3] < inf_thres)
+			return dist_wall_left;
+		else
+			return -1;
 		break;
 	case 2:
-		return dist_wall_right;
+		if(ir_readings[4] < inf_thres && ir_readings[5] < inf_thres)
+			return dist_wall_right;
+		else
+			return -1;
 		break;
 	default:
 		return -1;
@@ -622,13 +628,13 @@ int forward(ros::Rate loop_rate){
 
 	double initial_theta=heading_ref; // needs to receive rotation angle from logic node
 	double heading_error=0.0;
-	int status_changed=0,wall=0;
+	int status_changed=0,wall=0,avoid_flag=0,far_away_flag=1;
 	double initial_ir[8], close_ir=0.0;
 	double i_x=x, i_y=y;
 	double curr_dist=std::sqrt((x-i_x)*(x-i_x)+(y-i_y)*(y-i_y));
 	double BreakingRatio_1;
 	double last_E_r=PID_INIT,I_sum_r=0.0,last_R_d=PID_INIT,I_sum_d=0.0;
-	double ir_wall[2]={0.0,0.0},u_theta=0.0,theta_ref=0.0;
+	double ir_wall[2]={0.0,0.0},u_theta=0.0,theta_ref=0.0,temp_k=0,temp_s=0;
 
 	for(int i=0; i<8; i++)
 		initial_ir[i]=ir_readings[i];
@@ -653,52 +659,100 @@ int forward(ros::Rate loop_rate){
 		if(dist_wall(1) != -1){
 			if(dist_wall(2) != -1){
 				if(dist_wall(1) < dist_wall(2)){
+					ROS_INFO("IM SEEING SOMETHING TO THE LEFT!!");
 					wall=1;
+					if(dist_wall(1)<dist_ref)
+						far_away_flag=0;
+
 					for(int i=0; i<2; i++)
 						ir_wall[i]=ir_readings[i+2];
 				}else{
+					ROS_INFO("IM SEEING SOMETHING TO THE RIGHT!!");
 					wall=2;
+					if(dist_wall(2) < dist_ref)
+						far_away_flag=0;
+
 					for(int i=0; i<2; i++)
 						ir_wall[i]=ir_readings[i+4];
 				}
 			}else{
+				ROS_INFO("IM SEEING SOMETHING TO THE LEFT!!");
 				wall=1;
+				if(dist_wall(1) < dist_ref)
+					far_away_flag=0;
+
 				for(int i=0; i<2; i++)
 					ir_wall[i]=ir_readings[i+2];
 			}
 		}else if(dist_wall(2) != -1){
+			ROS_INFO("IM SEEING SOMETHING TO THE RIGHT!!");
+			if(dist_wall(2) < dist_ref)
+				far_away_flag=0;
+
 			wall=2;
 			for(int i=0; i<2; i++)
 				ir_wall[i]=ir_readings[i+4];
 		}else if(dist_wall(1)==-1 && dist_wall(2)==-1){
-			if(ir_readings[2] < dist_thres && ir_readings[4] < dist_thres){
+			if(ir_readings[2] < dist_thres/2 && ir_readings[4] < dist_thres/2){
+				avoid_flag=1;
 				if(ir_readings[2] < ir_readings[4]){
+					ROS_INFO("IM SEEING SOMETHING TO THE LEFT AND I WANT TO AVOID IT!!");
 					wall=1;
 					for(int i=0; i<2; i++)
 						ir_wall[i]=ir_readings[2];
 				}else{
+					ROS_INFO("IM SEEING SOMETHING TO THE RIGHT AND I WANT TO AVOIT IT!!");
 					wall=2;
 					for(int i=0; i<2; i++)
 						ir_wall[i]=ir_readings[4];
 				}
-			}else if(ir_readings[2] < dist_thres){
+			}else if(ir_readings[2] < dist_thres/2){
+				avoid_flag=1;
+				ROS_INFO("IM SEEING SOMETHING TO THE LEFT AND I WANT TO AVOID IT!!");
 				wall=1;
 				for(int i=0; i<2; i++)
 					ir_wall[i] = ir_readings[2];
-			}else if(ir_readings[4] < dist_thres){
+			}else if(ir_readings[4] < dist_thres/2){
+				avoid_flag=1;
+				ROS_INFO("IM SEEING SOMETHING TO THE RIGHT AND I WANT TO AVOID IT!!");
 				wall=2;
 				for(int i=0; i<2; i++)
 					ir_wall[i] = ir_readings[4];
 			}else{
+				ROS_INFO("IM SEEING NOTHING!!");
 				wall=0;
 			}
 		}
 		
-		if(wall)
-			u_theta=paralel_controller(wall,ir_wall,theta_ref,dist_ref,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
-		else
+		if(wall){
+			if(avoid_flag){
+				if(ir_wall[0]<1.0){
+					temp_s=std_velocity;
+					temp_k=k_dist;
+					k_dist=0.06; // OH THE SORROW
+					std_velocity=5.0; // OH SO SORRY
+					u_theta=paralel_controller(wall,ir_wall,theta_ref,2.0,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
+					k_dist=temp_k;
+					std_velocity=temp_s;
+				}else{
+					u_theta=0;
+				}
+			}else{
+				if(!far_away_flag){
+					u_theta=paralel_controller(wall,ir_wall,theta_ref,dist_ref,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
+				}else{
+					
+					temp_k=k_dist;
+					if(wall!=wall_to_follow)
+						k_dist=0.0; // OH SO DIRTY
+					u_theta=paralel_controller(wall,ir_wall,theta_ref,dist_ref,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
+					k_dist=temp_k;
+				}
+			}
+		}else
 			u_theta=0;		
 		
+
 		//Distance to wall < inf_thres ---> close! Reduce velocity
 		if(wall_in_range(3,inf_thres,ir_readings)){
 
@@ -710,7 +764,15 @@ int forward(ros::Rate loop_rate){
 			if(flag_dist2break_1 == 1){
 				initial_flag_dist2break_1 = close_ir;
 				flag_dist2break_1 = 0;
-				control_pub(std_velocity,u_theta);
+				
+				if(!wall){
+					temp_s=std_velocity;
+					std_velocity=15.0; // OH SO SAD
+					control_pub(std_velocity,u_theta);
+					std_velocity=temp_s;
+				}else{
+					control_pub(std_velocity,u_theta);
+				}
 			}else{
 				//2 yields (1/2)*std_velocity... 1 gives 0 
 				BreakingRatio_1 = ((initial_flag_dist2break_1-close_ir)/(1.05*(inf_thres-dist_thres))); 
