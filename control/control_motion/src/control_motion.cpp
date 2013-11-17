@@ -641,7 +641,7 @@ int forward(ros::Rate loop_rate){
 
 	// Will keep moving forward until sensors report obstacle or forward_distance is achieved
 	while(curr_dist<forward_distance){ 
-		std_velocity=15.0; // sorry :(
+		//std_velocity=12.5; // sorry :(
 
 		//Distance to wall < delay_thres ---> very close! STOP
 		if(wall_in_range(3,dist_thres,ir_readings)){ //
@@ -662,7 +662,7 @@ int forward(ros::Rate loop_rate){
 		if(dist_wall(1) != -1){
 			if(dist_wall(2) != -1){
 				if(dist_wall(1) < dist_wall(2)){
-					ROS_INFO("IM SEEING SOMETHING TO THE LEFT!!");
+					ROS_INFO("IM SEEING A WALL TO THE LEFT!!");
 					wall=1;
 					if(dist_wall(1)<dist_ref)
 						far_away_flag=0;
@@ -670,7 +670,7 @@ int forward(ros::Rate loop_rate){
 					for(int i=0; i<2; i++)
 						ir_wall[i]=ir_readings[i+2];
 				}else{
-					ROS_INFO("IM SEEING SOMETHING TO THE RIGHT!!");
+					ROS_INFO("IM SEEING A WALL TO THE RIGHT!!");
 					wall=2;
 					if(dist_wall(2) < dist_ref)
 						far_away_flag=0;
@@ -679,7 +679,7 @@ int forward(ros::Rate loop_rate){
 						ir_wall[i]=ir_readings[i+4];
 				}
 			}else{
-				ROS_INFO("IM SEEING SOMETHING TO THE LEFT!!");
+				ROS_INFO("IM SEEING A WALL TO THE LEFT!!");
 				wall=1;
 				if(dist_wall(1) < dist_ref)
 					far_away_flag=0;
@@ -688,14 +688,16 @@ int forward(ros::Rate loop_rate){
 					ir_wall[i]=ir_readings[i+2];
 			}
 		}else if(dist_wall(2) != -1){
-			ROS_INFO("IM SEEING SOMETHING TO THE RIGHT!!");
+			ROS_INFO("IM SEEING A WALL TO THE RIGHT!!");
 			if(dist_wall(2) < dist_ref)
 				far_away_flag=0;
 
 			wall=2;
 			for(int i=0; i<2; i++)
 				ir_wall[i]=ir_readings[i+4];
-		}else if(dist_wall(1)==-1 && dist_wall(2)==-1){
+			
+		}else if(dist_wall(1)==-1 && dist_wall(2)==-1){ // Not seeing a wall -> we are risking getting misaligned with the maze's grid structure. Better slow down.
+			std_velocity=12.5;
 			if(ir_readings[2] < dist_thres/2 && ir_readings[4] < dist_thres/2){
 				avoid_flag=1;
 				if(ir_readings[2] < ir_readings[4]){
@@ -730,8 +732,8 @@ int forward(ros::Rate loop_rate){
 		if(wall){
 			if(avoid_flag){
 				if(ir_wall[0]<1.0){
-					k_dist=0.06; // OH THE SORROW
-					std_velocity=5.0; // OH SO SORRY
+					//k_dist=0.06; // OH THE SORROW
+					//std_velocity=5.0; // OH SO SORRY
 					u_theta=paralel_controller(wall,ir_wall,theta_ref,2.0,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
 				}else{
 					u_theta=0;
@@ -741,8 +743,8 @@ int forward(ros::Rate loop_rate){
 					u_theta=paralel_controller(wall,ir_wall,theta_ref,dist_ref,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
 				}else{
 					
-					if(wall!=wall_to_follow)
-						k_dist=0.0; // OH SO DIRTY
+					if(wall!=wall_to_follow && (ir_wall[0]+ir_wall[1])>dist_ref)
+						k_dist=0.0; // will not try to get close to the wall it's not following. But it is desirable to align with it
 					u_theta=paralel_controller(wall,ir_wall,theta_ref,dist_ref,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
 				}
 			}
@@ -762,13 +764,7 @@ int forward(ros::Rate loop_rate){
 				initial_flag_dist2break_1 = close_ir;
 				flag_dist2break_1 = 0;
 				
-				if(!wall){
-					if(std_velocity==temp_s)
-						std_velocity=5.0; // OH SO SAD
-					control_pub(std_velocity,u_theta);
-				}else{
-					control_pub(std_velocity,u_theta);
-				}
+				control_pub(std_velocity,u_theta);
 			}else{
 				//2 yields (1/2)*std_velocity... 1 gives 0 
 				BreakingRatio_1 = ((initial_flag_dist2break_1-close_ir)/(1.05*(inf_thres-dist_thres))); 
@@ -784,9 +780,6 @@ int forward(ros::Rate loop_rate){
 		loop_rate.sleep();
 		ros::spinOnce();
 		curr_dist=std::sqrt((x-i_x)*(x-i_x)+(y-i_y)*(y-i_y));
-		//}
-
-		//ROS_INFO("Travelled distance: %.2f",curr_dist);
 	}
 
 	stop();
@@ -807,7 +800,7 @@ int rotate(ros::Rate loop_rate){
 
 	double heading_error=0.0;
 	double init_theta=processed_theta;
-	double init_error=heading_ref-(processed_theta-init_theta); //Why now is different than in Forward?
+	double init_error=heading_ref-(processed_theta-init_theta);
 	int done=0, wall=1;
 	double ir_wall[2]={0.0,0.0};
 	double theta_ref=0.0, theta_meas=0.0, error_theta=0.0,u_theta=0.0;
@@ -973,8 +966,6 @@ int main(int argc, char ** argv){
 			behavior = 0;
 			break;
 		}
-		//ROS_INFO("Behavior: %d\nWall to follow: %d",behavior,wall_to_follow);
-
 	}
 
 	return 0;
