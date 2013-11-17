@@ -36,11 +36,12 @@ ros::Subscriber	wall_sub;
 
 
 
+
 // Super simple since the other thing did not work
 void Get_Readings_Odometry(nav_msgs::Odometry::ConstPtr odometry_msg){
 
-	float x_Pose_Odometry=odometry_msg->pose.pose.position.x; //hopefully this will work directly
-	float y_Pose_Odometry=odometry_msg->pose.pose.position.y;
+	double x_Pose_Odometry=odometry_msg->pose.pose.position.x; //hopefully this will work directly
+	double y_Pose_Odometry=odometry_msg->pose.pose.position.y;
 
 	ROS_INFO("Odometry Coordinates(x,y): (%f,%f)",x_Pose_Odometry,y_Pose_Odometry);
 	
@@ -203,12 +204,12 @@ int main(int argc, char **argv)
 // int Max_Sensor_Range_Wall=15;
 
 // for later used in both approches backward and forward occupancy models
-// float Past_Wieght_L;
-// float Current_Wieght_L;
-// float Measurment_IR[8];
+// double Past_Wieght_L;
+// double Current_Wieght_L;
+// double Measurment_IR[8];
 
 
-//int Occupancy_Grid[x_matrix][y_matrix]; //Occupancy_grid_Matrix maybe should be a float since 
+//int Occupancy_Grid[x_matrix][y_matrix]; //Occupancy_grid_Matrix maybe should be a double since 
 
 	// ################### The approach ##########################
 
@@ -331,9 +332,9 @@ for(int X=Current_Pose[1]- Max_Sensor_Range_IR, X<=Current_Pose[1]+Max_Sensor_Ra
 void Inverse_Range_Sensor_Model(MAP, Current_Pose, Measurments)
 {
 	Current_Pose
-	float r = sqrt(exp2(MAP[X][Y]-Current_Pose[1])+exp2(MAP[X][Y]-Current_Pose[2]));
-	float phiX= atan2(MAP[X][Y]-Current_Pose[1]);
-	float phiY= atan2(MAP[X][Y]-Current_Pose[2]);
+	double r = sqrt(exp2(MAP[X][Y]-Current_Pose[1])+exp2(MAP[X][Y]-Current_Pose[2]));
+	double phiX= atan2(MAP[X][Y]-Current_Pose[1]);
+	double phiY= atan2(MAP[X][Y]-Current_Pose[2]);
 	// not finnished
 
 }
@@ -341,7 +342,7 @@ void Inverse_Range_Sensor_Model(MAP, Current_Pose, Measurments)
 void Forward_Occupancy_Grid_Mapping(Current_Pose, Measurments)
 {
 
-float LO=log(0.07/0.93) // chance that it is occupied 7% and 93% that is not occupied
+double LO=log(0.07/0.93) // chance that it is occupied 7% and 93% that is not occupied
 
 for(int X=0, X<x_matrix,  X++) // covers the nearest area in X
 	{
