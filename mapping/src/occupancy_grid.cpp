@@ -14,9 +14,9 @@
 
 
  //Initialize
-const unsigned int x_matrix=100; 
-const unsigned int y_matrix=100;
-const unsigned int robot_size=3; // square or symetrical when its turns!!
+const unsigned int x_matrix=1000; 
+const unsigned int y_matrix=1000;
+const unsigned int robot_size=20; // square or symetrical when its turns!!
 const float resolution_matrix=0.01; // in meter!
 int x_Current_Pose=50; //x,y coordinates
 int y_Current_Pose=50; //x,y coordinates
@@ -57,7 +57,7 @@ void Get_Readings_Odometry(nav_msgs::Odometry::ConstPtr odometry_msg){
 void test_odometry(){ // for test purpose only
 	
 
-	if (counter>=theashold)
+	/*if (counter>=theashold)
 	{
 
 		boolean =rand() % 4;
@@ -65,19 +65,31 @@ void test_odometry(){ // for test purpose only
 		counter=0;
 		//ROS_INFO("****** Random value:(%i) ******",boolean);
 
+	}*/
+
+		boolean=2;
+
+
+	if (boolean ==0){
+		x_Current_Pose ++;
+		ROS_INFO("Increase X++");
 	}
 
-	if (boolean ==0)
-		x_Current_Pose ++;
 
-	else if (boolean==1)
+	else if (boolean==1){
 		x_Current_Pose --;
+		ROS_INFO("Increase X --");
+	}
 
-	else if (boolean==2)
+	else if (boolean==2){
 		y_Current_Pose ++;
+		ROS_INFO("Increase Y ++");
+	}
 
-	else
+	else{
 		y_Current_Pose --;
+		ROS_INFO("Decrease Y --");
+	}
 
 	//ROS_INFO("Random value:(%i) (%i,%i)",boolean,x_Current_Pose,y_Current_Pose);
 	counter ++;
@@ -86,11 +98,22 @@ void test_odometry(){ // for test purpose only
 
 
 void Robot_odometry_size(int x_position, int y_position) {
+	int count=0;
+	for (int x=((x_position- round(robot_size/2))*x_matrix);x<(((x_position- (robot_size/2))*x_matrix)+(x_matrix*robot_size));x){
+		for (int y=y_position- round(robot_size/2); y< (y_position+robot_size); y++){
 
-	for (int x=(x_position*x_matrix);x<((x_position*x_matrix)+(x_matrix*robot_size));x){
-		for (int y=y_position; y< (y_position+robot_size); y++){
-			Occupancy_Grid[x+y]=0;
-			//ROS_INFO("matrix: (%i,%i) vector cell(%i)",x,y,(x+y));
+			if (count==4){
+				Occupancy_Grid[x+y]=100;
+				ROS_INFO("CENTER: (%i,%i),(%i,%i)",x,y,x_position,y_position);
+				count++;
+			}
+			else{
+				Occupancy_Grid[x+y]=0;
+				ROS_INFO("matrix: (%i,%i) vector cell(%i)",x,y,(x+y));
+				count++;
+			}
+			
+
 		}
 		x=x+x_matrix;
 	}
@@ -103,8 +126,6 @@ void Send_Message(){
 	nav_msgs::OccupancyGrid occ_msg;
 	nav_msgs::MapMetaData map_msg;
 
-
-	
 	occ_msg.header.stamp=ros::Time::now();
 	occ_msg.header.frame_id= "/map";
 
@@ -120,11 +141,8 @@ void Send_Message(){
 
 	occ_msg.data=Occupancy_Grid;
 
-
-	
-
 	occ_pub.publish(occ_msg);
-	//ROS_INFO("Publish: occ_msg");
+
 }
 
 void Receive_Camera(int x_position, int y_position) {
@@ -155,14 +173,14 @@ int main(int argc, char **argv)
 
 	ROS_INFO("Started the occupancy_grid Node");
 
-	ros::Rate loop_rate(5);
+	ros::Rate loop_rate(1);
 
 	struct timeval start, end;
 	while(ros::ok()){
 		//ROS_INFO("ROS OK!");
 		
 		
-		//test_odometry();
+		test_odometry();
 		Robot_odometry_size(x_Current_Pose,y_Current_Pose);
 		Send_Message();
 
