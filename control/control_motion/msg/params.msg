@@ -2,6 +2,7 @@ float64 k_forward
 float64 k_rotate
 float64 i_rotate
 float64 d_rotate
+float64 cte_rotate
 float64 k_align
 float64 i_align
 float64 d_align
