@@ -3,6 +3,6 @@
 	<include file="$(find openni_launch)/launch/openni.launch"/>
 
 	<!-- launch image / pcl processing nodes -->
+	<include file="$(find vision_object)/launch/all.launch"/>
 	<include file="$(find vision_plane)/launch/all.launch"/>
-	<include file="$(find vision_trial)/launch/all.launch"/>
 </launch>
