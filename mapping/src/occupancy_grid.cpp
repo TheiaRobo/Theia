@@ -14,17 +14,18 @@
 
 
  //Initialize
-const unsigned int x_matrix=1000; 
-const unsigned int y_matrix=1000;
-const unsigned int robot_size=20; // square or symetrical when its turns!!
-const float resolution_matrix=0.01; // in meter!
-int x_Current_Pose=50; //x,y coordinates
-int y_Current_Pose=50; //x,y coordinates
+const double resolution_matrix=0.2; // in meter!
+const unsigned int x_matrix=10/resolution_matrix; 
+const unsigned int y_matrix=10/resolution_matrix;
+const unsigned int robot_size=1; // square or symetrical when its turns!!
+int x_Current_Pose=round(x_matrix/2); //x,y coordinates
+int y_Current_Pose=round(y_matrix/2); //x,y coordinates
+const int freq=100;
 
-// some shit for the simulation!
+/*// some shit for the simulation!
 int counter=0;
 int theashold=10;
-int boolean;
+int boolean;*/
 
 
 std::vector<signed char>  Occupancy_Grid(x_matrix*y_matrix,50);
@@ -35,27 +36,35 @@ ros::Subscriber	camera_sub;
 ros::Subscriber	wall_sub;
 
 
-
+/* cell_round
+ * Rounds the received value to the nearest cell coordinate
+ */
+double cell_round(double val){
+	double cm_res=resolution_matrix*100;
+	
+	return round(val/cm_res);
+	
+}
 
 // Super simple since the other thing did not work
 void Get_Readings_Odometry(nav_msgs::Odometry::ConstPtr odometry_msg){
 
-	double x_Pose_Odometry=odometry_msg->pose.pose.position.x; //hopefully this will work directly
-	double y_Pose_Odometry=odometry_msg->pose.pose.position.y;
+	double x_Pose_Odometry=cell_round(odometry_msg->pose.pose.position.x);
+	double y_Pose_Odometry=cell_round(odometry_msg->pose.pose.position.y);
 
 	ROS_INFO("Odometry Coordinates(x,y): (%f,%f)",x_Pose_Odometry,y_Pose_Odometry);
 	
 	//Start in the middle of the grid
-	x_Current_Pose = (int)(x_Pose_Odometry + round(x_matrix/2));
-	y_Current_Pose = (int)(y_Pose_Odometry + round(y_matrix/2));
+	x_Current_Pose = (x_Pose_Odometry + round(x_matrix/2));
+	y_Current_Pose = (y_Pose_Odometry + round(y_matrix/2));
 
-	ROS_INFO("Grid coordinates from odometry readings: (%,%i)",x_Current_Pose,y_Current_Pose);
+	ROS_INFO("Grid coordinates from odometry readings: (%f,%f)",x_Current_Pose,y_Current_Pose);
 }
 
 
 
 
-void test_odometry(){ // for test purpose only
+/*void test_odometry(){ // for test purpose only
 	
 
 	/*if (counter>=theashold)
@@ -66,7 +75,7 @@ void test_odometry(){ // for test purpose only
 		counter=0;
 		//ROS_INFO("****** Random value:(%i) ******",boolean);
 
-	}*/
+	}*//*
 
 		boolean=2;
 
@@ -95,28 +104,22 @@ void test_odometry(){ // for test purpose only
 	//ROS_INFO("Random value:(%i) (%i,%i)",boolean,x_Current_Pose,y_Current_Pose);
 	counter ++;
 
-}
+}*/
 
 
 void Robot_odometry_size(int x_position, int y_position) {
 	int count=0;
-	for (int x=((x_position- round(robot_size/2))*x_matrix);x<(((x_position- (robot_size/2))*x_matrix)+(x_matrix*robot_size));x){
+	for (int x=((x_position- round(robot_size/2))*x_matrix);x<(((x_position- (robot_size/2))*x_matrix)+(x_matrix*robot_size));x+=x_matrix){
 		for (int y=y_position- round(robot_size/2); y< (y_position+robot_size); y++){
 
-			if (count==4){
+			/*if (count==4){
 				Occupancy_Grid[x+y]=100;
-				ROS_INFO("CENTER: (%i,%i),(%i,%i)",x,y,x_position,y_position);
 				count++;
-			}
-			else{
-				Occupancy_Grid[x+y]=0;
-				ROS_INFO("matrix: (%i,%i) vector cell(%i)",x,y,(x+y));
-				count++;
-			}
-			
+			}*/ // why??
+			Occupancy_Grid[x+y]=0;
+			count++;			
 
 		}
-		x=x+x_matrix;
 	}
 	//ROS_INFO("############### For LOOP ended ###################");
 }
@@ -174,14 +177,15 @@ int main(int argc, char **argv)
 
 	ROS_INFO("Started the occupancy_grid Node");
 
-	ros::Rate loop_rate(1);
+	ros::Rate loop_rate(freq);
 
 	struct timeval start, end;
+	
 	while(ros::ok()){
 		//ROS_INFO("ROS OK!");
 		
 		
-		test_odometry();
+		//test_odometry();
 		Robot_odometry_size(x_Current_Pose,y_Current_Pose);
 		Send_Message();
 
