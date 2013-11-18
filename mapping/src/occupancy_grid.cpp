@@ -49,10 +49,10 @@ double cell_round(double val){
 // Super simple since the other thing did not work
 void Get_Readings_Odometry(nav_msgs::Odometry::ConstPtr odometry_msg){
 
-	double x_Pose_Odometry=cell_round(odometry_msg->pose.pose.position.x);
-	double y_Pose_Odometry=cell_round(odometry_msg->pose.pose.position.y);
+	double x_Pose_Odometry=cell_round(odometry_msg->pose.pose.position.x*100); //odometry is comming in meters
+	double y_Pose_Odometry=cell_round(odometry_msg->pose.pose.position.y*100);
 
-	ROS_INFO("Odometry Coordinates(x,y): (%f,%f)",x_Pose_Odometry,y_Pose_Odometry);
+	ROS_INFO("Odometry Coordinates(x,y): (%f,%f)",odometry_msg->pose.pose.position.x*100,odometry_msg->pose.pose.position.y*100);
 	
 	//Start in the middle of the grid
 	x_Current_Pose = (x_Pose_Odometry + round(x_matrix/2));

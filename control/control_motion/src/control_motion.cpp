@@ -74,7 +74,7 @@ double last_angle = 0.0;
 double forward_distance=20.0;
 
 // Threshold for the sensors
-double heading_thres=0.005;
+double heading_thres=0.01;
 double align_thres=100;//0.003;
 double dist_thres=10.0;
 double dist_ref=3.0;
