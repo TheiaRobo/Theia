@@ -47,10 +47,10 @@ int flag_dist2break_3 = 1;
 
 // Control parameters
 double k_forward=1.0;
-double k_rotate=0.3;
+double k_rotate=1.0;
 double i_rotate=0.0;
-double d_rotate=0.01;
-double cte_rotate=0.30;
+double d_rotate=0.00;
+double cte_rotate=0.14;
 double k_align=0.0;//1.5;
 double i_align=0.0;
 double d_align=0.0;//0.04;
@@ -74,13 +74,14 @@ double last_angle = 0.0;
 double forward_distance=20.0;
 
 // Threshold for the sensors
-double heading_thres=0.01;
+double heading_thres=0.005;
 double align_thres=100;//0.003;
-double dist_thres=10.0;
-double dist_ref=3.0;
+double dist_thres=5.0;
+double cross_thres=500;
+double dist_ref=2.0;
 double inf_thres=20.0;
 double rotation_error_thres=0.10;
-double delay_thres=2.0; // no real time :(
+double delay_thres=3.0; // no real time :(
 
 //0 - None; 1 - Forward; 2 - Rotate xº; 3 - Forward with wall
 int behavior=0; 
@@ -300,6 +301,13 @@ int wall_in_range(int side, double thres, double ir[8]){
 			return 0;
 		}
 		break;
+	case 4:
+		if((ir[6] > thres|| ir[7] > thres) && ir[0] > inf_thres && ir[1] > inf_thres){
+			ROS_INFO("Crossed!");
+			return 1;
+		}else{
+			return 0;
+		}
 	default:
 		return 1;
 	}
@@ -638,13 +646,13 @@ int forward(ros::Rate loop_rate){
 
 	for(int i=0; i<8; i++)
 		initial_ir[i]=ir_readings[i];
-
+	ROS_INFO("Will go forward %.2f cm!",forward_distance);
 	// Will keep moving forward until sensors report obstacle or forward_distance is achieved
 	while(curr_dist<forward_distance){ 
-		//std_velocity=12.5; // sorry :(
+		std_velocity=10.0; // sorry :(
 
 		//Distance to wall < delay_thres ---> very close! STOP
-		if(wall_in_range(3,dist_thres,ir_readings)){ //
+		if(wall_in_range(3,dist_thres,ir_readings) || wall_in_range(4,cross_thres,ir_readings)){ //
 			stop();
 			std_velocity=temp_s;
 			k_dist=temp_k;
@@ -662,7 +670,7 @@ int forward(ros::Rate loop_rate){
 		if(dist_wall(1) != -1){
 			if(dist_wall(2) != -1){
 				if(dist_wall(1) < dist_wall(2)){
-					ROS_INFO("IM SEEING A WALL TO THE LEFT!!");
+					//ROS_INFO("IM SEEING A WALL TO THE LEFT!!");
 					wall=1;
 					if(dist_wall(1)<dist_ref)
 						far_away_flag=0;
@@ -670,7 +678,7 @@ int forward(ros::Rate loop_rate){
 					for(int i=0; i<2; i++)
 						ir_wall[i]=ir_readings[i+2];
 				}else{
-					ROS_INFO("IM SEEING A WALL TO THE RIGHT!!");
+					//ROS_INFO("IM SEEING A WALL TO THE RIGHT!!");
 					wall=2;
 					if(dist_wall(2) < dist_ref)
 						far_away_flag=0;
@@ -679,7 +687,7 @@ int forward(ros::Rate loop_rate){
 						ir_wall[i]=ir_readings[i+4];
 				}
 			}else{
-				ROS_INFO("IM SEEING A WALL TO THE LEFT!!");
+				//ROS_INFO("IM SEEING A WALL TO THE LEFT!!");
 				wall=1;
 				if(dist_wall(1) < dist_ref)
 					far_away_flag=0;
@@ -688,7 +696,7 @@ int forward(ros::Rate loop_rate){
 					ir_wall[i]=ir_readings[i+2];
 			}
 		}else if(dist_wall(2) != -1){
-			ROS_INFO("IM SEEING A WALL TO THE RIGHT!!");
+			//ROS_INFO("IM SEEING A WALL TO THE RIGHT!!");
 			if(dist_wall(2) < dist_ref)
 				far_away_flag=0;
 
@@ -697,34 +705,34 @@ int forward(ros::Rate loop_rate){
 				ir_wall[i]=ir_readings[i+4];
 			
 		}else if(dist_wall(1)==-1 && dist_wall(2)==-1){ // Not seeing a wall -> we are risking getting misaligned with the maze's grid structure. Better slow down.
-			std_velocity=12.5;
+			
 			if(ir_readings[2] < dist_thres/2 && ir_readings[4] < dist_thres/2){
 				avoid_flag=1;
 				if(ir_readings[2] < ir_readings[4]){
-					ROS_INFO("IM SEEING SOMETHING TO THE LEFT AND I WANT TO AVOID IT!!");
+					//ROS_INFO("IM SEEING SOMETHING TO THE LEFT AND I WANT TO AVOID IT!!");
 					wall=1;
 					for(int i=0; i<2; i++)
 						ir_wall[i]=ir_readings[2];
 				}else{
-					ROS_INFO("IM SEEING SOMETHING TO THE RIGHT AND I WANT TO AVOIT IT!!");
+					//ROS_INFO("IM SEEING SOMETHING TO THE RIGHT AND I WANT TO AVOIT IT!!");
 					wall=2;
 					for(int i=0; i<2; i++)
 						ir_wall[i]=ir_readings[4];
 				}
 			}else if(ir_readings[2] < dist_thres/2){
 				avoid_flag=1;
-				ROS_INFO("IM SEEING SOMETHING TO THE LEFT AND I WANT TO AVOID IT!!");
+				//ROS_INFO("IM SEEING SOMETHING TO THE LEFT AND I WANT TO AVOID IT!!");
 				wall=1;
 				for(int i=0; i<2; i++)
 					ir_wall[i] = ir_readings[2];
 			}else if(ir_readings[4] < dist_thres/2){
 				avoid_flag=1;
-				ROS_INFO("IM SEEING SOMETHING TO THE RIGHT AND I WANT TO AVOID IT!!");
+				//ROS_INFO("IM SEEING SOMETHING TO THE RIGHT AND I WANT TO AVOID IT!!");
 				wall=2;
 				for(int i=0; i<2; i++)
 					ir_wall[i] = ir_readings[4];
 			}else{
-				ROS_INFO("IM SEEING NOTHING!!");
+				//ROS_INFO("IM SEEING NOTHING!!");
 				wall=0;
 			}
 		}
@@ -767,7 +775,7 @@ int forward(ros::Rate loop_rate){
 				control_pub(std_velocity,u_theta);
 			}else{
 				//2 yields (1/2)*std_velocity... 1 gives 0 
-				BreakingRatio_1 = ((initial_flag_dist2break_1-close_ir)/(1.05*(inf_thres-dist_thres))); 
+				BreakingRatio_1 = ((inf_thres-close_ir)/(1.1*(inf_thres-dist_thres))); 
 				control_pub(abs(std_velocity*( 1 - BreakingRatio_1 )),u_theta);
 			}
 		}else{
@@ -798,7 +806,7 @@ int forward(ros::Rate loop_rate){
 
 int rotate(ros::Rate loop_rate){
 
-	double heading_error=0.0;
+	double heading_error=0.0, temp_thres;
 	double init_theta=processed_theta;
 	double init_error=heading_ref-(processed_theta-init_theta);
 	int done=0, wall=1;
@@ -809,9 +817,17 @@ int rotate(ros::Rate loop_rate){
 	ROS_INFO("Will rotate %.2f rad",heading_ref);
 	// Rotation on-going
 	while(ros::ok() && !done){
+		if(wall_in_range(1,inf_thres,ir_readings) || wall_in_range(2,inf_thres,ir_readings)){
+			if(!wall_in_range(3,dist_thres,ir_readings))
+				temp_thres=0.02;
+			else
+				temp_thres=heading_thres;
+		}else{
+			temp_thres=heading_thres;
+		}
 		heading_error=heading_ref-(processed_theta-init_theta);
 		// If Rotation completed
-		if(std::abs(heading_error) < heading_thres){
+		if(std::abs(heading_error) < temp_thres){
 			done=1;
 			stop();
 			loop_rate.sleep();
@@ -849,7 +865,7 @@ int forward_wall(ros::Rate loop_rate){
 
 	while(ros::ok()){
 
-		if(wall_in_range(3,dist_thres,ir_readings)){ 		// check if obstacle ahead
+		if(wall_in_range(3,dist_thres,ir_readings) || wall_in_range(4,cross_thres,ir_readings)){ 		// check if obstacle ahead
 			stop();
 			last_angle=0;
 			ROS_INFO("Stop! Obstacle ahead!\n");
@@ -905,7 +921,7 @@ int forward_wall(ros::Rate loop_rate){
 				velocity_fw=std_velocity;
 				control_pub(velocity_fw,u_theta);
 			}else{
-				BreakingRatio_3 = (initial_flag_dist2break_3-close_ir)/(1.05*(inf_thres-dist_thres));	//2 yields (1/2)*std_velocity... 1 gives 0 
+				BreakingRatio_3 = (inf_thres-close_ir)/(1.1*(inf_thres-dist_thres));	//2 yields (1/2)*std_velocity... 1 gives 0 
 				velocity_fw=abs(std_velocity*( 1 - BreakingRatio_3 ));
 				control_pub(velocity_fw,u_theta); // u_theta should be the result of a PID controller
 			}

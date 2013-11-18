@@ -8,16 +8,23 @@
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/MapMetaData.h>
+#include <control_logic/info.h>
 #include <vector>
 
 
 
 
  //Initialize
-const double resolution_matrix=0.2; // in meter!
-const unsigned int x_matrix=10/resolution_matrix; 
-const unsigned int y_matrix=10/resolution_matrix;
-const unsigned int robot_size=1; // square or symetrical when its turns!!
+const float PI=3.1415926f;
+const double resolution_matrix=0.02; // in meter!
+const int x_matrix=50/resolution_matrix; 
+const int y_matrix=50/resolution_matrix;
+
+// robot size: 2*delta_x+1, 2*delta_y+1
+const int delta_x=5;
+const int delta_y=5;
+
+
 int x_Current_Pose=round(x_matrix/2); //x,y coordinates
 int y_Current_Pose=round(y_matrix/2); //x,y coordinates
 const int freq=100;
@@ -27,13 +34,18 @@ int counter=0;
 int theashold=10;
 int boolean;*/
 
+// high level info
+
+int wall=0;
+double heading=0.0;
+
 
 std::vector<signed char>  Occupancy_Grid(x_matrix*y_matrix,50);
 ros::Publisher occ_pub;
 ros::Publisher map_pub;
 ros::Subscriber	odometry_sub;
 ros::Subscriber	camera_sub;
-ros::Subscriber	wall_sub;
+ros::Subscriber	logic_sub;
 
 
 /* cell_round
@@ -52,13 +64,13 @@ void Get_Readings_Odometry(nav_msgs::Odometry::ConstPtr odometry_msg){
 	double x_Pose_Odometry=cell_round(odometry_msg->pose.pose.position.x*100); //odometry is comming in meters
 	double y_Pose_Odometry=cell_round(odometry_msg->pose.pose.position.y*100);
 
-	ROS_INFO("Odometry Coordinates(x,y): (%f,%f)",odometry_msg->pose.pose.position.x*100,odometry_msg->pose.pose.position.y*100);
+	//ROS_INFO("Odometry Coordinates(x,y): (%f,%f)",odometry_msg->pose.pose.position.x*100,odometry_msg->pose.pose.position.y*100);
 	
 	//Start in the middle of the grid
 	x_Current_Pose = (x_Pose_Odometry + round(x_matrix/2));
 	y_Current_Pose = (y_Pose_Odometry + round(y_matrix/2));
 
-	ROS_INFO("Grid coordinates from odometry readings: (%f,%f)",x_Current_Pose,y_Current_Pose);
+	//ROS_INFO("Grid coordinates from odometry readings: (%d,%d)",x_Current_Pose,y_Current_Pose);
 }
 
 
@@ -108,20 +120,101 @@ void Get_Readings_Odometry(nav_msgs::Odometry::ConstPtr odometry_msg){
 
 
 void Robot_odometry_size(int x_position, int y_position) {
-	int count=0;
-	for (int x=((x_position- round(robot_size/2))*x_matrix);x<(((x_position- (robot_size/2))*x_matrix)+(x_matrix*robot_size));x+=x_matrix){
-		for (int y=y_position- round(robot_size/2); y< (y_position+robot_size); y++){
 
-			/*if (count==4){
-				Occupancy_Grid[x+y]=100;
-				count++;
-			}*/ // why??
+	for (int x=(x_position-delta_x)*x_matrix;x<=(x_position+delta_x)*x_matrix;x+=x_matrix){
+		for (int y=y_position-delta_y;y<=y_position+delta_y;y++){
+
 			Occupancy_Grid[x+y]=0;
-			count++;			
 
 		}
 	}
-	//ROS_INFO("############### For LOOP ended ###################");
+	
+	if(wall){
+		
+		if(heading==0){ // moving along x
+			if(wall==2){
+				
+				for(int x=(x_position-delta_x)*x_matrix;x<=(x_position+delta_x)*x_matrix;x+=x_matrix){
+					
+					Occupancy_Grid[x+(y_position+delta_y+1)]=100;
+					
+				}
+				
+			}else{
+
+				for(int x=(x_position-delta_x)*x_matrix;x<=(x_position+delta_x)*x_matrix;x+=x_matrix){
+
+					Occupancy_Grid[x+(y_position-delta_y-1)]=100;
+
+				}
+				
+			}
+		}else if(heading==PI){ // moving along -x
+			if(wall==2){
+
+				for(int x=(x_position-delta_x)*x_matrix;x<=(x_position+delta_x)*x_matrix;x+=x_matrix){
+
+					Occupancy_Grid[x+(y_position-delta_y-1)]=100;
+
+				}
+
+			}else{
+
+				for(int x=(x_position-delta_x)*x_matrix;x<=(x_position+delta_x)*x_matrix;x+=x_matrix){
+
+					Occupancy_Grid[x+(y_position+delta_y+1)]=100;
+
+				}
+				
+			}
+			
+			
+		}else if(heading==PI/2){ // moving along y
+			
+			if(wall==2){
+				for (int y=y_position-delta_y;y<=y_position+delta_y;y++){
+					
+					Occupancy_Grid[(x_position-delta_x-1)*x_matrix+y]=100;
+					
+				}
+			}else{
+
+				for (int y=y_position-delta_y;y<=y_position+delta_y;y++){
+
+					Occupancy_Grid[(x_position+delta_x+1)*x_matrix+y]=100;
+
+				}
+				
+			}
+			
+			
+		}else if(heading==-PI/2){ // moving along -y
+			
+			if(wall==2){
+
+				for (int y=y_position-delta_y;y<=y_position+delta_y;y++){
+
+					Occupancy_Grid[(x_position+delta_x+1)*x_matrix+y]=100;
+
+				}
+
+			}else{
+
+				for (int y=y_position-delta_y;y<=y_position+delta_y;y++){
+
+					Occupancy_Grid[(x_position-delta_x-1)*x_matrix+y]=100;
+
+				}
+				
+			}
+			
+		}
+		
+		
+	}
+	
+	
+	
 }
 
 
@@ -131,7 +224,7 @@ void Send_Message(){
 	nav_msgs::MapMetaData map_msg;
 
 	occ_msg.header.stamp=ros::Time::now();
-	occ_msg.header.frame_id= "/map";
+	occ_msg.header.frame_id= "/mapping";
 
 	map_msg.map_load_time=ros::Time::now();
 	map_msg.resolution=resolution_matrix;
@@ -152,8 +245,13 @@ void Send_Message(){
 void Receive_Camera(int x_position, int y_position) {
 
 }
-void Receive_Wall(int x_position, int y_position) {
-
+void Get_Motion_Info(control_logic::info::ConstPtr logic_msg) {
+	
+	wall=logic_msg->info_wall;
+	heading=logic_msg->info_heading;
+	
+	ROS_INFO("Heading: %.2f Wall: %d",heading,wall);
+	
 }
 
 
@@ -167,6 +265,7 @@ int main(int argc, char **argv)
     
 	//IR_sub = n.subscribe("/core_sensors_ir/ir",1,);
 	odometry_sub = n.subscribe("/core_sensors_odometry/odometry",1,Get_Readings_Odometry);
+	logic_sub = n.subscribe("/control_logic/info",1,Get_Motion_Info);
 	
 	occ_pub = n.advertise<nav_msgs::OccupancyGrid>("/occupancy_grid/occ",1);
 	map_pub = n.advertise<nav_msgs::MapMetaData>("occupancy_grid/map",1);
