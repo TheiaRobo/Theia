@@ -22,7 +22,7 @@ double cross_max = 500; // bigger value from the crossed sensors means the obsta
 int last_turn = 0;	//0 - null, 1 - left, 2 - right
 int last_direction = 0; //0 - null, 1 - left, 2 - right, 3 - forward
 double range_exc = 20.0;
-double heading_ref = 0;
+double info_heading_ref = 0;
 double drive_mode = 0;
 double forward_standard = 20.0;
 double forward_medium = 30.0;
@@ -32,7 +32,7 @@ const int ir_size = 8;
 const int median_size = 3;
 
 // info stuff
-double info_heading=0.0;
+char info_heading='E';
 int info_wall=0;
 ros::Publisher info_pub;
 
@@ -119,6 +119,40 @@ void turn_left() {
 	return;
 }
 
+void change_heading(char delta_heading){
+	
+	switch(info_heading){
+	
+	case 'E':
+		if(delta_heading=='R')
+			info_heading='S';
+		else
+			info_heading='N';
+		break;
+	case 'N':
+		if(delta_heading=='R')
+			info_heading='E';
+		else
+			info_heading='W';
+		break;
+	case 'W':
+		if(delta_heading=='R')
+			info_heading='N';
+		else
+			info_heading='S';
+		break;
+	case 'S':
+		if(delta_heading=='R')
+			info_heading='W';
+		else
+			info_heading='E';
+		break;
+	}
+	
+	
+}
+
+
 void turn_right() {
 
 	history[0].driving_mode=2;
@@ -133,10 +167,10 @@ double turn_random() {
 	double d_param = 0;
 	if (random_var > 5){ 
 		d_param=PI/2;
-		info_heading+=PI/2;
+		change_heading('L');
 	}else{
 		d_param=-PI/2;
-		info_heading-=PI/2;
+		change_heading('R');
 	}
 	return d_param;
 }
@@ -145,7 +179,7 @@ double turn_random() {
  * turn_TYPE: possible turning options
  **/
 void go_forward() {
-	heading_ref = 0;
+	info_heading_ref = 0;
 	drive_mode = 3;
 	last_direction = 3;
 	return;
@@ -334,13 +368,7 @@ int * consecutive_rotations(void){
 
 void publish_info(){
 	control_logic::info msg;
-	
-	if(info_heading>PI)
-		info_heading-=2*PI;
-	if(info_heading<-PI)
-		info_heading+=2*PI;
-	
-	
+
 	msg.info_heading=info_heading;
 	msg.info_wall=info_wall;
 	
@@ -431,10 +459,10 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 					history[0].driving_mode = 2;
 					if(last_wall_followed()==1){
 						history[0].driving_parameters=PI/2;
-						info_heading+=PI/2;
+						change_heading('L');
 					}else if(last_wall_followed()==2){
 						history[0].driving_parameters=-PI/2;
-						info_heading-=PI/2;
+						change_heading('R');
 					}else{
 						ROS_INFO("Case 0b: ERROR I was not turning correctly. history[0].driving_parameters = %.2f",history[0].driving_parameters);
 					}
@@ -443,10 +471,10 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 					history[0].driving_mode = 2;
 					if(history[2].driving_parameters==PI/2){
 						history[0].driving_parameters=PI/2;
-						info_heading+=PI/2;
+						change_heading('L');
 					}else if(history[2].driving_parameters==-PI/2){
 						history[0].driving_parameters=-PI/2;
-						info_heading-=PI/2;
+						change_heading('R');
 					}else{
 						ROS_INFO("Case 0b: ERROR I was not turning correctly. history[2].driving_parameters = %.2f",history[0].driving_parameters);
 					}
@@ -537,10 +565,10 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 						history[0].driving_mode = 2;
 						if(last_wall_followed()==1){
 							history[0].driving_parameters=PI/2;
-							info_heading+=PI/2;
+							change_heading('L');
 						}else if(last_wall_followed()==2){
 							history[0].driving_parameters=-PI/2;
-							info_heading-=PI/2;
+							change_heading('R');
 						}else{
 							ROS_INFO("Case 1b: ERROR I was not turning correctly. history[2].driving_parameters = %.2f",history[2].driving_parameters);
 						}
@@ -549,10 +577,10 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 						history[0].driving_mode = 2;
 						if(history[2].driving_parameters==PI/2){
 							history[0].driving_parameters=PI/2;
-							info_heading+=PI/2;
+							change_heading('L');
 						}else if(history[2].driving_parameters==-PI/2){
 							history[0].driving_parameters=-PI/2;
-							info_heading-=PI/2;
+							change_heading('R');
 						}else{
 							ROS_INFO("Case 1b: ERROR I was not turning correctly. history[2].driving_parameters = %.2f",history[0].driving_parameters);
 						}
@@ -592,20 +620,20 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 				history[0].driving_mode = 2;
 				if(history[2].driving_parameters==PI/2){
 					history[0].driving_parameters=-PI/2;
-					info_heading-=PI/2;
+					change_heading('L');
 				}else if(history[2].driving_parameters==-PI/2){
 					history[0].driving_parameters=PI/2;
-					info_heading+=PI/2;
+					change_heading('L');
 				}else {
 
 					switch(last_wall_followed()){
 						case 1:
 							history[0].driving_parameters=-PI/2;
-							info_heading-=PI/2;
+							change_heading('R');
 							break;
 						case 2:
 							history[0].driving_parameters=PI/2;
-							info_heading+=PI/2;
+							change_heading('L');
 							break;
 						default:
 							ROS_INFO("Case 2a: wtf");
@@ -623,10 +651,10 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 				history[0].driving_mode = 2;
 				if(history[1].driving_parameters==PI/2){
 					history[0].driving_parameters=PI/2;
-					info_heading+=PI/2;
+					change_heading('L');
 				}else if(history[1].driving_parameters==-PI/2){
 					history[0].driving_parameters=-PI/2;
-					info_heading-=PI/2;
+					change_heading('R');
 				}else{
 					ROS_INFO("Case 2a: ERROR I was not turning correctly. history[2].driving_parameters = %.2f",history[0].driving_parameters);
 				}
@@ -636,10 +664,10 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 				history[0].driving_mode = 2;
 				if(history[1].driving_parameters==1){
 					history[0].driving_parameters=-PI/2;
-					info_heading-=PI/2;
+					change_heading('R');
 				}else if(history[1].driving_parameters==2){
 					history[0].driving_parameters=PI/2;
-					info_heading+=PI/2;
+					change_heading('L');
 				}else{
 					ROS_INFO("Case 2a: ERROR I was not turning correctly. history[1].driving_parameters = %.2f",history[0].driving_parameters);
 				}
@@ -657,10 +685,10 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 				history[0].driving_mode = 2;
 				if(last_wall_followed()==1){
 					history[0].driving_parameters=-PI/2;
-					info_heading-=PI/2;
+					change_heading('R');
 				}else if(last_wall_followed()==2){
 					history[0].driving_parameters=PI/2;
-					info_heading+=PI/2;
+					change_heading('L');
 				}else if(last_wall_followed()==-1){
 					history[0].driving_parameters=turn_random();
 					ROS_INFO("Case 2b: Turn random. No last_wall_followed() = %d",last_wall_followed());
@@ -675,10 +703,10 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 					history[0].driving_mode = 2;
 					if(last_wall_followed()==1){
 						history[0].driving_parameters=PI/2;
-						info_heading+=PI/2;
+						change_heading('L');
 					}else if(last_wall_followed()==2){
 						history[0].driving_parameters=-PI/2;
-						info_heading-=PI/2;
+						change_heading('R');
 					}else{
 						ROS_INFO("Case 2b: ERROR I was following last_wall_followed() = %d",last_wall_followed());
 					}
@@ -688,10 +716,10 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 					history[0].driving_mode = 2;
 					if(last_wall_followed()==1){
 						history[0].driving_parameters=PI/2;
-						info_heading+=PI/2;
+						change_heading('L');
 					}else if(last_wall_followed()==2){
 						history[0].driving_parameters=-PI/2;
-						info_heading-=PI/2;
+						change_heading('R');
 					}else{
 						ROS_INFO("Case 2b: ERROR I was following last_wall_followed() = %d",last_wall_followed());
 					}
@@ -718,15 +746,18 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 				if(rot_count[0]==3){
 					history[0].driving_mode = 2;
 					history[0].driving_parameters = -history[rot_count[1]].driving_parameters; //Change the sign of rotation
-					info_heading-=history[rot_count[1]].driving_parameters;
+					if(history[rot_count[1]].driving_parameters==PI/2)
+						change_heading('R');
+					else
+						change_heading('L');
 				}else{
 					history[0].driving_mode = 2;
 					if(last_wall_followed()==1){
 						history[0].driving_parameters=PI/2;
-						info_heading+=PI/2;
+						change_heading('L');
 					}else if(last_wall_followed()==2){
 						history[0].driving_parameters=-PI/2;
-						info_heading-=PI/2;
+						change_heading('R');
 					}else if(last_wall_followed()==-1){
 						history[0].driving_parameters=turn_random();
 						ROS_INFO("Case 3a: Turn random. No last_wall_followed() = %d",last_wall_followed());
@@ -741,10 +772,10 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 				history[0].driving_mode = 2;
 				if(last_wall_followed()==1){
 					history[0].driving_parameters=PI/2;
-					info_heading+=PI/2;
+					change_heading('L');
 				}else if(last_wall_followed()==2){
 					history[0].driving_parameters=-PI/2;
-					info_heading-=PI/2;
+					change_heading('R');
 				}else{
 					ROS_INFO("Case 3a: ERROR I was following last_wall_followed() = %d",last_wall_followed());
 				}
@@ -763,10 +794,10 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 				history[0].driving_mode = 2;
 				if(last_wall_followed()==1){
 					history[0].driving_parameters=PI/2;
-					info_heading+=PI/2;
+					change_heading('L');
 				}else if(last_wall_followed()==2){
 					history[0].driving_parameters=-PI/2;
-					info_heading-=PI/2;
+					change_heading('R');
 				}else if(last_wall_followed()==-1){
 					history[0].driving_parameters=turn_random();
 					ROS_INFO("Case 3: Should not happen because I am turning around!\nTurn random. No last_wall_followed() = %d",last_wall_followed());
@@ -778,10 +809,10 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 				history[0].driving_mode = 2;
 				if(history[1].driving_parameters==PI/2){
 					history[0].driving_parameters=PI/2;
-					info_heading+=PI/2;
+					change_heading('L');
 				}else if(history[1].driving_parameters==-PI/2){
 					history[0].driving_parameters=-PI/2;
-					info_heading-=PI/2;
+					change_heading('R');
 				}else{
 					ROS_INFO("Case 3: ERROR I was not turning correctly. history[1].driving_parameters = %.2f",history[1].driving_parameters);
 				}
