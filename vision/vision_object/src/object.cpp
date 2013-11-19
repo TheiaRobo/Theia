@@ -10,25 +10,25 @@ int Object::find(
 ){
 	int errorCode = 0;
 
-	vector<std::string> dirVect;
+	outObjectVect.clear();
+
+	vector<string> dirVect;
 	errorCode = visionFileFindDirs(inPath, dirVect);
 	if(errorCode) return errorCode;
 
 	size_t numbFiles = dirVect.size();
-
-	outObjectVect.clear();
-	outObjectVect.reserve(numbFiles);
-
 	for(size_t i = 0; i < numbFiles; i++){
-		Object & object = outObjectVect[i];
+		Object object;
 		object.name = dirVect[i];
 		object.path = inPath + VISION_DIR_SEP + dirVect[i];
-		
+
 		errorCode = ImageData::find(object.path, object.imageDataVect);
 		if(errorCode) return errorCode;
+
+		outObjectVect.push_back(object);
 	}
 
-	return errorCode;	
+	return errorCode;
 }
 
 int objectsTrain(vector<Object> & inOutObjectVect){

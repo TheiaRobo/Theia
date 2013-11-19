@@ -9,6 +9,7 @@ int ImageData::find(
 	vector<ImageData> & outImageDataVect
 ){
 	int errorCode = 0;
+
 	outImageDataVect.clear();
 
 	vector<string> dirVect;
@@ -17,7 +18,7 @@ int ImageData::find(
 
 	size_t numbFiles = dirVect.size();
 	for(size_t i = 0; i < numbFiles; i++){
-		ImageData & imageData = outImageDataVect[i];
+		ImageData imageData;
 		imageData.angle = 0;
 		imageData.path = inPath + VISION_DIR_SEP + dirVect[i];
 
