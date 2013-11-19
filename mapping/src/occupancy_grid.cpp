@@ -1,5 +1,3 @@
-
-
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include <stdio.h>
@@ -29,6 +27,7 @@ const int robot_delta_y=10;
 // sensor array
 
 double ir[8];
+double inf_thres=20;
 
 int x_Current_Pose=round(x_matrix/2); //x,y coordinates
 int y_Current_Pose=round(y_matrix/2); //x,y coordinates
@@ -38,7 +37,7 @@ const int freq=100;
 // high level info
 
 int wall=0;
-double heading=0.0;
+char heading='E';
 
 
 std::vector<signed char>  Occupancy_Grid(x_matrix*y_matrix,50);
@@ -85,20 +84,182 @@ void place_map(int x_position, int y_position, int delta_x, int delta_y, int val
 	
 }
 
-void place_ir(){
+void ir_line(int ir_num,int x_position, int y_position){
 	
+	int startx=x_position, starty=y_position;
 	
-	if(ir[4] < 20){
-		for(int i=0; i<cell_round(ir[4]);i++){
-			
-			place_map(x_Current_Pose+robot_delta_x,y_Current_Pose+robot_delta_y+i,0,0,0);
-			
-		}
+	switch(heading){
+	
+	case 'E':
+		switch(ir_num){
 		
-		place_map(x_Current_Pose+robot_delta_x,y_Current_Pose+robot_delta_y+cell_round(ir[4]),0,0,100);
+		case 1:
+		case 3:
+			startx+=robot_delta_x;
+			starty-=robot_delta_y;
+			break;
+		case 2:
+		case 5:
+			startx+=robot_delta_x;
+			starty+=robot_delta_y;
+			break;
+		case 4:
+			startx-=robot_delta_x;
+			starty-=robot_delta_y;
+			break;
+		case 6:
+			startx-=robot_delta_x;
+			starty+=robot_delta_y;
+			break;
+		}
+		break;
+	case 'W':
+		switch(ir_num){
+		
+		case 1:
+		case 3:
+			startx-=robot_delta_x;
+			starty+=robot_delta_y;
+			break;
+		case 2:
+		case 5:
+			startx-=robot_delta_x;
+			starty-=robot_delta_y;
+			break;
+		case 4:
+			startx+=robot_delta_x;
+			starty+=robot_delta_y;
+			break;
+			
+		
+		}
+		break;
+	case 'N':
+		switch(ir_num){
+
+		case 1:
+		case 3:
+			startx-=robot_delta_x;
+			starty-=robot_delta_y;
+			break;
+		case 5:
+		case 2:
+			startx+=robot_delta_x;
+			starty-=robot_delta_y;
+			break;
+
+		}
+		break;
+	case 'S':
+		switch(ir_num){
+
+		case 1:
+		case 3:
+			startx+=robot_delta_x;
+			starty+=robot_delta_y;
+			break;
+		case 5:
+		case 2:
+			startx-=robot_delta_x;
+			starty+=robot_delta_y;
+			break;
+
+		}
+		break;
+
+	}
+	
+	switch(heading){
+	
+	case 'E':
+		switch(ir_num){
+		
+		case 1:
+		case 2:
+			for(int x=startx; x<startx+cell_round(ir[ir_num-1]);x++){
+				Occupancy_Grid[x*x_matrix+starty]=0;
+			}
+			Occupancy_Grid[(startx+cell_round(ir[ir_num-1]))*x_matrix+starty]=100;
+			break;
+		case 3:
+		case 5:
+			for(int y=starty; y<starty-cell_round(ir[ir_num-1]);y--){
+				Occupancy_Grid[startx*x_matrix+y]=0;
+			}
+			Occupancy_Grid[startx*x_matrix+starty-cell_round(ir[ir_num-1])]=100;
+			break;
+		}
+	case 'W':
+		switch(ir_num){
+
+		case 1:
+		case 2:
+			for(int x=startx; x<startx-cell_round(ir[ir_num-1]);x--){
+				Occupancy_Grid[x*x_matrix+starty]=0;
+			}
+			Occupancy_Grid[(startx-cell_round(ir[ir_num-1]))*x_matrix+starty]=100;
+			break;
+		case 3:
+		case 5:
+			for(int y=starty; y<starty+cell_round(ir[ir_num-1]);y++){
+				Occupancy_Grid[startx*x_matrix+y]=0;
+			}
+			Occupancy_Grid[startx*x_matrix+starty+cell_round(ir[ir_num-1])]=100;
+			break;
+		}
+		break;
+	case 'N':
+		switch(ir_num){
+
+		case 1:
+		case 2:
+			for(int y=starty; y<starty-cell_round(ir[ir_num-1]);y--){
+				Occupancy_Grid[startx*x_matrix+y]=0;
+			}
+			Occupancy_Grid[startx*x_matrix+starty-cell_round(ir[ir_num-1])]=100;
+			break;
+		case 3:
+		case 5:
+			for(int x=startx; x<startx-cell_round(ir[ir_num-1]);x--){
+				Occupancy_Grid[x*x_matrix+starty]=0;
+			}
+			Occupancy_Grid[(startx-cell_round(ir[ir_num-1]))*x_matrix+starty]=100;
+			break;
+		}
+		break;
+	case 'S':
+		switch(ir_num){
+
+		case 1:
+		case 2:
+			for(int y=starty; y<starty+cell_round(ir[ir_num-1]);y++){
+				Occupancy_Grid[startx*x_matrix+y]=0;
+			}
+			Occupancy_Grid[startx*x_matrix+starty+cell_round(ir[ir_num-1])]=100;
+			break;
+		case 3:
+		case 5:
+			for(int x=startx; x<startx+cell_round(ir[ir_num-1]);x++){
+				Occupancy_Grid[x*x_matrix+starty]=0;
+			}
+			Occupancy_Grid[(startx+cell_round(ir[ir_num-1]))*x_matrix+starty]=100;
+			break;
+		}
+		break;
+	
+	
 	}
 	
 	
+	
+}
+
+void place_ir(){
+	
+	for(int i=3; i<4; i++){
+		if(ir[i]<inf_thres)
+			ir_line(i+1,x_Current_Pose, y_Current_Pose);
+	}
 	
 }
 
@@ -141,7 +302,7 @@ void Get_Motion_Info(control_logic::info::ConstPtr logic_msg) {
 	wall=logic_msg->info_wall;
 	heading=logic_msg->info_heading;
 	
-	ROS_INFO("Heading: %.2f Wall: %d",heading,wall);
+	ROS_INFO("Heading: %c Wall: %d",heading,wall);
 	
 }
 
@@ -173,7 +334,7 @@ int main(int argc, char **argv)
 	
 	while(ros::ok()){
 
-		place_map(x_Current_Pose,y_Current_Pose,robot_delta_x,robot_delta_y,0);
+		place_map(x_Current_Pose,y_Current_Pose,robot_delta_x,robot_delta_y,50);
 		place_ir();
 		Send_Message();
 
