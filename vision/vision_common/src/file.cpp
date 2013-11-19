@@ -30,6 +30,8 @@ int visionFileFindDirs(
         if(!dirEntPtr->d_type == DT_DIR) continue;
         
         string fileName = string(dirEntPtr->d_name);
+        if(fileName == "." || fileName == "..") continue;
+        
         outDirVect.push_back(fileName);
     }while(true);
 
