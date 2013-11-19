@@ -2,7 +2,6 @@
 #define VISION_OBJECT_RECOG
 
 #include <vector>
-#include <vision/array.h>
 #include <vision/image.h>
 
 #include "file.h"
@@ -15,7 +14,7 @@ typedef struct {
 
 int recog(
 	TheiaImageData & data,
-	Array<ObjectTrainData_t> & trainDataArr,
+	std::vector<ObjectTrainData_t> & trainDataVect,
 	ObjectRecogContext & context,
 	ObjectFileTrain_t ** recognizedPtrPtr
 );

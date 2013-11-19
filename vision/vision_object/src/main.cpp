@@ -4,12 +4,12 @@
 
 // ROS
 #include <ros/ros.h>
-#include <vision/array.h>
 #include <vision/image.h>
 
 // ROS messages
 #include <sensor_msgs/Image.h>
 #include <std_msgs/Empty.h>
+#include <std_msgs/String.h>
 
 // ROS to / from OpenCV bridge
 #include <cv_bridge/cv_bridge.h>
@@ -22,13 +22,15 @@
 #define NODE_NAME "vision_object"
 #define TOPIC_IN "/camera/rgb/image_mono"
 #define TOPIC_TRAIN "/vision/object/train"
+#define TOPIC_OBJECT_NAME "/vision/object/recogName"
 
 using namespace std;
 
 TheiaImageContext imageContext;
-Array<ObjectTrainData_t> trainDataArr;
+vector<ObjectTrainData_t> trainDataVect;
 ros::Subscriber imageSub;
 ros::Subscriber trainSub;
+ros::Publisher objectNamePub;
 
 int trainInit(){
 	string path;
@@ -58,7 +60,6 @@ int trainInit(){
 	trainConfig.path = path;
 	trainConfig.imageContext = imageContext;
 
-	vector<ObjectTrainData_t> trainDataVect;
 	errorCode = train(
 		trainConfig,
 		trainDataVect
@@ -68,9 +69,6 @@ int trainInit(){
 		cout << "Error: Training failed" << endl;
 		return errorCode;
 	}
-
-	// to array
-	trainDataArr = Array<ObjectTrainData_t>(trainDataVect);
 
 	return 0;
 }
@@ -96,19 +94,28 @@ void imageCallback(const sensor_msgs::ImageConstPtr & rosMsgPtr){
 	recogContext.imageContextPtr = &imageContext;
 
 	ObjectFileTrain_t * recognizedPtr;
+	recognizedPtr = NULL;
+
 	recog(
 		imageData,
-		trainDataArr,
+		trainDataVect,
 		recogContext,
 		&recognizedPtr
 	);
 
+	string objectName;
 	if(recognizedPtr){
-		cout << recognizedPtr->object << " recognized" << endl;
+		objectName = recognizedPtr->object;
 	}else{
-		cout << " No object recognized" << endl;
+		objectName = "nothing";
 	}
 
+	// publish result
+	std_msgs::String objectNameMsg;
+	objectNameMsg.data = objectName;
+	objectNamePub.publish(objectNameMsg);
+
+	cout << objectName << " recognized" << endl;
 	cout << " End" << endl;
 }
 
@@ -130,6 +137,7 @@ int main(int argc, char ** argv){
 
 	imageSub = node.subscribe(TOPIC_IN, 1, imageCallback);
 	trainSub = node.subscribe(TOPIC_TRAIN, 1, trainCallback);
+	objectNamePub = node.advertise<std_msgs::String>(TOPIC_OBJECT_NAME, 1);
 
 	/**
 	* Init training data
