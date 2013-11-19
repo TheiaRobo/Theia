@@ -46,5 +46,11 @@ int objectsTrain(vector<Object> & inOutObjectVect){
 int Object::train(){
 	int errorCode = 0;
 
+	size_t numbImages = imageDataVect.size();
+	for(size_t i = 0; i < numbImages; i++){
+		errorCode = imageDataVect[i].train();
+		if(errorCode) return errorCode;
+	}
+	
 	return errorCode;
 }

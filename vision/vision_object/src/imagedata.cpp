@@ -57,3 +57,15 @@ int ImageData::find(
 
 	return errorCode;
 }
+
+int ImageData::train(){
+	int errorCode = 0;
+
+	errorCode = colorImageData.train();
+	if(errorCode) return errorCode;
+
+	errorCode = depthImageData.train();
+	if(errorCode) return errorCode;
+	
+	return errorCode;
+}

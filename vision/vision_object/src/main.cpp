@@ -20,9 +20,15 @@ int main(int argc, char ** argv){
 
 	size_t numbObjects = objectVect.size();
 	for(size_t i = 0; i < numbObjects; i++){
+		Object & object = objectVect[i];
 		cout << "Object " << i << endl;
-		cout << " Name: " << objectVect[i].name << endl;
-		cout << " # Images: " << objectVect[i].imageDataVect.size() << endl;
+		cout << " Name: " << object.name << endl;
+		cout << " # Images: " << object.imageDataVect.size() << endl;
+		
+		cout << " Train .." << endl;
+		object.train();
+		cout << " Done!" << endl;
+
 	}
 
 	return errorCode;
