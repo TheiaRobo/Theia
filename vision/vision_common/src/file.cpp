@@ -1,83 +1,54 @@
-// C
+#include <cerrno>
+#include <cstdio>
 #include <dirent.h>
-#include <sys/types.h>
-
-// C ++
 #include <iostream>
-#include <string>
-#include <vector>
-
-// ROS
+#include <sys/types.h>
 #include <vision/file.h>
-
-typedef struct dirent DIRENT;
 
 using namespace std;
 
-int visionFileScanDir(string dirName, vector<string> & fileVect){
-    DIR * dirPtr;
-    struct dirent * dirEntPtr;
-    vector<string> dirVect;
+typedef struct dirent DIRENT;
 
-    dirPtr = opendir(dirName.c_str());
+int visionFileFindDirs(
+    const string inPath,
+    vector<string> & outDirVect
+){
+    int errorCode;
 
+    outDirVect.clear();
+
+    DIR * dirPtr = opendir(inPath.c_str());
     if(!dirPtr){
-        cout << "Error: Could not open directory" << endl;
-        return -1;
+        cout << "Error in visionFileFindDirs" << endl;
+        cout << "Could not open directory" << endl;
+        return errno;
     }
 
-    /**
-    * Find regular files and subdirectories
-    */
     do{
-        dirEntPtr = readdir(dirPtr);
-
-        // are we done here?
-        if(!dirEntPtr){
-            break;
-        }
-
-        string fileName;
-        fileName = string(dirEntPtr->d_name);
-
-        // ignore recursive file names
-        if(fileName == "." || fileName == ".."){
-            continue;
-        }
-
-        string fullFileName;
-        fullFileName = dirName + VISION_DIR_SEPARATOR + fileName;
-
-        switch(dirEntPtr->d_type){
-            // regular file
-            case DT_REG:
-                fileVect.push_back(fullFileName);
-                break;
-
-            // directory
-            case DT_DIR:
-                dirVect.push_back(fullFileName);
-                break;
-        }
+        DIRENT * dirEntPtr = readdir(dirPtr);
+        if(!dirEntPtr) break;
+        if(!dirEntPtr->d_type == DT_DIR) continue;
+        
+        string fileName = string(dirEntPtr->d_name);
+        outDirVect.push_back(fileName);
     }while(true);
 
-    closedir(dirPtr);
-
-    /**
-    * Scan subdirectories  
-    */
-    size_t numbSubDirs;
-    numbSubDirs = dirVect.size();
-
-    int errorCode;
-    for(size_t i = 0; i < numbSubDirs; i++){
-        errorCode = visionFileScanDir(dirVect[i], fileVect);
-
-        if(errorCode){
-            cout << "Error: Could not read subdirectory" << endl;
-            return errorCode;
-        }
+    errorCode = closedir(dirPtr);
+    if(errorCode){
+        cout << "Error in visionFileFindDirs" << endl;
+        cout << "Could not close directory" << endl;
+        return errno;
     }
 
-    return 0;
+    return errorCode;
+}
+
+bool visionFileExists(const string inPath){
+    FILE * filePtr = fopen(inPath.c_str(), "r");
+    if(filePtr){
+        fclose(filePtr);
+        return true;
+    }else{
+        return false;
+    }
 }

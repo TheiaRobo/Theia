@@ -4,14 +4,12 @@
 #include <string>
 #include <vector>
 
-#define VISION_DIR_SEPARATOR '/'
+#define VISION_DIR_SEP '/'
 
-/**
-* Recursively scan a directory for files
-*/
-int visionFileScanDir(
-	std::string dirName,
-	std::vector<std::string> & fileVect
+int visionFileFindDirs(
+	const std::string inPath,
+	std::vector<std::string> & outDirVect
 );
+bool visionFileExists(const std::string inPath);
 
 #endif
