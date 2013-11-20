@@ -84,7 +84,7 @@ void place_map(int x_position, int y_position, int delta_x, int delta_y, int val
 	
 }
 
-void ir_line(int ir_num,int x_position, int y_position){
+void ir_line(int ir_num,int x_position, int y_position,double ir_val){
 	
 	int startx=x_position, starty=y_position;
 	
@@ -130,8 +130,10 @@ void ir_line(int ir_num,int x_position, int y_position){
 			startx+=robot_delta_x;
 			starty+=robot_delta_y;
 			break;
-			
-		
+		case 6:
+			startx+=robot_delta_x;
+			starty-=robot_delta_y;
+			break;		
 		}
 		break;
 	case 'N':
@@ -147,6 +149,13 @@ void ir_line(int ir_num,int x_position, int y_position){
 			startx+=robot_delta_x;
 			starty-=robot_delta_y;
 			break;
+		case 4:
+			startx-=robot_delta_x;
+			starty+=robot_delta_y;
+			break;
+		case 6:
+			startx+=robot_delta_x;
+			starty+=robot_delta_y;
 
 		}
 		break;
@@ -163,7 +172,13 @@ void ir_line(int ir_num,int x_position, int y_position){
 			startx-=robot_delta_x;
 			starty+=robot_delta_y;
 			break;
-
+		case 4:
+			startx+=robot_delta_x;
+			starty-=robot_delta_y;
+			break;
+		case 6:
+			startx-=robot_delta_x;
+			starty-=robot_delta_y;
 		}
 		break;
 
@@ -176,36 +191,59 @@ void ir_line(int ir_num,int x_position, int y_position){
 		
 		case 1:
 		case 2:
-			for(int x=startx; x<startx+cell_round(ir[ir_num-1]);x++){
+			for(int x=startx; x<startx+cell_round(ir_val);x++){
 				Occupancy_Grid[x*x_matrix+starty]=0;
 			}
-			Occupancy_Grid[(startx+cell_round(ir[ir_num-1]))*x_matrix+starty]=100;
+			if(ir_val!=inf_thres)
+				Occupancy_Grid[(startx+cell_round(ir_val))*x_matrix+starty]=100;
 			break;
 		case 3:
-		case 5:
-			for(int y=starty; y<starty-cell_round(ir[ir_num-1]);y--){
+		case 4:
+			for(int y=starty; y>starty-cell_round(ir_val);y--){
 				Occupancy_Grid[startx*x_matrix+y]=0;
 			}
-			Occupancy_Grid[startx*x_matrix+starty-cell_round(ir[ir_num-1])]=100;
+			if(ir_val!=inf_thres)
+				Occupancy_Grid[startx*x_matrix+starty-cell_round(ir_val)]=100;
 			break;
+		case 5:
+		case 6:
+			for(int y=starty; y<starty+cell_round(ir_val);y++){
+				Occupancy_Grid[startx*x_matrix+y]=0;
+			}
+			if(ir_val!=inf_thres)
+				Occupancy_Grid[startx*x_matrix+starty+cell_round(ir_val)]=100;
+			break;
+			
 		}
+		break;
 	case 'W':
 		switch(ir_num){
 
 		case 1:
 		case 2:
-			for(int x=startx; x<startx-cell_round(ir[ir_num-1]);x--){
+			for(int x=startx; x>startx-cell_round(ir_val);x--){
 				Occupancy_Grid[x*x_matrix+starty]=0;
 			}
-			Occupancy_Grid[(startx-cell_round(ir[ir_num-1]))*x_matrix+starty]=100;
+			if(ir_val!=inf_thres)
+				Occupancy_Grid[(startx-cell_round(ir_val))*x_matrix+starty]=100;
 			break;
 		case 3:
-		case 5:
-			for(int y=starty; y<starty+cell_round(ir[ir_num-1]);y++){
+		case 4:
+			for(int y=starty; y<starty+cell_round(ir_val);y++){
 				Occupancy_Grid[startx*x_matrix+y]=0;
 			}
-			Occupancy_Grid[startx*x_matrix+starty+cell_round(ir[ir_num-1])]=100;
+			if(ir_val!=inf_thres)
+				Occupancy_Grid[startx*x_matrix+starty+cell_round(ir_val)]=100;
 			break;
+		case 5:
+		case 6:
+			for(int y=starty; y>starty-cell_round(ir_val);y--){
+				Occupancy_Grid[startx*x_matrix+y]=0;
+			}
+			if(ir_val!=inf_thres)
+				Occupancy_Grid[startx*x_matrix+starty-cell_round(ir_val)]=100;
+			break;
+			
 		}
 		break;
 	case 'N':
@@ -213,18 +251,29 @@ void ir_line(int ir_num,int x_position, int y_position){
 
 		case 1:
 		case 2:
-			for(int y=starty; y<starty-cell_round(ir[ir_num-1]);y--){
+			for(int y=starty; y>starty-cell_round(ir_val);y--){
 				Occupancy_Grid[startx*x_matrix+y]=0;
 			}
-			Occupancy_Grid[startx*x_matrix+starty-cell_round(ir[ir_num-1])]=100;
+			if(ir_val!=inf_thres)
+				Occupancy_Grid[startx*x_matrix+starty-cell_round(ir_val)]=100;
 			break;
 		case 3:
-		case 5:
-			for(int x=startx; x<startx-cell_round(ir[ir_num-1]);x--){
+		case 4:
+			for(int x=startx; x>startx-cell_round(ir_val);x--){
 				Occupancy_Grid[x*x_matrix+starty]=0;
 			}
-			Occupancy_Grid[(startx-cell_round(ir[ir_num-1]))*x_matrix+starty]=100;
+			if(ir_val!=inf_thres)
+				Occupancy_Grid[(startx-cell_round(ir_val))*x_matrix+starty]=100;
 			break;
+		case 5:
+		case 6:
+			for(int x=startx; x<startx+cell_round(ir_val);x++){
+				Occupancy_Grid[x*x_matrix+starty]=0;
+			}
+			if(ir_val!=inf_thres)
+				Occupancy_Grid[(startx+cell_round(ir_val))*x_matrix+starty]=100;
+			break;
+			
 		}
 		break;
 	case 'S':
@@ -232,18 +281,29 @@ void ir_line(int ir_num,int x_position, int y_position){
 
 		case 1:
 		case 2:
-			for(int y=starty; y<starty+cell_round(ir[ir_num-1]);y++){
+			for(int y=starty; y<starty+cell_round(ir_val);y++){
 				Occupancy_Grid[startx*x_matrix+y]=0;
 			}
-			Occupancy_Grid[startx*x_matrix+starty+cell_round(ir[ir_num-1])]=100;
+			if(ir_val!=inf_thres)
+				Occupancy_Grid[startx*x_matrix+starty+cell_round(ir_val)]=100;
 			break;
 		case 3:
-		case 5:
-			for(int x=startx; x<startx+cell_round(ir[ir_num-1]);x++){
+		case 4:
+			for(int x=startx; x<startx+cell_round(ir_val);x++){
 				Occupancy_Grid[x*x_matrix+starty]=0;
 			}
-			Occupancy_Grid[(startx+cell_round(ir[ir_num-1]))*x_matrix+starty]=100;
+			if(ir_val!=inf_thres)
+				Occupancy_Grid[(startx+cell_round(ir_val))*x_matrix+starty]=100;
 			break;
+		case 5:
+		case 6:
+			for(int x=startx; x>startx-cell_round(ir_val);x--){
+				Occupancy_Grid[x*x_matrix+starty]=0;
+			}
+			if(ir_val!=inf_thres)
+				Occupancy_Grid[(startx-cell_round(ir_val))*x_matrix+starty]=100;
+			break;
+			
 		}
 		break;
 	
@@ -256,9 +316,11 @@ void ir_line(int ir_num,int x_position, int y_position){
 
 void place_ir(){
 	
-	for(int i=3; i<4; i++){
+	for(int i=0; i<6; i++){
 		if(ir[i]<inf_thres)
-			ir_line(i+1,x_Current_Pose, y_Current_Pose);
+			ir_line(i+1,x_Current_Pose, y_Current_Pose,ir[i]);
+		else
+			ir_line(i+1,x_Current_Pose,y_Current_Pose,inf_thres);
 	}
 	
 }
@@ -334,7 +396,7 @@ int main(int argc, char **argv)
 	
 	while(ros::ok()){
 
-		place_map(x_Current_Pose,y_Current_Pose,robot_delta_x,robot_delta_y,50);
+		place_map(x_Current_Pose,y_Current_Pose,robot_delta_x,robot_delta_y,0);
 		place_ir();
 		Send_Message();
 
