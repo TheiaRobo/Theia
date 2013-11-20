@@ -1,14 +1,22 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cv_bridge/cv_bridge.h>
+#include <ros/ros.h>
+#include <sensor_msgs/Image.h>
+#include <std_msgs/Empty.h>
 
 #include "object.h"
+
+#define NODE_NAME "vision_object"
+#define TOPIC_IN "/camera/rgb/image_mono"
 
 using namespace std;
 
 Config config;
 Context context(config);
 vector<Object> objectVect;
+ros::Subscriber colorImageSub;
 
 int init(){
 	int errorCode = 0;
@@ -62,7 +70,7 @@ int train(){
 		
 		cout << " Train .." << endl;
 		object.train(context);
-		
+
 		cout << " Show results .." << endl;
 		for(size_t j = 0; j < numbData; j++){
 			ObjectData & data = object.objectDataVect[j];
@@ -74,8 +82,40 @@ int train(){
 	return errorCode;
 }
 
+void colorImageCallback(const sensor_msgs::ImageConstPtr & rosMsgPtr){
+	int errorCode = 0;
+
+	cv_bridge::CvImagePtr imagePtr;
+	imagePtr = cv_bridge::toCvCopy(rosMsgPtr, "mono8");
+
+	ObjectData sampleData;
+	ColorImageData & colorImageData = sampleData.colorImage;
+	ColorImageContext & colorImageContext = context.colorImage;
+
+	errorCode = colorImageData.train(imagePtr->image, colorImageContext);
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not train color image" << endl;
+		return;
+	}
+
+	colorImageData.show();
+
+	errorCode = match(sampleData);
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not match object data" << endl;
+		return;
+	}
+}
+
 int main(int argc, char ** argv){
 	int errorCode = 0;
+
+	ros::init(argc, argv, NODE_NAME);
+	ros::NodeHandle node;
+
+	colorImageSub = node.subscribe(TOPIC_IN, 1, colorImageCallback);
 
 	errorCode = init();
 	if(errorCode) return errorCode;
@@ -87,6 +127,8 @@ int main(int argc, char ** argv){
 	errorCode = match();
 	if(errorCode) return;
 */
+
+	ros::spin();
 
 	return errorCode;
 }

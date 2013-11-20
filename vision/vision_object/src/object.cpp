@@ -49,10 +49,9 @@ int Object::match(
 	ObjectDataResult & outResult
 ){
 	int errorCode = 0;
-
 	ObjectDataResult bestResult;
-	size_t numbData = objectDataVect.size();
 
+	size_t numbData = objectDataVect.size();
 	for(size_t i = 0; i < numbData; i++){
 		ObjectDataResult currentResult;
 
@@ -72,5 +71,7 @@ int Object::match(
 		}
 	}
 
+	outResult = bestResult;
+	
 	return errorCode;
 }
