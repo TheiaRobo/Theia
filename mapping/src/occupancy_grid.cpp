@@ -376,7 +376,7 @@ void update_robot(){
 	visualization_msgs::Marker marker;
 	visualization_msgs::Marker odo;
 	// Set the frame ID and timestamp.  See the TF tutorials for information on these.
-	marker.header.frame_id = "/base_link";
+	marker.header.frame_id = "/mapping";
 	marker.header.stamp = ros::Time::now();
 
 	// Set the namespace and id for this marker.  This serves to create a unique ID
