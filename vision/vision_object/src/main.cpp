@@ -18,6 +18,11 @@ int main(int argc, char ** argv){
 		return errorCode;
 	}
 
+	// setup train context
+	TrainConfig config;
+	config.colorImage.minHessian = 400;
+	TrainContext context(config);
+
 	size_t numbObjects = objectVect.size();
 	for(size_t i = 0; i < numbObjects; i++){
 		Object & object = objectVect[i];
@@ -26,7 +31,7 @@ int main(int argc, char ** argv){
 		cout << " # Train data: " << object.trainDataVect.size() << endl;
 		
 		cout << " Train .." << endl;
-		object.train();
+		object.train(context);
 		cout << " Done!" << endl;
 
 	}

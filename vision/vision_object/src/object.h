@@ -17,7 +17,7 @@ class Object {
 		std::string path;
 		std::vector<TrainData> trainDataVect;
 
-		int train();
+		int train(const TrainContext & context);
 };
 
 #endif

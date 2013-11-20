@@ -31,24 +31,12 @@ int Object::find(
 	return errorCode;
 }
 
-int objectsTrain(vector<Object> & inOutObjectVect){
-	int errorCode = 0;
-
-	size_t numbObjects = inOutObjectVect.size();
-	for(size_t i = 0; i < numbObjects; i++){
-		errorCode = inOutObjectVect[i].train();
-		if(errorCode) return errorCode;
-	}
-
-	return errorCode;
-}
-
-int Object::train(){
+int Object::train(const TrainContext & context){
 	int errorCode = 0;
 
 	size_t numbImages = trainDataVect.size();
 	for(size_t i = 0; i < numbImages; i++){
-		errorCode = trainDataVect[i].train();
+		errorCode = trainDataVect[i].train(context);
 		if(errorCode) return errorCode;
 	}
 	

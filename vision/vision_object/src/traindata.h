@@ -7,6 +7,20 @@
 #include "colorimagedata.h"
 #include "depthimagedata.h"
 
+class TrainConfig {
+	public:
+		ColorImageConfig colorImage;
+		// DepthImageConfig depthImageConfig;
+};
+
+class TrainContext {
+	public:
+		ColorImageContext colorImage;
+		// DepthImageContext depthImageContext;
+
+		TrainContext(const TrainConfig & config);
+};
+
 class TrainData {
 	public:
 		static int find(
@@ -16,10 +30,10 @@ class TrainData {
 
 		int angle;
 		std::string path;
-		ColorImageData colorImageData;
-		DepthImageData depthImageData;
+		ColorImageData colorImage;
+		DepthImageData depthImage;
 
-		int train();
+		int train(const TrainContext & context);
 };
 
 #endif

@@ -5,6 +5,13 @@
 
 using namespace std;
 
+TrainContext::TrainContext(const TrainConfig & config)
+: colorImage(config.colorImage)
+// :depthImage(config.depthImage)
+{
+
+}
+
 int TrainData::find(
 	const string inPath,
 	vector<TrainData> & outTrainDataVect
@@ -49,8 +56,8 @@ int TrainData::find(
 			continue;
 		}
 
-		trainData.colorImageData.path = colorImagePath;
-		trainData.depthImageData.path = depthImagePath;
+		trainData.colorImage.path = colorImagePath;
+		trainData.depthImage.path = depthImagePath;
 
 		outTrainDataVect.push_back(trainData);
 	}
@@ -58,13 +65,13 @@ int TrainData::find(
 	return errorCode;
 }
 
-int TrainData::train(){
+int TrainData::train(const TrainContext & context){
 	int errorCode = 0;
 
-	errorCode = colorImageData.train();
+	errorCode = colorImage.train(context.colorImage);
 	if(errorCode) return errorCode;
 
-	errorCode = depthImageData.train();
+	errorCode = depthImage.train();
 	if(errorCode) return errorCode;
 	
 	return errorCode;
