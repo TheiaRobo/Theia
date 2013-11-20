@@ -30,6 +30,10 @@ double inf_thres=20;
 
 int x_Current_Pose=round(x_matrix/2); //x,y coordinates
 int y_Current_Pose=round(y_matrix/2); //x,y coordinates
+double odo_x=0.0;
+double odo_y=0.0;
+double odo_theta=0.0;
+double odo_correct=0.0;
 const int freq=100;
 
 
@@ -64,18 +68,22 @@ double cell_round(double val){
 void Get_Readings_Odometry(nav_msgs::Odometry::ConstPtr odometry_msg){
 
 	double x_Pose_Odometry=cell_round(odometry_msg->pose.pose.position.x*100); //odometry is comming in meters
-	double y_Pose_Odometry=-cell_round(odometry_msg->pose.pose.position.y*100);
+	double y_Pose_Odometry=cell_round(odometry_msg->pose.pose.position.y*100);
 	
 	//Start in the middle of the grid
 	x_Current_Pose = (x_Pose_Odometry + round(x_matrix/2));
 	y_Current_Pose = (y_Pose_Odometry + round(y_matrix/2));
+	
+	odo_x=odometry_msg->pose.pose.position.x+x_matrix*resolution_matrix/2;
+	odo_y=odometry_msg->pose.pose.position.y+y_matrix*resolution_matrix/2;
+	odo_theta=atan2(odometry_msg->pose.pose.orientation.z,odometry_msg->pose.pose.orientation.w)*2;
 }
 
 
 void place_map(int x_position, int y_position, int delta_x, int delta_y, int val) {
 
-	for (int x=(x_position-delta_x)*x_matrix;x<=(x_position+delta_x)*x_matrix;x+=x_matrix){
-		for (int y=y_position-delta_y;y<=y_position+delta_y;y++){
+	for (int x=x_position-delta_x;x<=x_position+delta_x;x++){
+		for (int y=(y_position-delta_y)*y_matrix;y<=(y_position+delta_y)*y_matrix;y+=y_matrix){
 
 			Occupancy_Grid[x+y]=val;
 
@@ -97,22 +105,22 @@ void fill_line(int startx, int starty, int axis,int n,int val){
 	
 	case 1:
 		for(int x=startx; x<startx+n;x++){
-			Occupancy_Grid[x*x_matrix+starty]=val;
+			Occupancy_Grid[x+starty*y_matrix]=val;
 		}
 		break;
 	case 2:
-		for(int y=starty; y>starty-n;y--){
-			Occupancy_Grid[startx*x_matrix+y]=val;
+		for(int y=starty; y<starty+n;y++){
+			Occupancy_Grid[startx+y*y_matrix]=val;
 		}
 		break;
 	case -1:
 		for(int x=startx; x>startx-n;x--){
-			Occupancy_Grid[x*x_matrix+starty]=val;
+			Occupancy_Grid[x+starty*y_matrix]=val;
 		}
 		break;
 	case -2:
-		for(int y=starty; y<starty+n;y++){
-			Occupancy_Grid[startx*x_matrix+y]=val;
+		for(int y=starty; y>starty-n;y--){
+			Occupancy_Grid[startx+y*y_matrix]=val;
 		}
 		break;
 	
@@ -132,20 +140,20 @@ void ir_line(int ir_num,int x_position, int y_position,double ir_val){
 		case 1:
 		case 3:
 			startx+=robot_delta_x;
-			starty-=robot_delta_y;
+			starty+=robot_delta_y;
 			break;
 		case 2:
 		case 5:
 			startx+=robot_delta_x;
-			starty+=robot_delta_y;
+			starty-=robot_delta_y;
 			break;
 		case 4:
 			startx-=robot_delta_x;
-			starty-=robot_delta_y;
+			starty+=robot_delta_y;
 			break;
 		case 6:
 			startx-=robot_delta_x;
-			starty+=robot_delta_y;
+			starty-=robot_delta_y;
 			break;
 		}
 		break;
@@ -155,20 +163,20 @@ void ir_line(int ir_num,int x_position, int y_position,double ir_val){
 		case 1:
 		case 3:
 			startx-=robot_delta_x;
-			starty+=robot_delta_y;
+			starty-=robot_delta_y;
 			break;
 		case 2:
 		case 5:
 			startx-=robot_delta_x;
-			starty-=robot_delta_y;
+			starty+=robot_delta_y;
 			break;
 		case 4:
 			startx+=robot_delta_x;
-			starty+=robot_delta_y;
+			starty-=robot_delta_y;
 			break;
 		case 6:
 			startx+=robot_delta_x;
-			starty-=robot_delta_y;
+			starty+=robot_delta_y;
 			break;		
 		}
 		break;
@@ -178,20 +186,20 @@ void ir_line(int ir_num,int x_position, int y_position,double ir_val){
 		case 1:
 		case 3:
 			startx-=robot_delta_x;
-			starty-=robot_delta_y;
+			starty+=robot_delta_y;
 			break;
 		case 5:
 		case 2:
 			startx+=robot_delta_x;
-			starty-=robot_delta_y;
+			starty+=robot_delta_y;
 			break;
 		case 4:
 			startx-=robot_delta_x;
-			starty+=robot_delta_y;
+			starty-=robot_delta_y;
 			break;
 		case 6:
 			startx+=robot_delta_x;
-			starty+=robot_delta_y;
+			starty-=robot_delta_y;
 
 		}
 		break;
@@ -201,20 +209,20 @@ void ir_line(int ir_num,int x_position, int y_position,double ir_val){
 		case 1:
 		case 3:
 			startx+=robot_delta_x;
-			starty+=robot_delta_y;
+			starty-=robot_delta_y;
 			break;
 		case 5:
 		case 2:
 			startx-=robot_delta_x;
-			starty+=robot_delta_y;
+			starty-=robot_delta_y;
 			break;
 		case 4:
 			startx+=robot_delta_x;
-			starty-=robot_delta_y;
+			starty+=robot_delta_y;
 			break;
 		case 6:
 			startx-=robot_delta_x;
-			starty-=robot_delta_y;
+			starty+=robot_delta_y;
 		}
 		break;
 
@@ -229,19 +237,19 @@ void ir_line(int ir_num,int x_position, int y_position,double ir_val){
 		case 2:
 			fill_line(startx,starty,1,cell_round(ir_val),0);
 			if(ir_val!=inf_thres)
-				Occupancy_Grid[(startx+cell_round(ir_val))*x_matrix+starty]=100;
+				Occupancy_Grid[startx+cell_round(ir_val)+starty*y_matrix]=100;
 			break;
 		case 3:
 		case 4:
 			fill_line(startx,starty,2,cell_round(ir_val),0);
 			if(ir_val!=inf_thres)
-				Occupancy_Grid[startx*x_matrix+starty-cell_round(ir_val)]=100;
+				Occupancy_Grid[startx+(starty+cell_round(ir_val))*y_matrix]=100;
 			break;
 		case 5:
 		case 6:
 			fill_line(startx,starty,-2,cell_round(ir_val),0);
 			if(ir_val!=inf_thres)
-				Occupancy_Grid[startx*x_matrix+starty+cell_round(ir_val)]=100;
+				Occupancy_Grid[startx+(starty-cell_round(ir_val))*y_matrix]=100;
 			break;
 			
 		}
@@ -253,19 +261,19 @@ void ir_line(int ir_num,int x_position, int y_position,double ir_val){
 		case 2:
 			fill_line(startx,starty,-1,cell_round(ir_val),0);
 			if(ir_val!=inf_thres)
-				Occupancy_Grid[(startx-cell_round(ir_val))*x_matrix+starty]=100;
+				Occupancy_Grid[startx-cell_round(ir_val)+starty*y_matrix]=100;
 			break;
 		case 3:
 		case 4:
 			fill_line(startx,starty,-2,cell_round(ir_val),0);
 			if(ir_val!=inf_thres)
-				Occupancy_Grid[startx*x_matrix+starty+cell_round(ir_val)]=100;
+				Occupancy_Grid[startx+(starty-cell_round(ir_val))*y_matrix]=100;
 			break;
 		case 5:
 		case 6:
 			fill_line(startx,starty,2,cell_round(ir_val),0);
 			if(ir_val!=inf_thres)
-				Occupancy_Grid[startx*x_matrix+starty-cell_round(ir_val)]=100;
+				Occupancy_Grid[startx+(starty+cell_round(ir_val))*y_matrix]=100;
 			break;
 			
 		}
@@ -277,19 +285,19 @@ void ir_line(int ir_num,int x_position, int y_position,double ir_val){
 		case 2:
 			fill_line(startx,starty,2,cell_round(ir_val),0);
 			if(ir_val!=inf_thres)
-				Occupancy_Grid[startx*x_matrix+starty-cell_round(ir_val)]=100;
+				Occupancy_Grid[startx+(starty+cell_round(ir_val))*y_matrix]=100;
 			break;
 		case 3:
 		case 4:
 			fill_line(startx,starty,-1,cell_round(ir_val),0);
 			if(ir_val!=inf_thres)
-				Occupancy_Grid[(startx-cell_round(ir_val))*x_matrix+starty]=100;
+				Occupancy_Grid[startx-cell_round(ir_val)+starty*y_matrix]=100;
 			break;
 		case 5:
 		case 6:
 			fill_line(startx,starty,1,cell_round(ir_val),0);
 			if(ir_val!=inf_thres)
-				Occupancy_Grid[(startx+cell_round(ir_val))*x_matrix+starty]=100;
+				Occupancy_Grid[startx+cell_round(ir_val)+starty*y_matrix]=100;
 			break;
 			
 		}
@@ -301,19 +309,19 @@ void ir_line(int ir_num,int x_position, int y_position,double ir_val){
 		case 2:
 			fill_line(startx,starty,-2,cell_round(ir_val),0);
 			if(ir_val!=inf_thres)
-				Occupancy_Grid[startx*x_matrix+starty+cell_round(ir_val)]=100;
+				Occupancy_Grid[startx+(starty-cell_round(ir_val))*y_matrix]=100;
 			break;
 		case 3:
 		case 4:
 			fill_line(startx,starty,1,cell_round(ir_val),0);
 			if(ir_val!=inf_thres)
-				Occupancy_Grid[(startx+cell_round(ir_val))*x_matrix+starty]=100;
+				Occupancy_Grid[startx+cell_round(ir_val)+starty*y_matrix]=100;
 			break;
 		case 5:
 		case 6:
 			fill_line(startx,starty,-1,cell_round(ir_val),0);
 			if(ir_val!=inf_thres)
-				Occupancy_Grid[(startx-cell_round(ir_val))*x_matrix+starty]=100;
+				Occupancy_Grid[startx-cell_round(ir_val)+starty*y_matrix]=100;
 			break;
 			
 		}
@@ -401,8 +409,8 @@ void update_robot(){
 	marker.action = visualization_msgs::Marker::ADD;
 
 	// Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
-	marker.pose.position.x = x_Current_Pose;
-	marker.pose.position.y = y_Current_Pose;
+	marker.pose.position.x = odo_x;
+	marker.pose.position.y = odo_y;
 	marker.pose.position.z = 0;
 	
 	switch(heading){
@@ -413,7 +421,7 @@ void update_robot(){
 		marker.pose.orientation = tf::createQuaternionMsgFromYaw(-PI/2);
 		break;
 	case 'W':
-		marker.pose.orientation = tf::createQuaternionMsgFromYaw(PI);
+		marker.pose.orientation = tf::createQuaternionMsgFromYaw(-PI);
 		break;
 	case 'N':
 		marker.pose.orientation = tf::createQuaternionMsgFromYaw(PI/2);
@@ -423,9 +431,9 @@ void update_robot(){
 	
 
 	// Set the scale of the marker -- 1x1x1 here means 1m on a side
-	marker.scale.x = 1.2;
-	marker.scale.y = 1.2;
-	marker.scale.z = 1.2;
+	marker.scale.x = 0.2;
+	marker.scale.y = 0.2;
+	marker.scale.z = 0.2;
 
 	// Set the color -- be sure to set alpha to something non-zero!
 	marker.color.r = 0.0f;
