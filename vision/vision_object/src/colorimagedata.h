@@ -28,6 +28,10 @@ class ColorImageData {
 		cv::Mat descriptors;
 
 		int train(const ColorImageContext & context);
+		int train(
+			const cv::Mat & image,
+			const ColorImageContext & context
+		);
 };
 
 #endif
