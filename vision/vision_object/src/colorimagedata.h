@@ -23,6 +23,8 @@ class ColorImageContext {
 
 class ColorImageResult {
 	public:
+		static ColorImageResult worst();
+
 		double meanError;
 		double meanSquareError;
 		double variance;

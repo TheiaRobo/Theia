@@ -23,6 +23,8 @@ class Context {
 
 class ObjectDataResult {
 	public:
+		static ObjectDataResult worst();
+
 		ColorImageResult colorImage;
 		// DepthImageResult depthImage
 

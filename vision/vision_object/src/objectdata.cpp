@@ -11,6 +11,14 @@ Context::Context(const Config & config)
 	// nothing
 }
 
+ObjectDataResult ObjectDataResult::worst(){
+	ObjectDataResult result;
+	result.colorImage = ColorImageResult::worst();
+	// result.depthImage = DepthImageResult::worst();
+
+	return result;
+}
+
 bool ObjectDataResult::isBetterThan(const ObjectDataResult & result){
 	return colorImage.isBetterThan(result.colorImage);
 }

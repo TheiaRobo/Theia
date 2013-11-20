@@ -49,7 +49,8 @@ int Object::match(
 	ObjectDataResult & outResult
 ){
 	int errorCode = 0;
-	ObjectDataResult bestResult;
+
+	outResult = ObjectDataResult::worst();
 
 	size_t numbData = objectDataVect.size();
 	for(size_t i = 0; i < numbData; i++){
@@ -62,16 +63,10 @@ int Object::match(
 		);
 		if(errorCode) return errorCode;
 
-		if(i){
-			if(currentResult.isBetterThan(bestResult)){
-				bestResult = currentResult;
-			}
-		}else{
-			bestResult = currentResult;
+		if(currentResult.isBetterThan(outResult)){
+			outResult = currentResult;
 		}
 	}
 
-	outResult = bestResult;
-	
 	return errorCode;
 }

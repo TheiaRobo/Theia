@@ -12,6 +12,15 @@ detector(config.minHessian), extractor(), matcher(NORM_L2)
 	// nothing
 }
 
+ColorImageResult ColorImageResult::worst(){
+	ColorImageResult result;
+	result.meanError = std::numeric_limits<double>::infinity();
+	result.meanSquareError = std::numeric_limits<double>::infinity();
+	result.variance = 0;
+
+	return result;
+}
+
 bool ColorImageResult::isBetterThan(const ColorImageResult & result){
 	return (meanSquareError < result.meanSquareError);
 }

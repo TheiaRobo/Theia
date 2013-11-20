@@ -46,6 +46,9 @@ int match(const ObjectData & inSampleData){
 		errorCode = objectVect[i].match(inSampleData, context, result);
 		if(errorCode) return errorCode;
 
+		cout << "Object " << i << endl;
+		cout << " Score: " << result.colorImage.meanSquareError << endl;
+
 		resultVect.push_back(result);
 	}
 
