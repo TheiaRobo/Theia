@@ -28,10 +28,15 @@ const int robot_delta_y=10;
 double ir[8];
 double inf_thres=20;
 
+
 int x_Current_Pose=round(x_matrix/2); //x,y coordinates
 int y_Current_Pose=round(y_matrix/2); //x,y coordinates
+int prev_x_Current_Pose=x_Current_Pose;
+int prev_y_Current_Pose=y_Current_Pose;
 double odo_x=0.0;
 double odo_y=0.0;
+double prev_odo_x=0.0;
+double prev_odo_y=0.0;
 double odo_theta=0.0;
 double odo_correct=0.0;
 const int freq=100;
@@ -67,16 +72,49 @@ double cell_round(double val){
 // Super simple since the other thing did not work
 void Get_Readings_Odometry(nav_msgs::Odometry::ConstPtr odometry_msg){
 
-	double x_Pose_Odometry=cell_round(odometry_msg->pose.pose.position.x*100); //odometry is comming in meters
-	double y_Pose_Odometry=cell_round(odometry_msg->pose.pose.position.y*100);
+	double x_Pose_Odometry=odometry_msg->pose.pose.position.x*100; //odometry is comming in meters
+	double y_Pose_Odometry=odometry_msg->pose.pose.position.y*100;
+	double delta_x=0.0, delta_y=0.0;
 	
-	//Start in the middle of the grid
-	x_Current_Pose = (x_Pose_Odometry + round(x_matrix/2));
-	y_Current_Pose = (y_Pose_Odometry + round(y_matrix/2));
+	prev_x_Current_Pose=x_Current_Pose;
+	prev_y_Current_Pose=y_Current_Pose;
 	
-	odo_x=odometry_msg->pose.pose.position.x+x_matrix*resolution_matrix/2;
-	odo_y=odometry_msg->pose.pose.position.y+y_matrix*resolution_matrix/2;
+	
+	prev_odo_x=odo_x;
+	prev_odo_y=odo_y;
+	
 	odo_theta=atan2(odometry_msg->pose.pose.orientation.z,odometry_msg->pose.pose.orientation.w)*2;
+	
+	ROS_INFO("ODO_THETA: %.2f",odo_theta);
+	switch(heading){
+	case 'E':
+		odo_correct=(0+odo_theta);
+		x_Current_Pose = cell_round(sqrt(x_Pose_Odometry*x_Pose_Odometry+y_Pose_Odometry*y_Pose_Odometry)*cos(odo_correct))+x_matrix/2;
+		y_Current_Pose = prev_y_Current_Pose;
+		break;
+	case 'W':
+		odo_correct=(PI+odo_theta);
+		x_Current_Pose = cell_round(sqrt(x_Pose_Odometry*x_Pose_Odometry+y_Pose_Odometry*y_Pose_Odometry)*cos(odo_correct))+x_matrix/2;
+		y_Current_Pose = prev_y_Current_Pose;
+		break;
+	case 'N':
+		odo_correct=(PI/2+odo_theta);
+		y_Current_Pose = cell_round(sqrt(x_Pose_Odometry*x_Pose_Odometry+y_Pose_Odometry*y_Pose_Odometry)*sin(odo_correct))+y_matrix/2;
+		x_Current_Pose = prev_x_Current_Pose;
+		break;
+	case 'S':
+		odo_correct=(-PI/2+odo_theta);
+		y_Current_Pose = cell_round(sqrt(x_Pose_Odometry*x_Pose_Odometry+y_Pose_Odometry*y_Pose_Odometry)*sin(odo_correct))+y_matrix/2;
+		x_Current_Pose = prev_x_Current_Pose;
+		break;
+	}
+	
+	
+	
+	
+	
+	odo_x=odometry_msg->pose.pose.position.x*cos(odo_correct)+x_matrix*resolution_matrix/2;
+	odo_y=odometry_msg->pose.pose.position.y*sin(odo_correct)+y_matrix*resolution_matrix/2;
 }
 
 
@@ -486,7 +524,7 @@ int main(int argc, char **argv)
 	while(ros::ok()){
 
 		place_map(x_Current_Pose,y_Current_Pose,robot_delta_x,robot_delta_y,0);
-		place_ir();
+		//place_ir();
 		update_robot();
 		Send_Message();
 
