@@ -12,44 +12,8 @@ detector(config.minHessian), extractor(), matcher(NORM_L2)
 	// nothing
 }
 
-int ColorImageData::train(const ColorImageContext & context){
-	int errorCode = 0;
-
-	if(path.empty()){
-		std::cout << "Error in ColorImageData::train" << std::endl;
-		std::cout << "No path given" << std::endl;
-		return -1;
-	}
-
-	Mat image = imread(path, CV_LOAD_IMAGE_GRAYSCALE);
-	if(!image.data){
-		std::cout << "Error in ColorImageData::train" << std::endl;
-		std::cout << "Could not read image" << std::endl;
-		std::cout << path << std::endl;
-		return -1;
-	}
-
-	errorCode = train(image, context);
-	if(errorCode) return errorCode;
-
-	return errorCode;
-}
-
 bool ColorImageResult::isBetterThan(const ColorImageResult & result){
 	return (meanSquareError < result.meanSquareError);
-}
-
-int ColorImageData::train(
-	const Mat & inImage,
-	const ColorImageContext & context
-){
-	int errorCode = 0;
-
-	image = inImage;
-	context.detector.detect(image, keypoints);
-	context.extractor.compute(image, keypoints, descriptors);
-
-	return errorCode;
 }
 
 int ColorImageData::match(
@@ -92,6 +56,60 @@ int ColorImageData::match(
   	outResult.meanSquareError = meanSquareError;
   	outResult.variance = variance;
   	outResult.matches = matches;
+
+	return errorCode;
+}
+
+int ColorImageData::show(){
+	int errorCode = 0;
+
+	Mat imageWithKeypoints;
+	drawKeypoints(
+		image,
+		keypoints,
+		imageWithKeypoints,
+		Scalar::all(-1),
+		DrawMatchesFlags::DRAW_RICH_KEYPOINTS
+	);
+
+	imshow("Keypoints", imageWithKeypoints);
+	waitKey(0);
+
+	return errorCode;
+}
+
+int ColorImageData::train(const ColorImageContext & context){
+	int errorCode = 0;
+
+	if(path.empty()){
+		std::cout << "Error in ColorImageData::train" << std::endl;
+		std::cout << "No path given" << std::endl;
+		return -1;
+	}
+
+	Mat image = imread(path, CV_LOAD_IMAGE_GRAYSCALE);
+	if(!image.data){
+		std::cout << "Error in ColorImageData::train" << std::endl;
+		std::cout << "Could not read image" << std::endl;
+		std::cout << path << std::endl;
+		return -1;
+	}
+
+	errorCode = train(image, context);
+	if(errorCode) return errorCode;
+
+	return errorCode;
+}
+
+int ColorImageData::train(
+	const Mat & inImage,
+	const ColorImageContext & context
+){
+	int errorCode = 0;
+
+	image = inImage;
+	context.detector.detect(image, keypoints);
+	context.extractor.compute(image, keypoints, descriptors);
 
 	return errorCode;
 }

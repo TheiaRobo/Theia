@@ -38,15 +38,16 @@ class ColorImageData {
 		std::vector<cv::KeyPoint> keypoints;
 		cv::Mat descriptors;
 
-		int train(const ColorImageContext & context);
-		int train(
-			const cv::Mat & image,
-			const ColorImageContext & context
-		);
 		int match(
 			const ColorImageData & inSample,
 			const ColorImageContext & inContext,
 			ColorImageResult & outResult
+		);
+		int show();
+		int train(const ColorImageContext & context);
+		int train(
+			const cv::Mat & image,
+			const ColorImageContext & context
 		);
 };
 
