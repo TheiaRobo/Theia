@@ -9,9 +9,8 @@
 #include <control_logic/info.h>
 #include <core_sensors/ir.h>
 #include <vector>
-
-
-
+#include <visualization_msgs/Marker.h>
+#include <tf/transform_broadcaster.h>
 
  //Initialize
 const float PI=3.1415926f;
@@ -43,6 +42,8 @@ char heading='E';
 std::vector<signed char>  Occupancy_Grid(x_matrix*y_matrix,50);
 ros::Publisher occ_pub;
 ros::Publisher map_pub;
+ros::Publisher robo_pub;
+ros::Publisher odo_pub;
 ros::Subscriber	odometry_sub;
 ros::Subscriber	camera_sub;
 ros::Subscriber	logic_sub;
@@ -370,12 +371,77 @@ void Get_Motion_Info(control_logic::info::ConstPtr logic_msg) {
 	
 }
 
+void update_robot(){
+	
+	visualization_msgs::Marker marker;
+	visualization_msgs::Marker odo;
+	// Set the frame ID and timestamp.  See the TF tutorials for information on these.
+	marker.header.frame_id = "/base_link";
+	marker.header.stamp = ros::Time::now();
+
+	// Set the namespace and id for this marker.  This serves to create a unique ID
+	// Any marker sent with the same namespace and id will overwrite the old one
+	marker.ns = "robot_pos";
+	marker.id = 0;
+
+	marker.type = visualization_msgs::Marker::CUBE;
+
+	// Set the marker action.  Options are ADD and DELETE
+	marker.action = visualization_msgs::Marker::ADD;
+
+	// Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
+	marker.pose.position.x = x_Current_Pose;
+	marker.pose.position.y = y_Current_Pose;
+	marker.pose.position.z = 0;
+	
+	switch(heading){
+	case 'E':
+		marker.pose.orientation = tf::createQuaternionMsgFromYaw(0);
+		break;
+	case 'S':
+		marker.pose.orientation = tf::createQuaternionMsgFromYaw(-PI/2);
+		break;
+	case 'W':
+		marker.pose.orientation = tf::createQuaternionMsgFromYaw(PI);
+		break;
+	case 'N':
+		marker.pose.orientation = tf::createQuaternionMsgFromYaw(PI/2);
+		break;
+	}
+	
+	
+
+	// Set the scale of the marker -- 1x1x1 here means 1m on a side
+	marker.scale.x = 1.2;
+	marker.scale.y = 1.2;
+	marker.scale.z = 1.2;
+
+	// Set the color -- be sure to set alpha to something non-zero!
+	marker.color.r = 0.0f;
+	marker.color.g = 1.0f;
+	marker.color.b = 0.0f;
+	marker.color.a = 1.0;
+
+	marker.lifetime = ros::Duration();
+	
+	odo=marker;
+	
+	odo.type = visualization_msgs::Marker::ARROW;
+	odo.pose.position.z=0.2;
+	odo.id = 1;
+
+	// Publish the marker
+	robo_pub.publish(marker);
+	odo_pub.publish(odo);
+
+}
+
 
 // ########################## MAIN ################################
 
 int main(int argc, char **argv)
 {
-	ros::init(argc, argv, "occupancy_grid");
+	ros::init(argc, argv, "mapping");
 	ros::NodeHandle n;
 
     
@@ -383,11 +449,13 @@ int main(int argc, char **argv)
 	logic_sub = n.subscribe("/control_logic/info",1,Get_Motion_Info);
 	ir_sub = n.subscribe("/core_sensors_ir/ir",1,Get_Ir);
 	
-	occ_pub = n.advertise<nav_msgs::OccupancyGrid>("/occupancy_grid/occ",1);
-	map_pub = n.advertise<nav_msgs::MapMetaData>("occupancy_grid/map",1);
+	occ_pub = n.advertise<nav_msgs::OccupancyGrid>("/mapping/occ",1);
+	map_pub = n.advertise<nav_msgs::MapMetaData>("/mapping/map",1);
+	robo_pub = n.advertise<visualization_msgs::Marker>("/mapping/robot", 1);
+	odo_pub = n.advertise<visualization_msgs::Marker>("/mapping/odo", 1);
 
 
-	ROS_INFO("Started the occupancy_grid Node");
+	ROS_INFO("Started the mapping Node");
 
 	ros::Rate loop_rate(freq);
 
@@ -400,6 +468,7 @@ int main(int argc, char **argv)
 
 		place_map(x_Current_Pose,y_Current_Pose,robot_delta_x,robot_delta_y,0);
 		place_ir();
+		update_robot();
 		Send_Message();
 
 		loop_rate.sleep();
