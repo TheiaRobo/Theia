@@ -35,6 +35,10 @@ int ColorImageData::train(const ColorImageContext & context){
 	return errorCode;
 }
 
+bool ColorImageResult::isBetterThan(const ColorImageResult & result){
+	return (meanSquareError < result.meanSquareError);
+}
+
 int ColorImageData::train(
 	const Mat & inImage,
 	const ColorImageContext & context

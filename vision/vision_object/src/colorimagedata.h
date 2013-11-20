@@ -27,6 +27,8 @@ class ColorImageResult {
 		double meanSquareError;
 		double variance;
 		std::vector<cv::DMatch> matches;
+
+		bool isBetterThan(const ColorImageResult & result);
 };
 
 class ColorImageData {

@@ -25,6 +25,8 @@ class ObjectDataResult {
 	public:
 		ColorImageResult colorImage;
 		// DepthImageResult depthImage
+
+		bool isBetterThan(const ObjectDataResult & result);
 };
 
 class ObjectData {

@@ -11,6 +11,10 @@ Context::Context(const Config & config)
 	// nothing
 }
 
+bool ObjectDataResult::isBetterThan(const ObjectDataResult & result){
+	return colorImage.isBetterThan(result.colorImage);
+}
+
 int ObjectData::find(
 	const string inPath,
 	vector<ObjectData> & outObjectDataVect
@@ -98,6 +102,6 @@ int ObjectData::match(
 	);
 	if(errorCode) return errorCode;
 */
-	
+
 	return errorCode;
 }

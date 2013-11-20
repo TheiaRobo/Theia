@@ -21,7 +21,7 @@ class Object {
 		int match(
 			const ObjectData & inSampleData,
 			const Context & inContext,
-			std::vector<ObjectDataResult> & outResultVect
+			ObjectDataResult & outResult
 		);
 };
 

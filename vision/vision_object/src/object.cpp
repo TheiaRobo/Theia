@@ -46,24 +46,30 @@ int Object::train(const Context & context){
 int Object::match(
 	const ObjectData & inSampleData,
 	const Context & inContext,
-	vector<ObjectDataResult> & outResultVect
+	ObjectDataResult & outResult
 ){
 	int errorCode = 0;
 
-	outResultVect.clear();
-
+	ObjectDataResult bestResult;
 	size_t numbData = objectDataVect.size();
+
 	for(size_t i = 0; i < numbData; i++){
-		ObjectDataResult objectDataResult;
+		ObjectDataResult currentResult;
 
 		errorCode = objectDataVect[i].match(
 			inSampleData,
 			inContext,
-			objectDataResult
+			currentResult
 		);
 		if(errorCode) return errorCode;
 
-		outResultVect.push_back(objectDataResult);
+		if(i){
+			if(currentResult.isBetterThan(bestResult)){
+				bestResult = currentResult;
+			}
+		}else{
+			bestResult = currentResult;
+		}
 	}
 
 	return errorCode;

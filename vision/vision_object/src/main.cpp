@@ -18,7 +18,6 @@ int main(int argc, char ** argv){
 		return errorCode;
 	}
 
-	// setup train context
 	Config config;
 	config.colorImage.minHessian = 400;
 	Context context(config);
