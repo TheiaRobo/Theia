@@ -1,13 +1,15 @@
 #include <iostream>
+#include <limits>
 #include <opencv2/highgui/highgui.hpp>
 
 #include "colorimagedata.h"
 
 using namespace cv;
 
-ColorImageContext::ColorImageContext(const ColorImageConfig & config){
-	detector = SurfFeatureDetector(config.minHessian);
-	extractor = SurfDescriptorExtractor();
+ColorImageContext::ColorImageContext(const ColorImageConfig & config) :
+detector(config.minHessian), extractor(), matcher(NORM_L2)
+{
+	// nothing
 }
 
 int ColorImageData::train(const ColorImageContext & context){
@@ -42,6 +44,50 @@ int ColorImageData::train(
 	image = inImage;
 	context.detector.detect(image, keypoints);
 	context.extractor.compute(image, keypoints, descriptors);
+
+	return errorCode;
+}
+
+int ColorImageData::match(
+	const ColorImageData & inSample,
+	const ColorImageContext & inContext,
+	ColorImageScore & outScore
+){
+	int errorCode = 0;
+
+	std::vector<DMatch> matches;
+  	inContext.matcher.match(descriptors, inSample.descriptors, matches);
+
+  	size_t numbMatches;
+  	numbMatches = matches.size();
+
+  	double totalError = 0;
+  	double totalSquareError = 0;
+  	for(size_t i = 0; i < numbMatches; i++){
+  		double distance = matches[i].distance;
+
+  		totalError += distance;
+  		totalSquareError += distance * distance;
+  	}
+
+  	double meanError;
+  	double meanSquareError;
+  	double variance;
+
+  	if(numbMatches){
+  		meanError = totalError / numbMatches;
+  		meanSquareError = totalSquareError / numbMatches;
+  		variance = meanSquareError - meanError * meanError;
+  	}else{
+  		meanError = std::numeric_limits<double>::infinity();
+  		meanSquareError = std::numeric_limits<double>::infinity();
+  		variance = 0;
+  	}
+
+  	outScore.meanError = meanError;
+  	outScore.meanSquareError = meanSquareError;
+  	outScore.variance = variance;
+  	outScore.matches = matches;
 
 	return errorCode;
 }

@@ -16,8 +16,17 @@ class ColorImageContext {
 	public:
 		cv::SurfFeatureDetector detector;
 		cv::SurfDescriptorExtractor extractor;
+		cv::BFMatcher matcher;
 
 		ColorImageContext(const ColorImageConfig & config);
+};
+
+class ColorImageScore {
+	public:
+		double meanError;
+		double meanSquareError;
+		double variance;
+		std::vector<cv::DMatch> matches;
 };
 
 class ColorImageData {
@@ -31,6 +40,11 @@ class ColorImageData {
 		int train(
 			const cv::Mat & image,
 			const ColorImageContext & context
+		);
+		int match(
+			const ColorImageData & inSample,
+			const ColorImageContext & inContext,
+			ColorImageScore & outScore
 		);
 };
 
