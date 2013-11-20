@@ -157,6 +157,7 @@ void turn_right() {
 
 	history[0].driving_mode=2;
 	history[0].driving_parameters=-PI/2;
+	info_wall=-1;
 	return;
 }
 
@@ -165,6 +166,9 @@ double turn_random() {
 	int driving_var = 1;
 	random_var=rand()%10; // random_var = {1, 10}
 	double d_param = 0;
+	
+	info_wall=-1;
+	
 	if (random_var > 5){ 
 		d_param=PI/2;
 		change_heading('L');
@@ -457,6 +461,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 
 				if(history[1].driving_parameters==forward_standard){
 					history[0].driving_mode = 2;
+					info_wall=-1;
 					if(last_wall_followed()==1){
 						history[0].driving_parameters=PI/2;
 						change_heading('L');
@@ -469,6 +474,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 
 				}else if(history[1].driving_parameters==forward_medium){
 					history[0].driving_mode = 2;
+					info_wall=-1;
 					if(history[2].driving_parameters==PI/2){
 						history[0].driving_parameters=PI/2;
 						change_heading('L');
@@ -563,6 +569,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 
 					if(history[1].driving_parameters==forward_standard){
 						history[0].driving_mode = 2;
+						info_wall=-1;
 						if(last_wall_followed()==1){
 							history[0].driving_parameters=PI/2;
 							change_heading('L');
@@ -575,6 +582,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 
 					}else if(history[1].driving_parameters==forward_medium){
 						history[0].driving_mode = 2;
+						info_wall=-1;
 						if(history[2].driving_parameters==PI/2){
 							history[0].driving_parameters=PI/2;
 							change_heading('L');
@@ -618,6 +626,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 			if(history[1].driving_mode == 1){
 				//e.g. when we finished turning around and we face a wall
 				history[0].driving_mode = 2;
+				info_wall=-1;
 				if(history[2].driving_parameters==PI/2){
 					history[0].driving_parameters=-PI/2;
 					change_heading('L');
@@ -649,6 +658,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 			}else if(history[1].driving_mode == 2){
 				//e.g. when we rotate in an internal corner in a narrow path
 				history[0].driving_mode = 2;
+				info_wall=-1;
 				if(history[1].driving_parameters==PI/2){
 					history[0].driving_parameters=PI/2;
 					change_heading('L');
@@ -662,6 +672,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 			}else if(history[1].driving_mode == 3){
 				//Internal corner
 				history[0].driving_mode = 2;
+				info_wall=-1;
 				if(history[1].driving_parameters==1){
 					history[0].driving_parameters=-PI/2;
 					change_heading('R');
@@ -683,6 +694,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 			if (wall_in_range(last_wall_followed(), side_max)){
 				/*Then it means that I am seeing the wall I following before I started turning*/
 				history[0].driving_mode = 2;
+				info_wall=-1;
 				if(last_wall_followed()==1){
 					history[0].driving_parameters=-PI/2;
 					change_heading('R');
@@ -701,6 +713,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 			else{
 				if(history[1].driving_mode == 1){
 					history[0].driving_mode = 2;
+					info_wall=-1;
 					if(last_wall_followed()==1){
 						history[0].driving_parameters=PI/2;
 						change_heading('L');
@@ -714,6 +727,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 
 				}else if(history[1].driving_mode == 2){
 					history[0].driving_mode = 2;
+					info_wall=-1;
 					if(last_wall_followed()==1){
 						history[0].driving_parameters=PI/2;
 						change_heading('L');
@@ -745,6 +759,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 
 				if(rot_count[0]==3){
 					history[0].driving_mode = 2;
+					info_wall=-1;
 					history[0].driving_parameters = -history[rot_count[1]].driving_parameters; //Change the sign of rotation
 					if(history[rot_count[1]].driving_parameters==PI/2)
 						change_heading('R');
@@ -752,6 +767,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 						change_heading('L');
 				}else{
 					history[0].driving_mode = 2;
+					info_wall=-1;
 					if(last_wall_followed()==1){
 						history[0].driving_parameters=PI/2;
 						change_heading('L');
@@ -770,6 +786,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 			else if(history[1].driving_mode == 2){
 				//Turning in a corner in a narrow path
 				history[0].driving_mode = 2;
+				info_wall=-1;
 				if(last_wall_followed()==1){
 					history[0].driving_parameters=PI/2;
 					change_heading('L');
@@ -792,6 +809,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 		else{
 			if(history[1].driving_mode == 1){
 				history[0].driving_mode = 2;
+				info_wall=-1;
 				if(last_wall_followed()==1){
 					history[0].driving_parameters=PI/2;
 					change_heading('L');
@@ -807,6 +825,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 
 			}else if(history[1].driving_mode == 2){
 				history[0].driving_mode = 2;
+				info_wall=-1;
 				if(history[1].driving_parameters==PI/2){
 					history[0].driving_parameters=PI/2;
 					change_heading('L');
