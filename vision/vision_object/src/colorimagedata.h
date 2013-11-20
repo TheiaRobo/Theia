@@ -21,7 +21,7 @@ class ColorImageContext {
 		ColorImageContext(const ColorImageConfig & config);
 };
 
-class ColorImageScore {
+class ColorImageResult {
 	public:
 		double meanError;
 		double meanSquareError;
@@ -44,7 +44,7 @@ class ColorImageData {
 		int match(
 			const ColorImageData & inSample,
 			const ColorImageContext & inContext,
-			ColorImageScore & outScore
+			ColorImageResult & outResult
 		);
 };
 

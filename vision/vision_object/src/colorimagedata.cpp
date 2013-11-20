@@ -51,7 +51,7 @@ int ColorImageData::train(
 int ColorImageData::match(
 	const ColorImageData & inSample,
 	const ColorImageContext & inContext,
-	ColorImageScore & outScore
+	ColorImageResult & outResult
 ){
 	int errorCode = 0;
 
@@ -84,10 +84,10 @@ int ColorImageData::match(
   		variance = 0;
   	}
 
-  	outScore.meanError = meanError;
-  	outScore.meanSquareError = meanSquareError;
-  	outScore.variance = variance;
-  	outScore.matches = matches;
+  	outResult.meanError = meanError;
+  	outResult.meanSquareError = meanSquareError;
+  	outResult.variance = variance;
+  	outResult.matches = matches;
 
 	return errorCode;
 }
