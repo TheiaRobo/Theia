@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "imagedata.h"
+#include "traindata.h"
 
 class Object {
 	public:
@@ -15,7 +15,7 @@ class Object {
 
 		std::string name;
 		std::string path;
-		std::vector<ImageData> imageDataVect;
+		std::vector<TrainData> trainDataVect;
 
 		int train();
 };

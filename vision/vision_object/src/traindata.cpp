@@ -1,17 +1,17 @@
 #include <cstdlib>
 #include <vision/file.h>
 
-#include "imagedata.h"
+#include "traindata.h"
 
 using namespace std;
 
-int ImageData::find(
+int TrainData::find(
 	const string inPath,
-	vector<ImageData> & outImageDataVect
+	vector<TrainData> & outTrainDataVect
 ){
 	int errorCode = 0;
 
-	outImageDataVect.clear();
+	outTrainDataVect.clear();
 
 	vector<string> dirVect;
 	errorCode = visionFileFindDirs(inPath, dirVect);
@@ -19,7 +19,7 @@ int ImageData::find(
 
 	size_t numbFiles = dirVect.size();
 	for(size_t i = 0; i < numbFiles; i++){
-		ImageData imageData;
+		TrainData trainData;
 		string dirName = dirVect[i];
 
 		// directory name must be a number
@@ -36,11 +36,11 @@ int ImageData::find(
 			continue;
 		}
 
-		imageData.angle = strtoul(dirName.c_str(), NULL, 10);
-		imageData.path = inPath + VISION_DIR_SEP + dirName;
+		trainData.angle = strtoul(dirName.c_str(), NULL, 10);
+		trainData.path = inPath + VISION_DIR_SEP + dirName;
 
-		string colorImagePath = imageData.path + VISION_DIR_SEP + "color.png";
-		string depthImagePath = imageData.path + VISION_DIR_SEP + "depth.png";
+		string colorImagePath = trainData.path + VISION_DIR_SEP + "color.png";
+		string depthImagePath = trainData.path + VISION_DIR_SEP + "depth.png";
 
 		if(
 			!visionFileExists(colorImagePath)
@@ -49,16 +49,16 @@ int ImageData::find(
 			continue;
 		}
 
-		imageData.colorImageData.path = colorImagePath;
-		imageData.depthImageData.path = depthImagePath;
+		trainData.colorImageData.path = colorImagePath;
+		trainData.depthImageData.path = depthImagePath;
 
-		outImageDataVect.push_back(imageData);
+		outTrainDataVect.push_back(trainData);
 	}
 
 	return errorCode;
 }
 
-int ImageData::train(){
+int TrainData::train(){
 	int errorCode = 0;
 
 	errorCode = colorImageData.train();

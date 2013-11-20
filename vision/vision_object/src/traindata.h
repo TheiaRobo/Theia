@@ -1,5 +1,5 @@
-#ifndef VISION_OBJECT_IMAGEDATA
-#define VISION_OBJECT_IMAEGDATA
+#ifndef VISION_OBJECT_TRAINDATA
+#define VISION_OBJECT_TRAINDATA
 
 #include <string>
 #include <vector>
@@ -7,11 +7,11 @@
 #include "colorimagedata.h"
 #include "depthimagedata.h"
 
-class ImageData {
+class TrainData {
 	public:
 		static int find(
 			const std::string inPath,
-			std::vector<ImageData> & outImageDataVect
+			std::vector<TrainData> & outImageDataVect
 		);
 
 		int angle;

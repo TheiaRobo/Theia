@@ -23,7 +23,7 @@ int main(int argc, char ** argv){
 		Object & object = objectVect[i];
 		cout << "Object " << i << endl;
 		cout << " Name: " << object.name << endl;
-		cout << " # Images: " << object.imageDataVect.size() << endl;
+		cout << " # Train data: " << object.trainDataVect.size() << endl;
 		
 		cout << " Train .." << endl;
 		object.train();
