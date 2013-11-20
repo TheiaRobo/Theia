@@ -58,7 +58,10 @@ int trainFile(
 		DrawMatchesFlags::DRAW_RICH_KEYPOINTS
 	);
 
-	imshow("Keypoints", imageWithKeypoints);
+	imshow(
+		"Keypoints for " + trainFile.object,
+		imageWithKeypoints
+	);
 	waitKey(0);
 
 	/**
