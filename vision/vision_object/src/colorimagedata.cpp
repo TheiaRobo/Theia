@@ -32,11 +32,20 @@ int ColorImageData::match(
 ){
 	int errorCode = 0;
 
+	outResult = ColorImageResult::worst();
+
 	std::vector<DMatch> matches;
-  	inContext.matcher.match(descriptors, inSample.descriptors, matches);
+  	inContext.matcher.match(
+  		descriptors,
+  		inSample.descriptors,
+  		matches
+  	);
 
   	size_t numbMatches;
   	numbMatches = matches.size();
+  	if(!numbMatches){
+  		return errorCode;
+  	}
 
   	double totalError = 0;
   	double totalSquareError = 0;
@@ -47,19 +56,9 @@ int ColorImageData::match(
   		totalSquareError += distance * distance;
   	}
 
-  	double meanError;
-  	double meanSquareError;
-  	double variance;
-
-  	if(numbMatches){
-  		meanError = totalError / numbMatches;
-  		meanSquareError = totalSquareError / numbMatches;
-  		variance = meanSquareError - meanError * meanError;
-  	}else{
-  		meanError = std::numeric_limits<double>::infinity();
-  		meanSquareError = std::numeric_limits<double>::infinity();
-  		variance = 0;
-  	}
+  	double meanError = totalError / numbMatches;
+  	double meanSquareError = totalSquareError / numbMatches;
+  	double variance = meanSquareError - meanError * meanError;
 
   	outResult.meanError = meanError;
   	outResult.meanSquareError = meanSquareError;
