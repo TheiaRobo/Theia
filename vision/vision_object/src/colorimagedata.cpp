@@ -27,5 +27,8 @@ int ColorImageData::train(const ColorImageContext & context){
 		return -1;
 	}
 
+	context.detector.detect(image, keypoints);
+	context.extractor.compute(image, keypoints, descriptors);
+	
 	return errorCode;
 }
