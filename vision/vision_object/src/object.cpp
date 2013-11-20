@@ -34,8 +34,8 @@ int Object::find(
 int Object::train(const Context & context){
 	int errorCode = 0;
 
-	size_t numbImages = objectDataVect.size();
-	for(size_t i = 0; i < numbImages; i++){
+	size_t numbData = objectDataVect.size();
+	for(size_t i = 0; i < numbData; i++){
 		errorCode = objectDataVect[i].train(context);
 		if(errorCode) return errorCode;
 	}
@@ -48,5 +48,23 @@ int Object::match(
 	const Context & inContext,
 	vector<ObjectDataResult> & outResultVect
 ){
-	return 0;
+	int errorCode = 0;
+
+	outResultVect.clear();
+
+	size_t numbData = objectDataVect.size();
+	for(size_t i = 0; i < numbData; i++){
+		ObjectDataResult objectDataResult;
+
+		errorCode = objectDataVect[i].match(
+			inSampleData,
+			inContext,
+			objectDataResult
+		);
+		if(errorCode) return errorCode;
+
+		outResultVect.push_back(objectDataResult);
+	}
+
+	return errorCode;
 }

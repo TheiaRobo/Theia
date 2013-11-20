@@ -75,3 +75,29 @@ int ObjectData::train(const Context & context){
 	
 	return errorCode;
 }
+
+int ObjectData::match(
+	const ObjectData & inSampleData,
+	const Context & inContext,
+	ObjectDataResult & outResult
+){
+	int errorCode = 0;
+
+	errorCode = colorImage.match(
+		inSampleData.colorImage,
+		inContext.colorImage,
+		outResult.colorImage
+	);
+	if(errorCode) return errorCode;
+
+/*
+	errorCode = depthImage.match(
+		inSample.depthImage,
+		inContext.depthImage,
+		outResult.depthImage
+	);
+	if(errorCode) return errorCode;
+*/
+	
+	return errorCode;
+}

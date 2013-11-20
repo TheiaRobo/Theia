@@ -16,13 +16,15 @@ class Config {
 class Context {
 	public:
 		ColorImageContext colorImage;
-		// DepthImageContext depthImageContext;
+		// DepthImageContext depthImage;
 
 		Context(const Config & config);
 };
 
 class ObjectDataResult {
-	// nothing
+	public:
+		ColorImageResult colorImage;
+		// DepthImageResult depthImage
 };
 
 class ObjectData {
@@ -38,6 +40,11 @@ class ObjectData {
 		DepthImageData depthImage;
 
 		int train(const Context & context);
+		int match(
+			const ObjectData & inSampleData,
+			const Context & inContext,
+			ObjectDataResult & outResult
+		);
 };
 
 #endif
