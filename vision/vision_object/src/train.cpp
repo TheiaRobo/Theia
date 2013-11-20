@@ -6,7 +6,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/nonfree/features2d.hpp>
 #include <vision/file.h>
-#include <vision/image.h>
 
 #include "file.h"
 #include "train.h"

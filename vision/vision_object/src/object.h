@@ -1,10 +1,10 @@
-#ifndef VISION_OBJECT
-#define VISION_OBJECT
+#ifndef VISION_OBJECT_OBJECT
+#define VISION_OBJECT_OBJECT
 
 #include <string>
 #include <vector>
 
-#include "traindata.h"
+#include "objectdata.h"
 
 class Object {
 	public:
@@ -15,9 +15,14 @@ class Object {
 
 		std::string name;
 		std::string path;
-		std::vector<TrainData> trainDataVect;
+		std::vector<ObjectData> objectDataVect;
 
-		int train(const TrainContext & context);
+		int train(const Context & context);
+		int match(
+			const ObjectData & inSampleData,
+			const Context & inContext,
+			std::vector<ObjectDataResult> & outResultVect
+		);
 };
 
 #endif

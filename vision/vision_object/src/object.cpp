@@ -22,7 +22,7 @@ int Object::find(
 		object.name = dirVect[i];
 		object.path = inPath + VISION_DIR_SEP + dirVect[i];
 
-		errorCode = TrainData::find(object.path, object.trainDataVect);
+		errorCode = ObjectData::find(object.path, object.objectDataVect);
 		if(errorCode) return errorCode;
 
 		outObjectVect.push_back(object);
@@ -31,14 +31,22 @@ int Object::find(
 	return errorCode;
 }
 
-int Object::train(const TrainContext & context){
+int Object::train(const Context & context){
 	int errorCode = 0;
 
-	size_t numbImages = trainDataVect.size();
+	size_t numbImages = objectDataVect.size();
 	for(size_t i = 0; i < numbImages; i++){
-		errorCode = trainDataVect[i].train(context);
+		errorCode = objectDataVect[i].train(context);
 		if(errorCode) return errorCode;
 	}
 	
 	return errorCode;
+}
+
+int Object::match(
+	const ObjectData & inSampleData,
+	const Context & inContext,
+	vector<ObjectDataResult> & outResultVect
+){
+	return 0;
 }
