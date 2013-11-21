@@ -1,151 +1,153 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
-// ROS
+#include <cv_bridge/cv_bridge.h>
 #include <ros/ros.h>
-#include <vision/array.h>
-#include <vision/image.h>
-
-// ROS messages
 #include <sensor_msgs/Image.h>
 #include <std_msgs/Empty.h>
 
-// ROS to / from OpenCV bridge
-#include <cv_bridge/cv_bridge.h>
-
-// Sub modules
-#include "file.h"
-#include "recog.h"
-#include "train.h"
+#include "object.h"
 
 #define NODE_NAME "vision_object"
 #define TOPIC_IN "/camera/rgb/image_mono"
-#define TOPIC_TRAIN "/vision/object/train"
 
 using namespace std;
 
-TheiaImageContext imageContext;
-Array<ObjectTrainData_t> trainDataArr;
-ros::Subscriber imageSub;
-ros::Subscriber trainSub;
+Config config;
+Context context(config);
+vector<Object> objectVect;
+ros::Subscriber colorImageSub;
 
-int trainInit(){
-	string path;
+int init(){
+	int errorCode = 0;
+
+	config = Config();
 	ros::param::getCached(
 		"~config/path",
-		path
+		config.path
 	);
-
-	int surfMinHessian;
 	ros::param::getCached(
-		"~config/surfMinHessian",
-		surfMinHessian
+		"~config/colorImage/minHessian",
+		config.colorImage.minHessian
+	);
+	ros::param::getCached(
+		"~config/depthImage/blurring",
+		config.depthImage.blurring
+	);
+	ros::param::getCached(
+		"~config/depthImage/cannyLevelOne",
+		config.depthImage.cannyLevelOne
+	);
+	ros::param::getCached(
+		"~config/depthImage/cannyLevelTwo",
+		config.depthImage.cannyLevelTwo
 	);
 
-	int errorCode;
-	errorCode = theiaImageCreateContext(
-		surfMinHessian,
-		imageContext
-	);
+	context = Context(config);
 
-	if(errorCode){
-		cout << "Error: Could not create image context" << endl;
-		return errorCode;
-	}
-
-	ObjectTrainConfig_t trainConfig;
-	trainConfig.path = path;
-	trainConfig.imageContext = imageContext;
-
-	vector<ObjectTrainData_t> trainDataVect;
-	errorCode = train(
-		trainConfig,
-		trainDataVect
-	);
-
-	if(errorCode){
-		cout << "Error: Training failed" << endl;
-		return errorCode;
-	}
-
-	// to array
-	trainDataArr = Array<ObjectTrainData_t>(trainDataVect);
-
-	return 0;
+	return errorCode;
 }
 
-void imageCallback(const sensor_msgs::ImageConstPtr & rosMsgPtr){
-	cout << "Image Callback" << endl;
-	cout << " Start" << endl;
+int match(const ObjectData & inSampleData){
+	int errorCode = 0;
+
+	size_t numbObjects = objectVect.size();
+	vector<ObjectDataResult> resultVect(numbObjects);
+
+	for(size_t i = 0; i < numbObjects; i++){
+		ObjectDataResult result;
+
+		errorCode = objectVect[i].match(inSampleData, context, result);
+		if(errorCode) return errorCode;
+
+		cout << "Object " << i << endl;
+		cout << " Score: " << result.colorImage.meanSquareError << endl;
+
+		resultVect.push_back(result);
+	}
+
+	return errorCode;
+}
+
+int train(){
+	int errorCode = 0;
+
+	errorCode = Object::find(context.path, objectVect);
+	if(errorCode) return errorCode;
+
+	size_t numbObjects = objectVect.size();
+	for(size_t i = 0; i < numbObjects; i++){
+		Object & object = objectVect[i];
+		size_t numbData = object.objectDataVect.size();
+
+		cout << "Object " << i << endl;
+		cout << " Name: " << object.name << endl;
+		cout << " # Data: " << numbData << endl;
+		
+		cout << " Train .." << endl;
+
+		errorCode = object.train(context);
+		if(errorCode) return errorCode;
+
+		cout << " Show results .." << endl;
+		for(size_t j = 0; j < numbData; j++){
+			ObjectData & data = object.objectDataVect[j];
+			data.colorImage.show();
+			data.depthImage.show();
+		}
+
+	}
+
+	return errorCode;
+}
+
+void colorImageCallback(const sensor_msgs::ImageConstPtr & rosMsgPtr){
+	int errorCode = 0;
 
 	cv_bridge::CvImagePtr imagePtr;
 	imagePtr = cv_bridge::toCvCopy(rosMsgPtr, "mono8");
 
-	TheiaImageData imageData;
-	imageData.image = imagePtr->image;
+	ObjectData sampleData;
+	ColorImageData & colorImageData = sampleData.colorImage;
+	ColorImageContext & colorImageContext = context.colorImage;
 
-	double minScore;
-	ros::param::getCached(
-		"~config/recogMinScore",
-		minScore
-	);
-
-	ObjectRecogContext recogContext;
-	recogContext.minScore = minScore;
-	recogContext.imageContextPtr = &imageContext;
-
-	ObjectFileTrain_t * recognizedPtr;
-	recog(
-		imageData,
-		trainDataArr,
-		recogContext,
-		&recognizedPtr
-	);
-
-	if(recognizedPtr){
-		cout << recognizedPtr->object << " recognized" << endl;
-	}else{
-		cout << " No object recognized" << endl;
+	errorCode = colorImageData.train(imagePtr->image, colorImageContext);
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not train color image" << endl;
+		return;
 	}
 
-	cout << " End" << endl;
-}
+	colorImageData.show();
 
-void trainCallback(const std_msgs::EmptyConstPtr & rosMsgPtr){
-	cout << "Training Callback" << endl;
-	cout << " Start" << endl;
-	
-	trainInit();
-
-	cout << " End" << endl;
+	errorCode = match(sampleData);
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not match object data" << endl;
+		return;
+	}
 }
 
 int main(int argc, char ** argv){
-	/**
-	* Init ROS
-	*/
+	int errorCode = 0;
+
 	ros::init(argc, argv, NODE_NAME);
 	ros::NodeHandle node;
 
-	imageSub = node.subscribe(TOPIC_IN, 1, imageCallback);
-	trainSub = node.subscribe(TOPIC_TRAIN, 1, trainCallback);
+	colorImageSub = node.subscribe(TOPIC_IN, 1, colorImageCallback);
 
-	/**
-	* Init training data
-	*/
-	int errorCode;
-	errorCode = trainInit();
+	errorCode = init();
+	if(errorCode) return errorCode;
 
-	if(errorCode){
-		cout << "Error: Could not init" << endl;
-		return errorCode;
-	}
+	errorCode = train();
+	if(errorCode) return errorCode;
 
-	/**
-	* Run object recognition
-	*/
+/*
+	errorCode = match();
+	if(errorCode) return;
+*/
+
 	ros::spin();
 
-	return 0;
+	return errorCode;
 }
