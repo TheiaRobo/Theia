@@ -21,16 +21,27 @@ ros::Subscriber colorImageSub;
 int init(){
 	int errorCode = 0;
 
-	/**
-	* TODO
-	* Copy configuration options from parameter server into
-	* config class
-	*/
 	config = Config();
-	config.colorImage.minHessian = 400;
-	config.depthImage.blurring = 3;
-	config.depthImage.cannyLevelOne = 3;
-	config.depthImage.cannyLevelTwo = 15;
+	ros::param::getCached(
+		"~config/path",
+		config.path
+	);
+	ros::param::getCached(
+		"~config/colorImage/minHessian",
+		config.colorImage.minHessian
+	);
+	ros::param::getCached(
+		"~config/depthImage/blurring",
+		config.depthImage.blurring
+	);
+	ros::param::getCached(
+		"~config/depthImage/cannyLevelOne",
+		config.depthImage.cannyLevelOne
+	);
+	ros::param::getCached(
+		"~config/depthImage/cannyLevelTwo",
+		config.depthImage.cannyLevelTwo
+	);
 
 	context = Context(config);
 
@@ -60,9 +71,8 @@ int match(const ObjectData & inSampleData){
 
 int train(){
 	int errorCode = 0;
-	string trainPath = "/home/amotta/Documents/Theia/vision/vision_object/train";
 
-	errorCode = Object::find(trainPath, objectVect);
+	errorCode = Object::find(context.path, objectVect);
 	if(errorCode) return errorCode;
 
 	size_t numbObjects = objectVect.size();

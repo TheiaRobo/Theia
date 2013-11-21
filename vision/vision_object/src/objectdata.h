@@ -9,12 +9,14 @@
 
 class Config {
 	public:
+		std::string path;
 		ColorImageConfig colorImage;
 		DepthImageConfig depthImage;
 };
 
 class Context {
 	public:
+		std::string path;
 		ColorImageContext colorImage;
 		DepthImageContext depthImage;
 

@@ -7,7 +7,7 @@ using namespace std;
 
 Context::Context(const Config & config)
 : colorImage(config.colorImage), depthImage(config.depthImage) {
-	// nothing
+	path = config.path;
 }
 
 ObjectDataResult ObjectDataResult::worst(){
