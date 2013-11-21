@@ -101,14 +101,15 @@ int ObjectData::match(
 	);
 	if(errorCode) return errorCode;
 
-/*
 	errorCode = depthImage.match(
 		inSample.depthImage,
 		inContext.depthImage,
 		outResult.depthImage
 	);
 	if(errorCode) return errorCode;
-*/
+
+	errorCode = matchColors(inSample, inContext, outResult);
+	if(errorCode) return errorCode;
 
 	return errorCode;
 }

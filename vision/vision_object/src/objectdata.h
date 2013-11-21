@@ -26,7 +26,7 @@ class ObjectDataResult {
 		static ObjectDataResult worst();
 
 		ColorImageResult colorImage;
-		// DepthImageResult depthImage
+		DepthImageResult depthImage;
 
 		bool isBetterThan(const ObjectDataResult & result);
 };
