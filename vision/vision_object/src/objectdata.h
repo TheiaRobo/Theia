@@ -10,13 +10,13 @@
 class Config {
 	public:
 		ColorImageConfig colorImage;
-		// DepthImageConfig depthImageConfig;
+		DepthImageConfig depthImage;
 };
 
 class Context {
 	public:
 		ColorImageContext colorImage;
-		// DepthImageContext depthImage;
+		DepthImageContext depthImage;
 
 		Context(const Config & config);
 };

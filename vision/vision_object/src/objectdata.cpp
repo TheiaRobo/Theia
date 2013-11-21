@@ -6,8 +6,7 @@
 using namespace std;
 
 Context::Context(const Config & config)
-: colorImage(config.colorImage)
-{
+: colorImage(config.colorImage), depthImage(config.depthImage) {
 	// nothing
 }
 
@@ -82,7 +81,7 @@ int ObjectData::train(const Context & context){
 	errorCode = colorImage.train(context.colorImage);
 	if(errorCode) return errorCode;
 
-	errorCode = depthImage.train();
+	errorCode = depthImage.train(context.depthImage);
 	if(errorCode) return errorCode;
 	
 	return errorCode;
