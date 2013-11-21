@@ -31,14 +31,19 @@ double inf_thres=20;
 
 int x_Current_Pose=round(x_matrix/2); //x,y coordinates
 int y_Current_Pose=round(y_matrix/2); //x,y coordinates
-int prev_x_Current_Pose=x_Current_Pose;
-int prev_y_Current_Pose=y_Current_Pose;
-double odo_x=0.0;
-double odo_y=0.0;
-double prev_odo_x=0.0;
-double prev_odo_y=0.0;
+
+
+// variables needed to perform odometry's correction
+// raw odometry
+double odo_x[2]={x_matrix*resolution_matrix/2,x_matrix*resolution_matrix/2};
+double odo_y[2]={y_matrix*resolution_matrix/2,y_matrix*resolution_matrix/2};
 double odo_theta=0.0;
+
+// corrected odometry
+double corrected_odo_x[2]={x_matrix*resolution_matrix/2,x_matrix*resolution_matrix/2};
+double corrected_odo_y[2]={y_matrix*resolution_matrix/2,y_matrix*resolution_matrix/2};
 double odo_correct=0.0;
+
 const int freq=100;
 
 
@@ -72,49 +77,57 @@ double cell_round(double val){
 // Super simple since the other thing did not work
 void Get_Readings_Odometry(nav_msgs::Odometry::ConstPtr odometry_msg){
 
-	double x_Pose_Odometry=odometry_msg->pose.pose.position.x*100; //odometry is comming in meters
-	double y_Pose_Odometry=odometry_msg->pose.pose.position.y*100;
-	double delta_x=0.0, delta_y=0.0;
+	//double x_Pose_Odometry=odometry_msg->pose.pose.position.x*100; //odometry is comming in meters
+	//double y_Pose_Odometry=odometry_msg->pose.pose.position.y*100;
+	double delta_x=0.0, delta_y=0.0;	
 	
-	prev_x_Current_Pose=x_Current_Pose;
-	prev_y_Current_Pose=y_Current_Pose;
+	odo_x[1]=odo_x[0];
+	odo_y[1]=odo_y[0];
+	corrected_odo_x[1]=corrected_odo_x[0];
+	corrected_odo_y[1]=corrected_odo_y[0];
 	
-	
-	prev_odo_x=odo_x;
-	prev_odo_y=odo_y;
-	
+	odo_x[0]=odometry_msg->pose.pose.position.x+x_matrix*resolution_matrix/2;
+	odo_y[0]=odometry_msg->pose.pose.position.y+y_matrix*resolution_matrix/2;
 	odo_theta=atan2(odometry_msg->pose.pose.orientation.z,odometry_msg->pose.pose.orientation.w)*2;
 	
+	delta_x=odo_x[0]-odo_x[1];
+	delta_y=odo_y[0]-odo_y[1];
+	
+	ROS_INFO("x_Current_Pose: %d\ny_Current_Pose: %d",x_Current_Pose,y_Current_Pose);
+	
 	ROS_INFO("ODO_THETA: %.2f",odo_theta);
+	ROS_INFO("Delta_x: %.2f\n Delta_y: %.2f",delta_x,delta_y);
 	switch(heading){
 	case 'E':
-		odo_correct=(0+odo_theta);
-		x_Current_Pose = cell_round(sqrt(x_Pose_Odometry*x_Pose_Odometry+y_Pose_Odometry*y_Pose_Odometry)*cos(odo_correct))+x_matrix/2;
-		y_Current_Pose = prev_y_Current_Pose;
+		odo_correct=(odo_theta-0);
+		delta_x=sqrt(delta_x*delta_x+delta_y*delta_y)*cos(odo_correct);
+		delta_y=0;		
 		break;
 	case 'W':
-		odo_correct=(PI+odo_theta);
-		x_Current_Pose = cell_round(sqrt(x_Pose_Odometry*x_Pose_Odometry+y_Pose_Odometry*y_Pose_Odometry)*cos(odo_correct))+x_matrix/2;
-		y_Current_Pose = prev_y_Current_Pose;
+		odo_correct=(2*PI-odo_theta);
+		delta_x=sqrt(delta_x*delta_x+delta_y*delta_y)*cos(odo_correct);
+		delta_y=0;
 		break;
 	case 'N':
-		odo_correct=(PI/2+odo_theta);
-		y_Current_Pose = cell_round(sqrt(x_Pose_Odometry*x_Pose_Odometry+y_Pose_Odometry*y_Pose_Odometry)*sin(odo_correct))+y_matrix/2;
-		x_Current_Pose = prev_x_Current_Pose;
+		odo_correct=(PI-odo_theta);
+		delta_y=sqrt(delta_x*delta_x+delta_y*delta_y)*sin(odo_correct);
+		delta_x=0;
 		break;
 	case 'S':
-		odo_correct=(-PI/2+odo_theta);
-		y_Current_Pose = cell_round(sqrt(x_Pose_Odometry*x_Pose_Odometry+y_Pose_Odometry*y_Pose_Odometry)*sin(odo_correct))+y_matrix/2;
-		x_Current_Pose = prev_x_Current_Pose;
+		odo_correct=(-PI-odo_theta);
+		delta_y=sqrt(delta_x*delta_x+delta_y*delta_y)*sin(odo_correct);
+		delta_x=0;
 		break;
 	}
+	ROS_INFO("ODO_CORRECT: %.2f\nDelta_x: %.2f\n Delta_y: %.2f",odo_correct,delta_x,delta_y);
+	corrected_odo_x[0]=corrected_odo_x[1]+delta_x;
+	corrected_odo_y[0]=corrected_odo_y[1]+delta_y;
 	
+	x_Current_Pose=cell_round(corrected_odo_x[0]*100);
+	y_Current_Pose=cell_round(corrected_odo_y[0]*100);
 	
+	ROS_INFO("x_Current_Pose: %d\ny_Current_Pose: %d",x_Current_Pose,y_Current_Pose);
 	
-	
-	
-	odo_x=odometry_msg->pose.pose.position.x*cos(odo_correct)+x_matrix*resolution_matrix/2;
-	odo_y=odometry_msg->pose.pose.position.y*sin(odo_correct)+y_matrix*resolution_matrix/2;
 }
 
 
@@ -447,8 +460,8 @@ void update_robot(){
 	marker.action = visualization_msgs::Marker::ADD;
 
 	// Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
-	marker.pose.position.x = odo_x;
-	marker.pose.position.y = odo_y;
+	marker.pose.position.x = odo_x[0];
+	marker.pose.position.y = odo_y[0];
 	marker.pose.position.z = 0;
 	
 	switch(heading){
