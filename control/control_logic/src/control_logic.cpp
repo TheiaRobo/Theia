@@ -553,12 +553,12 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 					history[0].driving_mode = 2;
 					info_wall=-1;
 					history[0].driving_parameters=rotate2_last_wall();
-					
+
 				}else if(history[1].driving_parameters==forward_medium){
 					history[0].driving_mode = 2;
 					info_wall=-1;
 					history[0].driving_parameters=rotate2_last_rotation(2);
-					
+
 				}else if(history[1].driving_parameters==forward_extended){
 					ROS_INFO("Case 0b: I did not find a wall to follow\nImpossible case history[1].driving_parameters = %.2f",history[1].driving_parameters);
 				}else{
@@ -616,15 +616,11 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 
 			}else{
 				//COMING FROM NOWHERE
-				if(history[1].driving_mode==0){
-					ROS_INFO("Case 1a: Coming from nowhere");
-					history[0].driving_mode = 3;
-					history[0].driving_parameters = closest_wall();					   
-					info_wall=closest_wall();
-					flag_turning = 0;
-				}else{
-					ROS_INFO("Case 1a: Impossible case flag_turning=0 and coming driving_mode = %d", history[1].driving_mode);
-				}
+				ROS_INFO("Case 1a: Impossible case flag_turning=0 and coming driving_mode = %d", history[1].driving_mode);
+				history[0].driving_mode = 3;
+				history[0].driving_parameters = closest_wall();					   
+				info_wall=closest_wall();
+				flag_turning = 0;
 			}
 
 
@@ -646,13 +642,13 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 						info_wall=-1;
 
 						history[0].driving_parameters=rotate2_last_wall();
-						
+
 
 					}else if(history[1].driving_parameters==forward_medium){
 						history[0].driving_mode = 2;
 						info_wall=-1;
 						history[0].driving_parameters=rotate2_last_rotation(2);
-						
+
 					}else if(history[1].driving_parameters==forward_extended){
 						ROS_INFO("Case 1b: I did not find a wall to follow\nImpossible case history[1].driving_parameters = %.2f",history[1].driving_parameters);
 					}else{
@@ -717,13 +713,13 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 				history[0].driving_mode = 2;
 				history[0].driving_parameters=rotate2_last_rotation(1);
 				info_wall=-1;
-				
+
 			}else if(history[1].driving_mode == 3){
 				//Internal corner
 				history[0].driving_mode = 2;
 				history[0].driving_parameters=rotate2_not_last_wall();
 				info_wall=-1;
-				
+
 			}else{
 				ROS_INFO("Case 2a: Impossible case flag_turning=0 and coming driving_mode = %d", history[1].driving_mode);
 			}
