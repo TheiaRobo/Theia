@@ -34,6 +34,22 @@ int ColorImageData::match(
 
 	outResult = ColorImageResult::worst();
 
+	errorCode = matchKeypoints(inSample, inContext, outResult);
+	if(errorCode) return errorCode;
+
+	errorCode = matchColors(inSample, inContext, outResult);
+	if(errorCode) return errorCode;
+
+	return errorCode;
+}
+
+int ColorImageData::matchKeypoints(
+	const ColorImageData & inSample,
+	const ColorImageContext & inContext,
+	ColorImageResult & outResult
+){
+	int errorCode = 0;
+
 	std::vector<DMatch> matches;
   	inContext.matcher.match(
   		descriptors,
@@ -64,6 +80,16 @@ int ColorImageData::match(
   	outResult.meanSquareError = meanSquareError;
   	outResult.variance = variance;
   	outResult.matches = matches;
+
+	return errorCode;
+}
+
+int ColorImageData::matchColors(
+	const ColorImageData & inSample,
+	const ColorImageContext & inContext,
+	ColorImageResult & inOutResult
+){
+	int errorCode = 0;
 
 	return errorCode;
 }

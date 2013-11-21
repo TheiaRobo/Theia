@@ -51,6 +51,18 @@ class ColorImageData {
 			const cv::Mat & image,
 			const ColorImageContext & context
 		);
+
+	protected:
+		int matchKeypoints(
+			const ColorImageData & inSample,
+			const ColorImageContext & inContext,
+			ColorImageResult & outResult
+		);
+		int matchColors(
+			const ColorImageData & inSample,
+			const ColorImageContext & inContext,
+			ColorImageResult & inOutResult
+		);
 };
 
 #endif
