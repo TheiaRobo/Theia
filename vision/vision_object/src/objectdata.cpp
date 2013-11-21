@@ -89,14 +89,14 @@ int ObjectData::train(const Context & context){
 }
 
 int ObjectData::match(
-	const ObjectData & inSampleData,
+	const ObjectData & inSample,
 	const Context & inContext,
 	ObjectDataResult & outResult
 ){
 	int errorCode = 0;
 
 	errorCode = colorImage.match(
-		inSampleData.colorImage,
+		inSample.colorImage,
 		inContext.colorImage,
 		outResult.colorImage
 	);
@@ -111,5 +111,14 @@ int ObjectData::match(
 	if(errorCode) return errorCode;
 */
 
+	return errorCode;
+}
+
+int ObjectData::matchColors(
+	const ObjectData & inSample,
+	const Context & inContext,
+	ObjectDataResult & ioResult
+){
+	int errorCode = 0;
 	return errorCode;
 }

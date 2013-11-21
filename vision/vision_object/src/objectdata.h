@@ -43,11 +43,18 @@ class ObjectData {
 		ColorImageData colorImage;
 		DepthImageData depthImage;
 
-		int train(const Context & context);
 		int match(
-			const ObjectData & inSampleData,
+			const ObjectData & inSample,
 			const Context & inContext,
 			ObjectDataResult & outResult
+		);
+		int train(const Context & context);
+
+	protected:
+		int matchColors(
+			const ObjectData & inSample,
+			const Context & inContext,
+			ObjectDataResult & ioResult
 		);
 };
 
