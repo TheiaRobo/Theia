@@ -31,7 +31,7 @@ class DepthImageData {
 	public:
 		std::string path;
 		cv::Mat image;
-		std::vector<cv::Point> contour;
+		std::vector< std::vector<cv::Point> > contours;
 
 		int match(
 			const DepthImageData & inSample,

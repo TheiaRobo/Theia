@@ -32,7 +32,20 @@ int DepthImageData::match(
 }
 
 int DepthImageData::show(){
-	return 0;
+	int errorCode = 0;
+
+	Mat imageWithContour = image.clone();
+	drawContours(
+		imageWithContour,
+		contours,
+		-1, // draw all
+		Scalar(128, 255, 255)
+	);
+
+	imshow("Contours", imageWithContour);
+	waitKey(0);
+
+	return errorCode;
 }
 
 int DepthImageData::train(const DepthImageContext & inContext){
@@ -64,14 +77,12 @@ int DepthImageData::train(
 ){
 	int errorCode = 0;
 
-	// set image
 	image = inImage;
 
-	// find contours
-	std::vector<std::vector<Point>> contourVect;
+	Mat workingImage = image.clone();
 	findContours(
-		image,
-		contourVect,
+		workingImage,
+		contours,
 		inContext.contourMode,
 		inContext.contourMethod
 	);
