@@ -1,6 +1,7 @@
 #include <iostream>
 #include <limits>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 #include "depthimagedata.h"
 
@@ -61,5 +62,19 @@ int DepthImageData::train(
 	const Mat & inImage,
 	const DepthImageContext & inContext
 ){
-	return 0;
+	int errorCode = 0;
+
+	// set image
+	image = inImage;
+
+	// find contours
+	std::vector<std::vector<Point>> contourVect;
+	findContours(
+		image,
+		contourVect,
+		inContext.contourMode,
+		inContext.contourMethod
+	);
+
+	return errorCode;
 }
