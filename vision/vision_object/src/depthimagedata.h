@@ -6,14 +6,20 @@
 
 class DepthImageConfig {
 	public:
+		int blurring;
 		int contourMode;
 		int contourMethod;
+		double cannyLevelOne;
+		double cannyLevelTwo;
 };
 
 class DepthImageContext {
 	public:
+		int blurring;
 		int contourMode;
 		int contourMethod;
+		double cannyLevelOne;
+		double cannyLevelTwo;
 
 		DepthImageContext(const DepthImageConfig & config);
 };

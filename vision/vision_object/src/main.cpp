@@ -28,6 +28,9 @@ int init(){
 	*/
 	config = Config();
 	config.colorImage.minHessian = 400;
+	config.depthImage.blurring = 3;
+	config.depthImage.cannyLevelOne = 3;
+	config.depthImage.cannyLevelTwo = 15;
 
 	context = Context(config);
 
@@ -72,7 +75,9 @@ int train(){
 		cout << " # Data: " << numbData << endl;
 		
 		cout << " Train .." << endl;
-		object.train(context);
+
+		errorCode = object.train(context);
+		if(errorCode) return errorCode;
 
 		cout << " Show results .." << endl;
 		for(size_t j = 0; j < numbData; j++){

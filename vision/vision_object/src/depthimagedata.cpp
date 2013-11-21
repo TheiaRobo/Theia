@@ -8,8 +8,11 @@
 using namespace cv;
 
 DepthImageContext::DepthImageContext(const DepthImageConfig & config){
+	blurring = config.blurring;
 	contourMode = config.contourMode;
 	contourMethod = config.contourMethod;
+	cannyLevelOne = config.cannyLevelOne;
+	cannyLevelTwo = config.cannyLevelTwo;
 }
 
 DepthImageResult DepthImageResult::worst(){
@@ -79,13 +82,39 @@ int DepthImageData::train(
 
 	image = inImage;
 
+	// blurring
 	Mat workingImage = image.clone();
-	findContours(
+	blur(
 		workingImage,
-		contours,
-		inContext.contourMode,
-		inContext.contourMethod
+		workingImage,
+		Size(inContext.blurring, inContext.blurring)
 	);
+	
+	// edge detection
+	Canny(
+		workingImage,
+		workingImage,
+		inContext.cannyLevelOne,
+		inContext.cannyLevelTwo
+	);
+
+	imshow("Canny", workingImage);
+	waitKey(0);
+
+	// contour recognition
+	try{
+		findContours(
+			workingImage,
+			contours,
+			inContext.contourMode,
+			inContext.contourMethod
+		);
+	}catch(Exception ex){
+		std::cout << "Error in " << __FUNCTION__ << std::endl;
+		std::cout << "Could not find contours" << std::endl;
+		std::cout << path << std::endl;
+		return -1;
+	}
 
 	return errorCode;
 }
