@@ -31,6 +31,10 @@ int init(){
 		config.colorImage.minHessian
 	);
 	ros::param::getCached(
+		"~config/colorImage/numbMatchesHomography",
+		config.colorImage.numbMatchesHomography
+	);
+	ros::param::getCached(
 		"~config/depthImage/blurring",
 		config.depthImage.blurring
 	);
@@ -92,7 +96,7 @@ int train(){
 		cout << " Show results .." << endl;
 		for(size_t j = 0; j < numbData; j++){
 			ObjectData & data = object.objectDataVect[j];
-			data.colorImage.show();
+			data.colorImage.showKeypoints();
 			// data.depthImage.show();
 		}
 
@@ -118,7 +122,7 @@ void colorImageCallback(const sensor_msgs::ImageConstPtr & rosMsgPtr){
 		return;
 	}
 
-	colorImageData.show();
+	colorImageData.showKeypoints();
 
 	errorCode = match(sampleData);
 	if(errorCode){

@@ -10,7 +10,7 @@ using namespace cv;
 
 ColorImageContext::ColorImageContext(const ColorImageConfig & config) :
 detector(config.minHessian), extractor(), matcher(NORM_L2) {
-	// nothing
+	numbMatchesHomography = config.numbMatchesHomography;
 }
 
 ColorImageResult::ColorImageResult(){
@@ -22,7 +22,7 @@ ColorImageResult::ColorImageResult(){
 int ColorImageResult::getBestMatches(
 	int inNumbMatches,
 	std::vector<cv::DMatch> & outMatches
-){
+) const {
 	int errorCode = 0;
 
 	std::vector<DMatch> workingCopy(matches);
@@ -42,7 +42,7 @@ int ColorImageResult::getBestMatches(
 	return errorCode;
 }
 
-bool ColorImageResult::isBetterThan(const ColorImageResult & result){
+bool ColorImageResult::isBetterThan(const ColorImageResult & result) const {
 	return (meanSquareError < result.meanSquareError);
 }
 
@@ -53,8 +53,8 @@ int ColorImageData::findHomography(
 ){
 	int errorCode = 0;
 
-  	// size_t numbGoodMatches = inContext.numbMatchesHomography;
-  	size_t numbGoodMatches = 6;
+/*
+  	size_t numbGoodMatches = inContext.numbMatchesHomography;
   	size_t numbMatches = ioResult.matches.size();
   	if(numbMatches < numbGoodMatches){
   		std::cout << "Error in " << __FUNCTION__ << std::endl;
@@ -80,8 +80,41 @@ int ColorImageData::findHomography(
 
   	Mat homography;
   	try{
-  		homography = cv::findHomography(trainPoints, samplePoints);
-  		// homography = findHomography(trainPoints, sampleKeypoints, CV_RANSAC);
+  		// homography = cv::findHomography(trainPoints, samplePoints);
+  		homography = cv::findHomography(trainPoints, samplePoints, CV_RANSAC);
+  	}catch(Exception ex){
+  		std::cout << "Error in " << __FUNCTION__ << std::endl;
+  		std::cout << "Could not find homography" << std::endl;
+  		return -1;
+  	}
+*/
+
+  	size_t numbMatches = ioResult.matches.size();
+  	if(numbMatches < 4){
+  		std::cout << "Error in " << __FUNCTION__ << std::endl;
+  		std::cout << "Not enough keypoints for finding homography" << std::endl;
+  		return -1;
+  	}
+
+  	// construct point vectors  	
+  	std::vector<Point2f> objectPoints;
+  	std::vector<Point2f> samplePoints;
+  	for(size_t i = 0; i < numbMatches; i++){
+  		size_t objectPointIndex = ioResult.matches[i].queryIdx;
+  		size_t samplePointIndex = ioResult.matches[i].trainIdx;
+
+  		objectPoints.push_back(keypoints[objectPointIndex].pt);
+  		samplePoints.push_back(inSample.keypoints[samplePointIndex].pt);
+  	}
+
+  	Mat homography;
+  	try{
+  		homography = cv::findHomography(
+  			objectPoints,
+  			samplePoints,
+  			CV_LMEDS,
+  			10
+  		);
   	}catch(Exception ex){
   		std::cout << "Error in " << __FUNCTION__ << std::endl;
   		std::cout << "Could not find homography" << std::endl;
@@ -105,6 +138,9 @@ int ColorImageData::match(
 
 	errorCode = findHomography(inSample, inContext, outResult);
 	if(errorCode) return errorCode;
+
+	showMatches(inSample, outResult);
+	showHomography(inSample, outResult);
 
 	return errorCode;
 }
@@ -150,7 +186,43 @@ int ColorImageData::matchKeypoints(
 	return errorCode;
 }
 
-int ColorImageData::show(){
+int ColorImageData::showHomography(
+	const ColorImageData & inSample,
+	const ColorImageResult & inResult
+){
+	int errorCode = 0;
+
+	std::vector<Point2f> corners(4);
+	corners[0] = cvPoint(0, 0);
+	corners[1] = cvPoint(image.cols, 0);
+	corners[2] = cvPoint(image.cols, image.rows);
+	corners[3] = cvPoint(0, image.rows);
+
+	std::vector<Point2f> transformedCorners(4);
+	perspectiveTransform(
+		corners,
+		transformedCorners,
+		inResult.homography
+	);
+
+	Mat imageWithHomography(inSample.image);
+	for(size_t i = 0; i < 4; i++){
+		line(
+			imageWithHomography,
+			transformedCorners[i],
+			transformedCorners[(i + 1) % 4],
+			Scalar(0, 255, 0),
+			4
+		);
+	}
+
+	imshow("Homography", imageWithHomography);
+	waitKey();
+
+	return errorCode;
+}
+
+int ColorImageData::showKeypoints(){
 	int errorCode = 0;
 
 	Mat imageWithKeypoints;
@@ -163,6 +235,34 @@ int ColorImageData::show(){
 	);
 
 	imshow("Keypoints", imageWithKeypoints);
+	waitKey(0);
+
+	return errorCode;
+}
+
+int ColorImageData::showMatches(
+	const ColorImageData & inSample,
+	const ColorImageResult & inResult
+){
+	int errorCode = 0;
+
+	std::vector<DMatch> bestMatches;
+	errorCode = inResult.getBestMatches(10, bestMatches);
+	if(errorCode) return errorCode;
+	
+	Mat imageWithMatches;
+	drawMatches(
+		image, keypoints,
+		inSample.image, inSample.keypoints,
+		bestMatches,
+		imageWithMatches,
+		Scalar::all(-1),
+		Scalar::all(-1),
+		vector<char>(),
+		DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
+	);
+
+	imshow("Matches", imageWithMatches);
 	waitKey(0);
 
 	return errorCode;
