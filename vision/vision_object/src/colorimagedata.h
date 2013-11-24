@@ -25,11 +25,21 @@ class ColorImageResult {
 	public:
 		static ColorImageResult worst();
 
+/*
+		ColorImageData & sample;
+		ColorImageData & train;
+*/
+		
 		double meanError;
 		double meanSquareError;
 		double variance;
+		cv::Mat homography;
 		std::vector<cv::DMatch> matches;
 
+		int getBestMatches(
+			int inNumbMatches,
+			std::vector<cv::DMatch> & outMatches
+		);
 		bool isBetterThan(const ColorImageResult & result);
 };
 
@@ -53,15 +63,15 @@ class ColorImageData {
 		);
 
 	protected:
+		int findHomography(
+			const ColorImageData & inSample,
+			const ColorImageContext & inContext,
+			ColorImageResult & ioResult
+		);
 		int matchKeypoints(
 			const ColorImageData & inSample,
 			const ColorImageContext & inContext,
 			ColorImageResult & outResult
-		);
-		int matchColors(
-			const ColorImageData & inSample,
-			const ColorImageContext & inContext,
-			ColorImageResult & inOutResult
 		);
 };
 

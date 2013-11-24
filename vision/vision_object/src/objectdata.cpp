@@ -80,10 +80,10 @@ int ObjectData::train(const Context & context){
 
 	errorCode = colorImage.train(context.colorImage);
 	if(errorCode) return errorCode;
-
+/*
 	errorCode = depthImage.train(context.depthImage);
 	if(errorCode) return errorCode;
-	
+*/	
 	return errorCode;
 }
 

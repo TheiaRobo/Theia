@@ -1,5 +1,7 @@
+#include <algorithm>
 #include <iostream>
 #include <limits>
+#include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
 #include "colorimagedata.h"
@@ -20,8 +22,78 @@ ColorImageResult ColorImageResult::worst(){
 	return result;
 }
 
+int ColorImageResult::getBestMatches(
+	int inNumbMatches,
+	std::vector<cv::DMatch> & outMatches
+){
+	int errorCode = 0;
+
+	std::vector<DMatch> workingCopy(matches);
+	sort(workingCopy.begin(), workingCopy.end());
+
+	size_t totalMatches = workingCopy.size();
+	size_t numbMatches = inNumbMatches;
+	if(numbMatches > totalMatches){
+		numbMatches = totalMatches;
+	}
+
+	outMatches = std::vector<DMatch>(
+		workingCopy.begin(),
+		workingCopy.begin() + numbMatches
+	);
+
+	return errorCode;
+}
+
 bool ColorImageResult::isBetterThan(const ColorImageResult & result){
 	return (meanSquareError < result.meanSquareError);
+}
+
+int ColorImageData::findHomography(
+	const ColorImageData & inSample,
+	const ColorImageContext & inContext,
+	ColorImageResult & ioResult
+){
+	int errorCode = 0;
+
+  	// size_t numbGoodMatches = inContext.numbMatchesHomography;
+  	size_t numbGoodMatches = 6;
+  	size_t numbMatches = ioResult.matches.size();
+  	if(numbMatches < numbGoodMatches){
+  		std::cout << "Error in " << __FUNCTION__ << std::endl;
+  		std::cout << "Not enough matches" << std::endl;
+  		std::cout << path << std::endl;
+  		return -1;
+  	}
+
+  	std::vector<DMatch> goodMatches;
+  	errorCode = ioResult.getBestMatches(numbGoodMatches, goodMatches);
+  	if(errorCode) return errorCode;
+
+  	// construct point vectors
+  	std::vector<Point2f> samplePoints;
+  	std::vector<Point2f> trainPoints;
+  	for(size_t i = 0; i < numbGoodMatches; i++){
+  		size_t sampleIndex = goodMatches[i].trainIdx;
+  		size_t trainIndex = goodMatches[i].queryIdx;
+
+  		samplePoints.push_back(inSample.keypoints[sampleIndex].pt);
+  		trainPoints.push_back(keypoints[trainIndex].pt);
+  	}
+
+  	Mat homography;
+  	try{
+  		homography = cv::findHomography(trainPoints, samplePoints);
+  		// homography = findHomography(trainPoints, sampleKeypoints, CV_RANSAC);
+  	}catch(Exception ex){
+  		std::cout << "Error in " << __FUNCTION__ << std::endl;
+  		std::cout << "Could not find homography" << std::endl;
+  		return -1;
+  	}
+
+  	ioResult.homography = homography;
+
+	return errorCode;
 }
 
 int ColorImageData::match(
@@ -34,6 +106,9 @@ int ColorImageData::match(
 	outResult = ColorImageResult::worst();
 
 	errorCode = matchKeypoints(inSample, inContext, outResult);
+	if(errorCode) return errorCode;
+
+	errorCode = findHomography(inSample, inContext, outResult);
 	if(errorCode) return errorCode;
 
 	return errorCode;

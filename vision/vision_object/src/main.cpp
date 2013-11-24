@@ -93,7 +93,7 @@ int train(){
 		for(size_t j = 0; j < numbData; j++){
 			ObjectData & data = object.objectDataVect[j];
 			data.colorImage.show();
-			data.depthImage.show();
+			// data.depthImage.show();
 		}
 
 	}
