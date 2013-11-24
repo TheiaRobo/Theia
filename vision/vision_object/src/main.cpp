@@ -11,7 +11,7 @@
 #include "object.h"
 
 #define NODE_NAME "vision_object"
-#define TOPIC_IN_COLOR "/camera/rgb/image_mono"
+#define TOPIC_IN_COLOR "/camera/rgb/image_rect"
 #define TOPIC_IN_DEPTH "/camera/depth/image_rect"
 
 using namespace std;
@@ -147,9 +147,8 @@ int main(int argc, char ** argv){
 	
 	Subscriber<Image> colorImageSub(node, TOPIC_IN_COLOR, 1);
 	Subscriber<Image> depthImageSub(node, TOPIC_IN_DEPTH, 1);
-
 	TimeSynchronizer<Image, Image> sync(colorImageSub, depthImageSub, 10);
-	sync.registerCallback(boost::bind(&imageCallback, _1, _2));
+	sync.registerCallback(imageCallback);
 
 	errorCode = init();
 	if(errorCode) return errorCode;
