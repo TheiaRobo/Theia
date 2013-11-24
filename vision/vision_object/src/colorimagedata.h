@@ -23,19 +23,13 @@ class ColorImageContext {
 
 class ColorImageResult {
 	public:
-		static ColorImageResult worst();
-
-/*
-		ColorImageData & sample;
-		ColorImageData & train;
-*/
-		
 		double meanError;
 		double meanSquareError;
 		double variance;
 		cv::Mat homography;
 		std::vector<cv::DMatch> matches;
 
+		ColorImageResult();
 		int getBestMatches(
 			int inNumbMatches,
 			std::vector<cv::DMatch> & outMatches

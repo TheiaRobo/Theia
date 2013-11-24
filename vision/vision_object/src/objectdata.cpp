@@ -10,12 +10,9 @@ Context::Context(const Config & config)
 	path = config.path;
 }
 
-ObjectDataResult ObjectDataResult::worst(){
-	ObjectDataResult result;
-	result.colorImage = ColorImageResult::worst();
-	// result.depthImage = DepthImageResult::worst();
-
-	return result;
+ObjectDataResult::ObjectDataResult(){
+	colorImage = ColorImageResult();
+	// depthImage = DepthImageResult();
 }
 
 bool ObjectDataResult::isBetterThan(const ObjectDataResult & result){

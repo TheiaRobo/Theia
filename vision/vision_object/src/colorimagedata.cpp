@@ -13,13 +13,10 @@ detector(config.minHessian), extractor(), matcher(NORM_L2) {
 	// nothing
 }
 
-ColorImageResult ColorImageResult::worst(){
-	ColorImageResult result;
-	result.meanError = std::numeric_limits<double>::infinity();
-	result.meanSquareError = std::numeric_limits<double>::infinity();
-	result.variance = 0;
-
-	return result;
+ColorImageResult::ColorImageResult(){
+	meanError = std::numeric_limits<double>::infinity();
+	meanSquareError = std::numeric_limits<double>::infinity();
+	variance = 0;
 }
 
 int ColorImageResult::getBestMatches(
@@ -102,8 +99,6 @@ int ColorImageData::match(
 	ColorImageResult & outResult
 ){
 	int errorCode = 0;
-
-	outResult = ColorImageResult::worst();
 
 	errorCode = matchKeypoints(inSample, inContext, outResult);
 	if(errorCode) return errorCode;
