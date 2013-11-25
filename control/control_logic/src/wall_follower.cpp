@@ -1,6 +1,6 @@
 
 #include <ros/ros.h>
-#include "control_logic/MotionCommand.h"
+#include "theia_services/MotionCommand.h"
 #include "control_logic/info.h"
 #include <core_sensors/ir.h>
 
@@ -483,7 +483,7 @@ void publish_info(){
 /*
  * think: will update &res after a given &req
  * */
-bool think(control_logic::MotionCommand::Request &req, control_logic::MotionCommand::Response &res){
+bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCommand::Response &res){
 
 	int history_idx = 0, *rot_count=0;
 	bool turn=true;

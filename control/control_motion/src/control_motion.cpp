@@ -3,7 +3,7 @@
 #include <core_control_motor/vw.h>
 #include <nav_msgs/Odometry.h>
 #include <core_sensors/ir.h>
-#include <control_logic/MotionCommand.h>
+#include <theia_services/MotionCommand.h>
 #include <tf/transform_datatypes.h>
 #include <control_motion/params.h>
 
@@ -106,7 +106,7 @@ ros::Publisher vw_pub;
 ros::ServiceClient ask_logic;
 
 core_control_motor::vw control_message;
-control_logic::MotionCommand srv;
+theia_services::MotionCommand srv;
 
 ros::Subscriber	odo_sub;
 ros::Subscriber ir_sub;
@@ -950,7 +950,7 @@ int main(int argc, char ** argv){
 	ros::NodeHandle n;
 	ros::Rate loop_rate(freq);
 
-	ask_logic = n.serviceClient<control_logic::MotionCommand>("wall_follower/motion_command");
+	ask_logic = n.serviceClient<theia_services::MotionCommand>("wall_follower/motion_command");
 
 	vw_pub = n.advertise<core_control_motor::vw>("/control_motion/vw",1);
 	odo_sub = n.subscribe("/core_sensors_odometry/odometry",1,odo_proc);

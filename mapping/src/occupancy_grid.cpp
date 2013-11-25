@@ -11,6 +11,7 @@
 #include <vector>
 #include <visualization_msgs/Marker.h>
 #include <tf/transform_broadcaster.h>
+#include <theia_services/mapsrv.h>
 
  //Initialize
 const float PI=3.1415926f;

@@ -11,6 +11,8 @@
   <depend package="roscpp"/>
   <depend package="core_control_motor"/>
   <depend package="core_sensors"/>
+  <depend package="nav_msgs"/>
+  <depend package="theia_services"/>
 
 </package>
 

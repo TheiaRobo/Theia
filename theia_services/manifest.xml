@@ -1,0 +1,15 @@
+<package>
+  <description brief="theia_services">
+
+     theia_services
+
+  </description>
+  <author>robo</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/theia_services</url>
+  <depend package="nav_msgs"/>
+
+</package>
+
+

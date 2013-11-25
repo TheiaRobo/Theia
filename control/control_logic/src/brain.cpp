@@ -1,7 +1,10 @@
 #include <ros/ros.h>
 #include "control_logic/MotionCommand.h"
 #include "control_logic/info.h"
+#include "control_logic/commands.h"
 #include <core_sensors/ir.h>
+#include <nav_msgs/OccupancyGrid.h>
+#include <theia_services/mapsrv.h>
 
 
 
@@ -12,8 +15,8 @@ int main(int argc, char ** argv){
 	ros::NodeHandle n;
 	ros::Rate loop_rate(10);
 
-	ros::ServiceServer request_map = n.serviceClient<nav_msgs::OccupancyGrid>("mapping/ProcessedMap");
-	ros::Publisher pub_commands = n.advertise<control_logic::commands>("/brain/commands", 1, readIrData);
+	ros::ServiceClient request_map = n.serviceClient<theia_services::mapsrv>("mapping/ProcessedMap");
+	ros::Publisher pub_commands = n.advertise<control_logic::commands>("/brain/commands", 1);
 
 	while(ros::ok()){
 		loop_rate.sleep();
