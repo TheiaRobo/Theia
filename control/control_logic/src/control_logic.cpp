@@ -13,7 +13,7 @@ const float PI = 3.1415926f;
 
 //IR distance thresholds
 double front_max = 20.0;
-double front_min = 5.0;
+double front_min = 6.0;
 double side_max = 20.0;
 double side_min = 4.0;
 double side_ref = 4.0;
@@ -24,9 +24,9 @@ int last_direction = 0; //0 - null, 1 - left, 2 - right, 3 - forward
 double range_exc = 20.0;
 double info_heading_ref = 0;
 double drive_mode = 0;
-double forward_standard = 25.0;
-double forward_medium = 35.0;
-double forward_extended = 40.0;
+double forward_standard = 22.0;
+double forward_medium = 32.0;
+double forward_extended = 37.0;
 const int hist_size = 100;
 const int ir_size = 8;
 const int median_size = 3;
@@ -120,9 +120,9 @@ void turn_left() {
 }
 
 void change_heading(char delta_heading){
-	
+
 	switch(info_heading){
-	
+
 	case 'E':
 		if(delta_heading=='R')
 			info_heading='S';
@@ -148,8 +148,8 @@ void change_heading(char delta_heading){
 			info_heading='E';
 		break;
 	}
-	
-	
+
+
 }
 
 
@@ -166,9 +166,9 @@ double turn_random() {
 	int driving_var = 1;
 	random_var=rand()%10; // random_var = {1, 10}
 	double d_param = 0;
-	
+
 	info_wall=-1;
-	
+
 	if (random_var > 5){ 
 		d_param=PI/2;
 		change_heading('L');
@@ -211,8 +211,9 @@ void shift_history(void){
 	for (i=hist_size; i>0; i--){
 		history[i]=history[i-1];
 	}
-	history[0].driving_mode=0;
-	history[0].driving_parameters=0.0;
+	//We are going to move forward if an error is detected. Instead of initializing to 1
+	history[0].driving_mode=1;
+	history[0].driving_parameters=forward_standard;
 
 	return;
 }
@@ -290,12 +291,13 @@ int closest_wall(void){
 			return 2;
 		}
 
-	}else { //No wall in range ( !wall_in_range(1, side_max) && !wall_in_range(2, side_max))
+	}else { 
+		//No wall in range ( !wall_in_range(1, side_max) && !wall_in_range(2, side_max))
 		ROS_INFO("Error closest_wall = -1");
 		return -1;
 	}
 }
-	
+
 /*
  * last_wall_followed: search last wall followed. Looks if history.driving_mode == 3 (FOLLOW_W)
  * It will be called just when 2 walls are seen on the sides. Then we have to decide which wall to follow.
@@ -305,7 +307,7 @@ int closest_wall(void){
 int last_wall_followed(void){
 
 	for (int i=1; i < hist_size; i++){
-		// history[0] should be empty!; history[1] should have the last command!
+		// history[0] should not be accessed!; history[1] should have the last command!
 		if (history[i].driving_mode == 3)
 		{
 			//history[0].driving_mode = 3;
@@ -336,7 +338,7 @@ int * consecutive_rotations(void){
 	return_vec = new int[2];
 
 	for (i=1; i<hist_size; i++){
-		// history[0] should be empty!; history[1] should have the last command!
+		// history[0] should not be accessed!; history[1] should have the last command!
 		if (history[i].driving_mode == 2){
 			if (direction==1){
 				if(history[i].driving_parameters>0)
@@ -370,15 +372,104 @@ int * consecutive_rotations(void){
 	return return_vec;
 }
 
+/** 
+ * 
+ * rotate2_(not_)last_rotation: returns the direction of the last rotation (or the opposite) based on the history vector and the previous rotation
+ * 
+ **/
+double rotate2_last_rotation(int history_idx){
+	if(history[history_idx].driving_parameters==PI/2){
+		change_heading('L');
+		return PI/2;
+	}else if(history[history_idx].driving_parameters==-PI/2){
+		change_heading('R');
+		return -PI/2;
+	}else {
+		//No previous rotations found in history vector
+		switch(last_wall_followed()){
+		case 1:
+			change_heading('L');
+			return PI/2;
+			break;
+		case 2:
+			change_heading('R');
+			return -PI/2;
+			break;
+		default:
+			//No wall following detected in the past. No wall to follow. Misbehave by turning randomly.
+			ROS_INFO("ERROR history[1].driving_parameters = %.2f",history[1].driving_parameters);
+			return turn_random();
+		}
+	}
+}
+
+double rotate2_not_last_rotation(int history_idx){
+	if(history[history_idx].driving_parameters==PI/2){
+		change_heading('R');
+		return -PI/2;
+	}else if(history[history_idx].driving_parameters==-PI/2){
+		change_heading('L');
+		return PI/2;
+	}else {
+		//No previous rotations found in history vector
+		switch(last_wall_followed()){
+		case 1:
+			change_heading('R');
+			return -PI/2;
+			break;
+		case 2:
+			change_heading('L');
+			return PI/2;
+			break;
+		default:
+			//No wall following detected in the past. No wall to follow. Misbehave by turning randomly.
+			ROS_INFO("ERROR history[1].driving_parameters = %.2f",history[1].driving_parameters);
+			return turn_random();
+		}
+	}
+}
+
+/** 
+ * 
+ * rotate2_(not_)last_wall: returns the direction of the last wall (or the opposite) based on the history vector and the previous rotation
+ * 
+ **/
+double rotate2_last_wall(){
+	if(last_wall_followed()==1){
+		change_heading('L');
+		return PI/2;
+	}else if(last_wall_followed()==2){
+		change_heading('R');
+		return -PI/2;
+	}else{
+		//No wall following detected in the past. No wall to follow. Misbehave by turning randomly.
+		ROS_INFO("RANDOM following last_wall_followed() = %d",last_wall_followed());
+		return turn_random();
+	}
+}
+
+double rotate2_not_last_wall(){
+	if(last_wall_followed()==1){
+		change_heading('R');
+		return -PI/2;
+	}else if(last_wall_followed()==2){
+		change_heading('L');
+		return PI/2;
+	}else{
+		//No wall following detected in the past. No wall to follow. Misbehave by turning randomly.
+		ROS_INFO("RANDOM following last_wall_followed() = %d",last_wall_followed());
+		return turn_random();
+	}
+}
+
 void publish_info(){
 	control_logic::info msg;
 
 	msg.info_heading=info_heading;
 	msg.info_wall=info_wall;
-	
+
 	info_pub.publish(msg);
-	
-	
+
 }
 
 
@@ -400,7 +491,7 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 		res.B=0;
 		return true;
 	}
-	
+
 	info_wall=0;
 	ros::Duration refresh(0.1);
 	refresh.sleep(); // wait a bit before sending new orders
@@ -455,35 +546,18 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 		}else{
 			// flag_turning = 1
 
-			//Same code as in the case of at least 1 wall when I am detecting the wall I 
-			//was not following
+			//Same code as in the case of at least 1 wall when I am detecting the wall I was not following
 			if(history[1].driving_mode == 1){
 
 				if(history[1].driving_parameters==forward_standard){
 					history[0].driving_mode = 2;
 					info_wall=-1;
-					if(last_wall_followed()==1){
-						history[0].driving_parameters=PI/2;
-						change_heading('L');
-					}else if(last_wall_followed()==2){
-						history[0].driving_parameters=-PI/2;
-						change_heading('R');
-					}else{
-						ROS_INFO("Case 0b: ERROR I was not turning correctly. history[0].driving_parameters = %.2f",history[0].driving_parameters);
-					}
+					history[0].driving_parameters=rotate2_last_wall();
 
 				}else if(history[1].driving_parameters==forward_medium){
 					history[0].driving_mode = 2;
 					info_wall=-1;
-					if(history[2].driving_parameters==PI/2){
-						history[0].driving_parameters=PI/2;
-						change_heading('L');
-					}else if(history[2].driving_parameters==-PI/2){
-						history[0].driving_parameters=-PI/2;
-						change_heading('R');
-					}else{
-						ROS_INFO("Case 0b: ERROR I was not turning correctly. history[2].driving_parameters = %.2f",history[0].driving_parameters);
-					}
+					history[0].driving_parameters=rotate2_last_rotation(2);
 
 				}else if(history[1].driving_parameters==forward_extended){
 					ROS_INFO("Case 0b: I did not find a wall to follow\nImpossible case history[1].driving_parameters = %.2f",history[1].driving_parameters);
@@ -509,27 +583,28 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 
 		}
 
-
-
 		///////////////////////////////////////////////////
 		//CASE 1: If I am seeing at least one wall AND there is no wall very close at the front
 		///////////////////////////////////////////////////
 	}else if (((wall_in_range(1, side_max) || wall_in_range(2, side_max)) ) && (!wall_in_range(3, front_min) && !wall_in_range(4,cross_max))){
 
 		// flag_turning = 0
-		// flag_turning = 0
 		if (!flag_turning){
 			if(history[1].driving_mode == 1){
 				//Follow the wall if I am not turning around
 				history[0].driving_mode = 3;
-				history[0].driving_parameters = closest_wall();					   //Follow the closest wall
-				info_wall=closest_wall();
+				history[0].driving_parameters = last_wall_followed();					   
+				info_wall=last_wall_followed();
+				//Previous instruction correcting bug in the defined
+				/*history[0].driving_parameters = closest_wall();					   
+				info_wall=closest_wall();*/
+				//END Previous instruction
 				flag_turning=0;
 
 			}else if(history[1].driving_mode == 2){
 				//We might be in a corner after rotation
 				history[0].driving_mode = 3;
-				history[0].driving_parameters = last_wall_followed();					   //Follow the closest wall
+				history[0].driving_parameters = last_wall_followed();					   
 				info_wall=last_wall_followed();
 				flag_turning=0;
 
@@ -541,24 +616,19 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 
 			}else{
 				//COMING FROM NOWHERE
-				if(history[1].driving_mode==0){
-					ROS_INFO("Case 1a: Coming from nowhere");
-					history[0].driving_mode = 3;
-					history[0].driving_parameters = closest_wall();					   //Follow the closest wall
-					info_wall=closest_wall();
-					flag_turning = 0;
-				}else{
-					ROS_INFO("Case 1a: Impossible case flag_turning=0 and coming driving_mode = %d", history[1].driving_mode);
-				}
+				ROS_INFO("Case 1a: Impossible case flag_turning=0 and coming driving_mode = %d", history[1].driving_mode);
+				history[0].driving_mode = 3;
+				history[0].driving_parameters = closest_wall();					   
+				info_wall=closest_wall();
+				flag_turning = 0;
 			}
 
 
 		}else{
 			// flag_turning = 1
-			// flag_turning = 1
 
 			if (wall_in_range(last_wall_followed(), side_max)){
-				/*Then it means that I am seeing the wall I following before I started turning*/
+				//Then it means that I am seeing the wall I was following before I started turning
 				history[0].driving_mode = 3;
 				history[0].driving_parameters=last_wall_followed();
 				info_wall=last_wall_followed();
@@ -570,28 +640,14 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 					if(history[1].driving_parameters==forward_standard){
 						history[0].driving_mode = 2;
 						info_wall=-1;
-						if(last_wall_followed()==1){
-							history[0].driving_parameters=PI/2;
-							change_heading('L');
-						}else if(last_wall_followed()==2){
-							history[0].driving_parameters=-PI/2;
-							change_heading('R');
-						}else{
-							ROS_INFO("Case 1b: ERROR I was not turning correctly. history[2].driving_parameters = %.2f",history[2].driving_parameters);
-						}
+
+						history[0].driving_parameters=rotate2_last_wall();
+
 
 					}else if(history[1].driving_parameters==forward_medium){
 						history[0].driving_mode = 2;
 						info_wall=-1;
-						if(history[2].driving_parameters==PI/2){
-							history[0].driving_parameters=PI/2;
-							change_heading('L');
-						}else if(history[2].driving_parameters==-PI/2){
-							history[0].driving_parameters=-PI/2;
-							change_heading('R');
-						}else{
-							ROS_INFO("Case 1b: ERROR I was not turning correctly. history[2].driving_parameters = %.2f",history[0].driving_parameters);
-						}
+						history[0].driving_parameters=rotate2_last_rotation(2);
 
 					}else if(history[1].driving_parameters==forward_extended){
 						ROS_INFO("Case 1b: I did not find a wall to follow\nImpossible case history[1].driving_parameters = %.2f",history[1].driving_parameters);
@@ -622,11 +678,14 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 		///////////////////////////////////////////////////
 	}else if (((wall_in_range(1, side_max) || wall_in_range(2, side_max)) ) && (wall_in_range(3, front_min)) || wall_in_range(4,cross_max)){
 
+		// flag_turning = 0
 		if (!flag_turning){
 			if(history[1].driving_mode == 1){
-				//e.g. when we finished turning around and we face a wall
+				//e.g. when we finished turning mode and we face a wall
 				history[0].driving_mode = 2;
+				history[0].driving_parameters=rotate2_not_last_rotation(2);
 				info_wall=-1;
+				/*
 				if(history[2].driving_parameters==PI/2){
 					history[0].driving_parameters=-PI/2;
 					change_heading('L');
@@ -634,79 +693,46 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 					history[0].driving_parameters=PI/2;
 					change_heading('L');
 				}else {
-
 					switch(last_wall_followed()){
-						case 1:
-							history[0].driving_parameters=-PI/2;
-							change_heading('R');
-							break;
-						case 2:
-							history[0].driving_parameters=PI/2;
-							change_heading('L');
-							break;
-						default:
-							ROS_INFO("Case 2a: wtf");
-							history[0].driving_parameters=turn_random();
+					case 1:
+						history[0].driving_parameters=-PI/2;
+						change_heading('R');
+						break;
+					case 2:
+						history[0].driving_parameters=PI/2;
+						change_heading('L');
+						break;
+					default:
+						ROS_INFO("Case 2a: wtf");
+						history[0].driving_parameters=turn_random();
 					}
-				}
-				/*
-					ROS_INFO("Case 2a: Should not happen! Turn random. No last_wall_followed() = %d",last_wall_followed());
-				}else {
-					ROS_INFO("Case 2a: ERROR I was following last_wall_followed() = %d",last_wall_followed());
-				}
-				*/
+				}*/
+
 			}else if(history[1].driving_mode == 2){
 				//e.g. when we rotate in an internal corner in a narrow path
 				history[0].driving_mode = 2;
+				history[0].driving_parameters=rotate2_last_rotation(1);
 				info_wall=-1;
-				if(history[1].driving_parameters==PI/2){
-					history[0].driving_parameters=PI/2;
-					change_heading('L');
-				}else if(history[1].driving_parameters==-PI/2){
-					history[0].driving_parameters=-PI/2;
-					change_heading('R');
-				}else{
-					ROS_INFO("Case 2a: ERROR I was not turning correctly. history[2].driving_parameters = %.2f",history[0].driving_parameters);
-				}
 
 			}else if(history[1].driving_mode == 3){
 				//Internal corner
 				history[0].driving_mode = 2;
+				history[0].driving_parameters=rotate2_not_last_wall();
 				info_wall=-1;
-				if(history[1].driving_parameters==1){
-					history[0].driving_parameters=-PI/2;
-					change_heading('R');
-				}else if(history[1].driving_parameters==2){
-					history[0].driving_parameters=PI/2;
-					change_heading('L');
-				}else{
-					ROS_INFO("Case 2a: ERROR I was not turning correctly. history[1].driving_parameters = %.2f",history[0].driving_parameters);
-				}
 
 			}else{
 				ROS_INFO("Case 2a: Impossible case flag_turning=0 and coming driving_mode = %d", history[1].driving_mode);
 			}
 		}
 
-
+		// flag_turning = 1
 		else{
 
 			if (wall_in_range(last_wall_followed(), side_max)){
-				/*Then it means that I am seeing the wall I following before I started turning*/
+				//Then it means that I am seeing the wall I following before I started turning
 				history[0].driving_mode = 2;
+				history[0].driving_parameters=rotate2_not_last_wall();
 				info_wall=-1;
-				if(last_wall_followed()==1){
-					history[0].driving_parameters=-PI/2;
-					change_heading('R');
-				}else if(last_wall_followed()==2){
-					history[0].driving_parameters=PI/2;
-					change_heading('L');
-				}else if(last_wall_followed()==-1){
-					history[0].driving_parameters=turn_random();
-					ROS_INFO("Case 2b: Turn random. No last_wall_followed() = %d",last_wall_followed());
-				}else {
-					ROS_INFO("Case 2b: ERROR I was following last_wall_followed() = %d",last_wall_followed());
-				}
 				flag_turning = 0;	
 			}
 
@@ -714,29 +740,13 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 				if(history[1].driving_mode == 1){
 					history[0].driving_mode = 2;
 					info_wall=-1;
-					if(last_wall_followed()==1){
-						history[0].driving_parameters=PI/2;
-						change_heading('L');
-					}else if(last_wall_followed()==2){
-						history[0].driving_parameters=-PI/2;
-						change_heading('R');
-					}else{
-						ROS_INFO("Case 2b: ERROR I was following last_wall_followed() = %d",last_wall_followed());
-					}
+					history[0].driving_parameters=rotate2_last_wall();
 					flag_turning = 0;					
 
 				}else if(history[1].driving_mode == 2){
 					history[0].driving_mode = 2;
+					history[0].driving_parameters=rotate2_last_wall();
 					info_wall=-1;
-					if(last_wall_followed()==1){
-						history[0].driving_parameters=PI/2;
-						change_heading('L');
-					}else if(last_wall_followed()==2){
-						history[0].driving_parameters=-PI/2;
-						change_heading('R');
-					}else{
-						ROS_INFO("Case 2b: ERROR I was following last_wall_followed() = %d",last_wall_followed());
-					}
 					flag_turning = 0;
 
 				}else if(history[1].driving_mode == 3){
@@ -754,88 +764,48 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 
 		rot_count=consecutive_rotations(); 
 
+		// flag_turning = 0
 		if (!flag_turning){
 			if(history[1].driving_mode == 1){
 
 				if(rot_count[0]==3){
 					history[0].driving_mode = 2;
-					info_wall=-1;
 					history[0].driving_parameters = -history[rot_count[1]].driving_parameters; //Change the sign of rotation
+					info_wall=-1;
 					if(history[rot_count[1]].driving_parameters==PI/2)
 						change_heading('R');
 					else
 						change_heading('L');
 				}else{
 					history[0].driving_mode = 2;
+					history[0].driving_parameters=rotate2_last_wall();
 					info_wall=-1;
-					if(last_wall_followed()==1){
-						history[0].driving_parameters=PI/2;
-						change_heading('L');
-					}else if(last_wall_followed()==2){
-						history[0].driving_parameters=-PI/2;
-						change_heading('R');
-					}else if(last_wall_followed()==-1){
-						history[0].driving_parameters=turn_random();
-						ROS_INFO("Case 3a: Turn random. No last_wall_followed() = %d",last_wall_followed());
-					}else {
-						ROS_INFO("Case 3a: ERROR I was following last_wall_followed() = %d",last_wall_followed());
-					}
 				}
-			}
 
-			else if(history[1].driving_mode == 2){
-				//Turning in a corner in a narrow path
+			}else if(history[1].driving_mode == 2){
+				//e.g., Turning in a corner in a narrow path
 				history[0].driving_mode = 2;
+				history[0].driving_parameters=rotate2_last_wall();
 				info_wall=-1;
-				if(last_wall_followed()==1){
-					history[0].driving_parameters=PI/2;
-					change_heading('L');
-				}else if(last_wall_followed()==2){
-					history[0].driving_parameters=-PI/2;
-					change_heading('R');
-				}else{
-					ROS_INFO("Case 3a: ERROR I was following last_wall_followed() = %d",last_wall_followed());
-				}
-
 			}else if(history[1].driving_mode == 3){
 				ROS_INFO("Case 3a: Error flag_turning has to be 1");
+
 			}else{
 				ROS_INFO("Case 3a: Impossible case flag_turning=0 and coming driving_mode = %d", history[1].driving_mode);
 			}
 		}
 
-		
-		
+		// flag_turning = 1
 		else{
 			if(history[1].driving_mode == 1){
 				history[0].driving_mode = 2;
+				history[0].driving_parameters=rotate2_last_wall();
 				info_wall=-1;
-				if(last_wall_followed()==1){
-					history[0].driving_parameters=PI/2;
-					change_heading('L');
-				}else if(last_wall_followed()==2){
-					history[0].driving_parameters=-PI/2;
-					change_heading('R');
-				}else if(last_wall_followed()==-1){
-					history[0].driving_parameters=turn_random();
-					ROS_INFO("Case 3: Should not happen because I am turning around!\nTurn random. No last_wall_followed() = %d",last_wall_followed());
-				}else {
-					ROS_INFO("Case 3: ERROR I was following last_wall_followed() = %d",last_wall_followed());
-				}
-
 			}else if(history[1].driving_mode == 2){
+				//e.g., Trying to access a very narrow gap when turning, and there is no space in front to go FWD
 				history[0].driving_mode = 2;
+				history[0].driving_parameters=rotate2_not_last_rotation(1);
 				info_wall=-1;
-				if(history[1].driving_parameters==PI/2){
-					history[0].driving_parameters=PI/2;
-					change_heading('L');
-				}else if(history[1].driving_parameters==-PI/2){
-					history[0].driving_parameters=-PI/2;
-					change_heading('R');
-				}else{
-					ROS_INFO("Case 3: ERROR I was not turning correctly. history[1].driving_parameters = %.2f",history[1].driving_parameters);
-				}
-
 			}else if(history[1].driving_mode == 3){
 				ROS_INFO("Case 3: ERROR I cannot be in history[1].driving_mode = %d and flag=1",history[1].driving_mode);
 			}else{
@@ -881,11 +851,20 @@ bool think(control_logic::MotionCommand::Request &req, control_logic::MotionComm
 
 	//getchar();
 
-	res.B = history[0].driving_mode;
-	res.parameter = history[0].driving_parameters;
-	
+	if(history[0].driving_parameters == -1){
+		//If an error is detected then the default behaviour is going forward
+		history[0].driving_mode=1;
+		history[0].driving_parameters=forward_standard;
+		res.B = history[0].driving_mode;
+		res.parameter = history[0].driving_parameters;
+		ROS_INFO("ERROR!! OMG! ERROR!! \n history[0].driving_parameters == -1");
+	}else{
+		//If an error is detected then the default behaviour is going forward as initialization and shifting function suggest
+		res.B = history[0].driving_mode;
+		res.parameter = history[0].driving_parameters;
+	}
 	publish_info();
-	
+
 	//loop_rate.sleep();
 	//ros::spinOnce();
 
@@ -907,7 +886,7 @@ int main(int argc, char ** argv){
 
 	ros::ServiceServer motion_command = n.advertiseService("control_logic/motion_command", think); //Set up service server in this node
 	ros::Subscriber ir_data = n.subscribe("/core_sensors_ir/ir", 1, readIrData);
-	
+
 	info_pub = n.advertise<control_logic::info>("/control_logic/info",1);
 
 	initialize_history();
