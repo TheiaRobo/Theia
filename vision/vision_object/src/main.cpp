@@ -22,6 +22,8 @@ Config config;
 Context context(config);
 vector<Object> objectVect;
 ObjectData sampleData;
+bool colorImageReady;
+bool depthImageReady;
 ros::Subscriber colorImageSub;
 ros::Subscriber depthImageSub;
 
@@ -36,6 +38,10 @@ int init(){
 	ros::param::getCached(
 		"~config/colorImage/minHessian",
 		config.colorImage.minHessian
+	);
+	ros::param::getCached(
+		"~config/colorImage/maxMeanSquareError",
+		config.colorImage.maxMeanSquareError
 	);
 	ros::param::getCached(
 		"~config/colorImage/numbMatchesHomography",
@@ -59,7 +65,7 @@ int init(){
 	return errorCode;
 }
 
-int match(const ObjectData & inSampleData){
+int match(){
 	int errorCode = 0;
 
 	size_t numbObjects = objectVect.size();
@@ -67,8 +73,8 @@ int match(const ObjectData & inSampleData){
 
 	for(size_t i = 0; i < numbObjects; i++){
 		ObjectDataResult result;
-
-		errorCode = objectVect[i].match(inSampleData, context, result);
+		Object & data = objectVect[i];
+		errorCode = data.match(sampleData, context, result);
 		if(errorCode) return errorCode;
 
 		cout << "Object " << i << endl;
@@ -112,6 +118,21 @@ int train(){
 	return errorCode;
 }
 
+int tryToMatch(){
+	int errorCode = 0;
+
+	if(!colorImageReady) return 0;
+	if(!depthImageReady) return 0;
+
+	errorCode = match();
+	if(errorCode) return errorCode;
+
+	colorImageReady = false;
+	colorImageReady = false;
+
+	return errorCode;
+}
+
 void colorCallback(const ImageConstPtr & colorMsgPtr){
 	int errorCode = 0;
 
@@ -133,16 +154,15 @@ void colorCallback(const ImageConstPtr & colorMsgPtr){
 		cout << "Could not train color image" << endl;
 		return;
 	}
-/*
-	colorImageData.showKeypoints();
 
-	errorCode = match(sampleData);
+	colorImageReady = true;
+
+	errorCode = tryToMatch();
 	if(errorCode){
 		cout << "Error in " << __FUNCTION__ << endl;
-		cout << "Could not match object data" << endl;
+		cout << "Matching failed" << endl;
 		return;
 	}
-*/
 }
 
 void depthCallback(const ImageConstPtr & depthMsgPtr){
@@ -170,6 +190,15 @@ void depthCallback(const ImageConstPtr & depthMsgPtr){
 		cout << "Could not train depth image" << endl;
 		return;
 	}
+
+	depthImageReady = true;
+
+	errorCode = tryToMatch();
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Matching failed" << endl;
+		return;
+	}
 }
 
 int main(int argc, char ** argv){
@@ -180,6 +209,9 @@ int main(int argc, char ** argv){
 
 	colorImageSub = node.subscribe(TOPIC_IN_COLOR, 1, colorCallback);
 	depthImageSub = node.subscribe(TOPIC_IN_DEPTH, 1, depthCallback);
+
+	colorImageReady = false;
+	depthImageReady = false;
 
 	errorCode = init();
 	if(errorCode) return errorCode;
