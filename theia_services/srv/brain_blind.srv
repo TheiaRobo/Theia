@@ -1,3 +1,5 @@
-int32 n
+bool active
 int32[] commands
 float64[] vals
+---
+bool done

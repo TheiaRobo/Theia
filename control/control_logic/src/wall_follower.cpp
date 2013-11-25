@@ -3,6 +3,7 @@
 #include "theia_services/MotionCommand.h"
 #include "control_logic/info.h"
 #include <core_sensors/ir.h>
+#include <theia_services/brain_wall.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
@@ -49,6 +50,7 @@ typedef struct history_struct{
 driving_history history[hist_size];
 
 int flag_turning = 0; 
+bool active=false;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
@@ -492,6 +494,12 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 		res.B=0;
 		return true;
 	}
+	
+	if(!active){ // motion will have to ask somewhere else
+		res.B=0;
+		return true;
+		
+	}
 
 	info_wall=0;
 	ros::Duration refresh(0.1);
@@ -873,6 +881,15 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 	return true;
 }
 
+bool status(theia_services::brain_wall::Request &req, theia_services::brain_wall::Response &res){
+	
+	active=req.active;
+	res.ok=true;
+	
+	return true;
+	
+	
+}
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
 // MAIN() SECTION
@@ -886,6 +903,7 @@ int main(int argc, char ** argv){
 	ros::Rate loop_rate(10);
 
 	ros::ServiceServer motion_command = n.advertiseService("wall_follower/motion_command", think); //Set up service server in this node
+	ros::ServiceServer orders = n.advertiseService("wall_follower/instructions", status);
 	ros::Subscriber ir_data = n.subscribe("/core_sensors_ir/ir", 1, readIrData);
 
 	info_pub = n.advertise<control_logic::info>("/logic/info",1);
