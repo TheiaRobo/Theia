@@ -73,6 +73,7 @@ int match(){
 
 	for(size_t i = 0; i < numbObjects; i++){
 		ObjectDataResult result;
+
 		Object & data = objectVect[i];
 		errorCode = data.match(sampleData, context, result);
 		if(errorCode) return errorCode;
@@ -80,7 +81,12 @@ int match(){
 		cout << "Object " << i << endl;
 		cout << " Score: " << result.colorImage.meanSquareError << endl;
 
-		resultVect.push_back(result);
+		if(result.isGoodEnough(context)){
+			cout << " Good enough" << endl;
+			resultVect.push_back(result);
+		}else{
+			cout << " Not good enough" << endl;
+		}
 	}
 
 	return errorCode;
@@ -181,7 +187,7 @@ void depthCallback(const ImageConstPtr & depthMsgPtr){
 	// convert to grayscale
 	cv::Mat image;
 	imagePtr->image.convertTo(image, CV_8UC1, 255);
-
+	
 	DepthImageData & imageData = sampleData.depthImage;
 	DepthImageContext & imageContext = context.depthImage;
 	errorCode = imageData.train(image, imageContext);

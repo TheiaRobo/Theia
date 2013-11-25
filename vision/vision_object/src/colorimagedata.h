@@ -40,6 +40,7 @@ class ColorImageResult {
 		) const;
 		bool isBetterThan(const ColorImageResult & result) const;
 		bool isBetterThan(double maxMeanSquareError) const;
+		bool isGoodEnough(const ColorImageContext & inContext) const;
 };
 
 class ColorImageData {

@@ -29,7 +29,8 @@ class ObjectDataResult {
 		DepthImageResult depthImage;
 
 		ObjectDataResult();
-		bool isBetterThan(const ObjectDataResult & result);
+		bool isBetterThan(const ObjectDataResult & result) const;
+		bool isGoodEnough(const Context & inContext) const;
 };
 
 class ObjectData {

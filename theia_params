@@ -5,7 +5,7 @@ vision_object:
     path: /home/amotta/Documents/Theia/vision/vision_object/train
     colorImage:
         minHessian: 400
-        maxMeanSquareError: 35
+        maxMeanSquareError: 0.35
         numbMatchesHomography: 6
     depthImage:
         blurring: 3

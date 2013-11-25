@@ -51,6 +51,10 @@ bool ColorImageResult::isBetterThan(double maxMeanSquareError) const {
 	return (meanSquareError < maxMeanSquareError);
 }
 
+bool ColorImageResult::isGoodEnough(const ColorImageContext & inContext) const {
+	return isBetterThan(inContext.maxMeanSquareError);
+}
+
 int ColorImageData::findHomography(
 	const ColorImageData & inSample,
 	const ColorImageContext & inContext,

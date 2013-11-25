@@ -55,7 +55,7 @@ int Object::match(
 	size_t numbData = objectDataVect.size();
 	for(size_t i = 0; i < numbData; i++){
 		ObjectDataResult currentResult;
-
+		
 		errorCode = objectDataVect[i].match(
 			inSampleData,
 			inContext,
