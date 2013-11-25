@@ -29,4 +29,4 @@ rosbuild_gensrv()
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-rosbuild_add_executable(control_logic src/control_logic.cpp)
+rosbuild_add_executable(wall_follower src/wall_follower.cpp)

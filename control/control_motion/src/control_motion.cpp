@@ -76,7 +76,7 @@ double forward_distance=20.0;
 // Threshold for the sensors
 double heading_thres=0.005;
 double align_thres=100;//0.003;
-double dist_thres=5.0;
+double dist_thres=6.0;
 double cross_thres=500;
 double dist_ref=3.0;
 double inf_thres=20.0;
@@ -950,7 +950,7 @@ int main(int argc, char ** argv){
 	ros::NodeHandle n;
 	ros::Rate loop_rate(freq);
 
-	ask_logic = n.serviceClient<control_logic::MotionCommand>("control_logic/motion_command");
+	ask_logic = n.serviceClient<control_logic::MotionCommand>("wall_follower/motion_command");
 
 	vw_pub = n.advertise<core_control_motor::vw>("/control_motion/vw",1);
 	odo_sub = n.subscribe("/core_sensors_odometry/odometry",1,odo_proc);
