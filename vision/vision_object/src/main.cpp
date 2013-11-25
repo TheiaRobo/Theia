@@ -21,6 +21,9 @@ using namespace sensor_msgs;
 Config config;
 Context context(config);
 vector<Object> objectVect;
+ObjectData sampleData;
+ros::Subscriber colorImageSub;
+ros::Subscriber depthImageSub;
 
 int init(){
 	int errorCode = 0;
@@ -109,32 +112,62 @@ int train(){
 	return errorCode;
 }
 
-void imageCallback(
-	const ImageConstPtr & colorMsgPtr,
-	const ImageConstPtr & depthMsgPtr
-){
+void colorCallback(const ImageConstPtr & colorMsgPtr){
 	int errorCode = 0;
 
 	cv_bridge::CvImagePtr imagePtr;
-	imagePtr = cv_bridge::toCvCopy(colorMsgPtr, "mono8");
+	imagePtr = cv_bridge::toCvCopy(colorMsgPtr);
 
-	ObjectData sampleData;
-	ColorImageData & colorImageData = sampleData.colorImage;
-	ColorImageContext & colorImageContext = context.colorImage;
+	cv::Mat & image = imagePtr->image; 
+	if(!image.data){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not convert image to OpenCV data" << endl;
+		return;
+	}
 
-	errorCode = colorImageData.train(imagePtr->image, colorImageContext);
+	ColorImageData & imageData = sampleData.colorImage;
+	ColorImageContext & imageContext = context.colorImage;
+	errorCode = imageData.train(image, imageContext);
 	if(errorCode){
 		cout << "Error in " << __FUNCTION__ << endl;
 		cout << "Could not train color image" << endl;
 		return;
 	}
-
+/*
 	colorImageData.showKeypoints();
 
 	errorCode = match(sampleData);
 	if(errorCode){
 		cout << "Error in " << __FUNCTION__ << endl;
 		cout << "Could not match object data" << endl;
+		return;
+	}
+*/
+}
+
+void depthCallback(const ImageConstPtr & depthMsgPtr){
+	int errorCode = 0;
+
+	cv_bridge::CvImagePtr imagePtr;
+	imagePtr = cv_bridge::toCvCopy(depthMsgPtr);
+
+	cv::Mat & floatImage = imagePtr->image; 
+	if(!floatImage.data){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not convert image to OpenCV data" << endl;
+		return;
+	}
+
+	// convert to grayscale
+	cv::Mat image;
+	imagePtr->image.convertTo(image, CV_8UC1, 255);
+
+	DepthImageData & imageData = sampleData.depthImage;
+	DepthImageContext & imageContext = context.depthImage;
+	errorCode = imageData.train(image, imageContext);
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not train depth image" << endl;
 		return;
 	}
 }
@@ -144,11 +177,9 @@ int main(int argc, char ** argv){
 
 	ros::init(argc, argv, NODE_NAME);
 	ros::NodeHandle node;
-	
-	Subscriber<Image> colorImageSub(node, TOPIC_IN_COLOR, 1);
-	Subscriber<Image> depthImageSub(node, TOPIC_IN_DEPTH, 1);
-	TimeSynchronizer<Image, Image> sync(colorImageSub, depthImageSub, 10);
-	sync.registerCallback(imageCallback);
+
+	colorImageSub = node.subscribe(TOPIC_IN_COLOR, 1, colorCallback);
+	depthImageSub = node.subscribe(TOPIC_IN_DEPTH, 1, depthCallback);
 
 	errorCode = init();
 	if(errorCode) return errorCode;
