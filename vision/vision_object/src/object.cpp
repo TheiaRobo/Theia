@@ -50,7 +50,7 @@ int Object::match(
 ){
 	int errorCode = 0;
 
-	outResult = ObjectDataResult::worst();
+	outResult = ObjectDataResult();
 
 	size_t numbData = objectDataVect.size();
 	for(size_t i = 0; i < numbData; i++){
