@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <utility>
 #include <vector>
 #include <cv_bridge/cv_bridge.h>
 #include <message_filters/subscriber.h>
@@ -7,12 +8,14 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <std_msgs/Empty.h>
+#include <vision_object/Object.h>
 
 #include "object.h"
 
 #define NODE_NAME "vision_object"
 #define TOPIC_IN_COLOR "/camera/rgb/image_rect"
 #define TOPIC_IN_DEPTH "/camera/depth/image_rect"
+#define TOPIC_OUT_OBJECT "/vision/object"
 
 using namespace std;
 using namespace message_filters;
@@ -21,6 +24,12 @@ using namespace sensor_msgs;
 Config config;
 Context context(config);
 vector<Object> objectVect;
+ObjectData sampleData;
+bool colorImageReady;
+bool depthImageReady;
+ros::Subscriber colorImageSub;
+ros::Subscriber depthImageSub;
+ros::Publisher objectPub;
 
 int init(){
 	int errorCode = 0;
@@ -33,6 +42,10 @@ int init(){
 	ros::param::getCached(
 		"~config/colorImage/minHessian",
 		config.colorImage.minHessian
+	);
+	ros::param::getCached(
+		"~config/colorImage/maxMeanSquareError",
+		config.colorImage.maxMeanSquareError
 	);
 	ros::param::getCached(
 		"~config/colorImage/numbMatchesHomography",
@@ -56,22 +69,52 @@ int init(){
 	return errorCode;
 }
 
-int match(const ObjectData & inSampleData){
+int publishResults(
+	const vector< pair<Object, ObjectDataResult> > & inResults
+){
+	int errorCode = 0;
+
+	size_t numbResults = inResults.size();
+	for(size_t i = 0; i < numbResults; i++){
+		const Object & object = inResults[i].first;
+		const ObjectDataResult & result = inResults[i].second;
+
+		vision_object::Object msg;
+		msg.objectName = object.name;
+		msg.objectAngle = result.angle;
+
+		objectPub.publish(msg);
+	}
+	
+	return errorCode;
+}
+
+int match(){
 	int errorCode = 0;
 
 	size_t numbObjects = objectVect.size();
-	vector<ObjectDataResult> resultVect(numbObjects);
+	vector< pair<Object, ObjectDataResult> > resultVect;
 
 	for(size_t i = 0; i < numbObjects; i++){
 		ObjectDataResult result;
 
-		errorCode = objectVect[i].match(inSampleData, context, result);
+		Object & object = objectVect[i];
+		errorCode = object.match(sampleData, context, result);
 		if(errorCode) return errorCode;
 
-		cout << "Object " << i << endl;
-		cout << " Score: " << result.colorImage.meanSquareError << endl;
+		cout << "Object: " << object.name << endl;
+		cout << "Score: " << result.colorImage.meanSquareError << endl;
 
-		resultVect.push_back(result);
+		if(result.isGoodEnough(context)){
+			resultVect.push_back(make_pair(object, result));
+		}
+	}
+
+	errorCode = publishResults(resultVect);
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not publish results" << endl;
+		return -1;
 	}
 
 	return errorCode;
@@ -109,32 +152,85 @@ int train(){
 	return errorCode;
 }
 
-void imageCallback(
-	const ImageConstPtr & colorMsgPtr,
-	const ImageConstPtr & depthMsgPtr
-){
+int tryToMatch(){
+	int errorCode = 0;
+
+	if(!colorImageReady) return 0;
+	if(!depthImageReady) return 0;
+
+	errorCode = match();
+	if(errorCode) return errorCode;
+
+	colorImageReady = false;
+	colorImageReady = false;
+
+	return errorCode;
+}
+
+void colorCallback(const ImageConstPtr & colorMsgPtr){
 	int errorCode = 0;
 
 	cv_bridge::CvImagePtr imagePtr;
-	imagePtr = cv_bridge::toCvCopy(colorMsgPtr, "mono8");
+	imagePtr = cv_bridge::toCvCopy(colorMsgPtr);
 
-	ObjectData sampleData;
-	ColorImageData & colorImageData = sampleData.colorImage;
-	ColorImageContext & colorImageContext = context.colorImage;
+	cv::Mat & image = imagePtr->image; 
+	if(!image.data){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not convert image to OpenCV data" << endl;
+		return;
+	}
 
-	errorCode = colorImageData.train(imagePtr->image, colorImageContext);
+	ColorImageData & imageData = sampleData.colorImage;
+	ColorImageContext & imageContext = context.colorImage;
+	errorCode = imageData.train(image, imageContext);
 	if(errorCode){
 		cout << "Error in " << __FUNCTION__ << endl;
 		cout << "Could not train color image" << endl;
 		return;
 	}
 
-	colorImageData.showKeypoints();
+	colorImageReady = true;
 
-	errorCode = match(sampleData);
+	errorCode = tryToMatch();
 	if(errorCode){
 		cout << "Error in " << __FUNCTION__ << endl;
-		cout << "Could not match object data" << endl;
+		cout << "Matching failed" << endl;
+		return;
+	}
+}
+
+void depthCallback(const ImageConstPtr & depthMsgPtr){
+	int errorCode = 0;
+
+	cv_bridge::CvImagePtr imagePtr;
+	imagePtr = cv_bridge::toCvCopy(depthMsgPtr);
+
+	cv::Mat & floatImage = imagePtr->image; 
+	if(!floatImage.data){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not convert image to OpenCV data" << endl;
+		return;
+	}
+
+	// convert to grayscale
+	cv::Mat image;
+	imagePtr->image.convertTo(image, CV_8UC1, 255);
+
+	DepthImageData & imageData = sampleData.depthImage;
+	DepthImageContext & imageContext = context.depthImage;
+	errorCode = imageData.train(image, imageContext);
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not train depth image" << endl;
+		return;
+	}
+
+	depthImageReady = true;
+
+	errorCode = tryToMatch();
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Matching failed" << endl;
 		return;
 	}
 }
@@ -144,11 +240,15 @@ int main(int argc, char ** argv){
 
 	ros::init(argc, argv, NODE_NAME);
 	ros::NodeHandle node;
-	
-	Subscriber<Image> colorImageSub(node, TOPIC_IN_COLOR, 1);
-	Subscriber<Image> depthImageSub(node, TOPIC_IN_DEPTH, 1);
-	TimeSynchronizer<Image, Image> sync(colorImageSub, depthImageSub, 10);
-	sync.registerCallback(imageCallback);
+
+	colorImageSub = node.subscribe(TOPIC_IN_COLOR, 1, colorCallback);
+	depthImageSub = node.subscribe(TOPIC_IN_DEPTH, 1, depthCallback);
+	objectPub = node.advertise<vision_object::Object>(
+		TOPIC_OUT_OBJECT, 1
+	);
+
+	colorImageReady = false;
+	depthImageReady = false;
 
 	errorCode = init();
 	if(errorCode) return errorCode;

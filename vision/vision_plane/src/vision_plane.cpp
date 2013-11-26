@@ -7,6 +7,7 @@
 #include <sensor_msgs/PointCloud2.h>
 
 // PCL includes
+#include <pcl/common/centroid.h>
 #include <pcl/ModelCoefficients.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/voxel_grid.h>
@@ -223,7 +224,7 @@ void findPlanes(TheiaCloudPtr in, std::vector<Plane_t> & planeVect){
 double planeVectToAngle(std::vector<Plane_t> & planeVect){
     double totalArea = 0;
     double totalAngle = 0;
-    for(int i = 0; i < planeVect.size(); i++){
+    for(unsigned int i = 0; i < planeVect.size(); i++){
         double planeNormalX = planeVect[i].normal[0];
         double planeNormalZ = planeVect[i].normal[2];
         double angle = atan2(planeNormalZ, planeNormalX);
@@ -245,7 +246,7 @@ double planeVectToAngle(std::vector<Plane_t> & planeVect){
         totalArea += planeArea;
         totalAngle += angle * planeArea;
 
-        ROS_INFO("Plane #%d, Angle %f", i, angle);
+        ROS_INFO("Plane #%u, Angle %f", i, angle);
     }
 
     double averageAngle = totalAngle / totalArea;

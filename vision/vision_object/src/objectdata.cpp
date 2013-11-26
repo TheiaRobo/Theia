@@ -15,8 +15,12 @@ ObjectDataResult::ObjectDataResult(){
 	// depthImage = DepthImageResult();
 }
 
-bool ObjectDataResult::isBetterThan(const ObjectDataResult & result){
+bool ObjectDataResult::isBetterThan(const ObjectDataResult & result) const {
 	return colorImage.isBetterThan(result.colorImage);
+}
+
+bool ObjectDataResult::isGoodEnough(const Context & inContext) const {
+	return colorImage.isGoodEnough(inContext.colorImage);
 }
 
 int ObjectData::find(

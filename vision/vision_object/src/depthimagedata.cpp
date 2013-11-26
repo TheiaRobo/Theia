@@ -110,10 +110,9 @@ int DepthImageData::train(
 			inContext.contourMethod
 		);
 	}catch(Exception ex){
-		std::cout << "Error in " << __FUNCTION__ << std::endl;
+		std::cout << "Exception in " << __FUNCTION__ << std::endl;
 		std::cout << "Could not find contours" << std::endl;
 		std::cout << path << std::endl;
-		return -1;
 	}
 
 	return errorCode;

@@ -29,6 +29,8 @@ class DepthImageResult {
 		static DepthImageResult worst();
 		
 		double error;
+		int posX;
+		int posY;
 
 		bool isBetterThan(const DepthImageResult & result);
 };

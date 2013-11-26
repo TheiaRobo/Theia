@@ -10,6 +10,7 @@
 class ColorImageConfig {
 	public:
 		int minHessian;
+		double maxMeanSquareError;
 		int numbMatchesHomography;
 };
 
@@ -18,6 +19,7 @@ class ColorImageContext {
 		cv::SurfFeatureDetector detector;
 		cv::SurfDescriptorExtractor extractor;
 		cv::BFMatcher matcher;
+		double maxMeanSquareError;
 		int numbMatchesHomography;
 
 		ColorImageContext(const ColorImageConfig & config);
@@ -37,6 +39,8 @@ class ColorImageResult {
 			std::vector<cv::DMatch> & outMatches
 		) const;
 		bool isBetterThan(const ColorImageResult & result) const;
+		bool isBetterThan(double maxMeanSquareError) const;
+		bool isGoodEnough(const ColorImageContext & inContext) const;
 };
 
 class ColorImageData {
