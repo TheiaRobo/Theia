@@ -12,6 +12,7 @@
 #include <visualization_msgs/Marker.h>
 #include <tf/transform_broadcaster.h>
 #include <theia_services/mapsrv.h>
+#include <theia_services/corrected_odo.h>
 
  //Initialize
 const float PI=3.1415926f;
@@ -66,6 +67,7 @@ std::vector<signed char>  Corrected_Map(x_matrix*y_matrix,blue);
 ros::Publisher occ_pub;
 ros::Publisher map_pub;
 ros::Publisher robo_pub;
+ros::Publisher arrow_pub;
 ros::Publisher odo_pub;
 ros::Publisher corrected_map_pub;
 ros::Subscriber	odometry_sub;
@@ -587,10 +589,42 @@ void update_robot(){
 
 	// Publish the marker
 	robo_pub.publish(marker);
-	odo_pub.publish(odo);
+	arrow_pub.publish(odo);
 
 }
 
+void Send_Odometry(){
+	
+	theia_services::corrected_odo msg;
+	
+	msg.x=corrected_odo_x[0];
+	msg.y=corrected_odo_y[0];
+	
+	odo_pub.publish(msg);
+	
+}
+
+// Sends the corrected map on request
+bool provide_map(theia_services::mapsrv::Request &req, theia_services::mapsrv::Response &res){
+	
+	nav_msgs::OccupancyGrid Correct_Map_Msg;
+
+	Correct_Map_Msg.header.stamp=ros::Time::now();
+	Correct_Map_Msg.header.frame_id= "/mapping";
+
+	Correct_Map_Msg.info.map_load_time=ros::Time::now();
+	Correct_Map_Msg.info.resolution=resolution_matrix;
+	Correct_Map_Msg.info.width=x_matrix;
+	Correct_Map_Msg.info.height=y_matrix;
+
+	Correct_Map(robot_delta_x,robot_delta_y);
+	
+	Correct_Map_Msg.data=Corrected_Map;
+	res.map=Correct_Map_Msg;
+	
+	return true;
+	
+}
 
 // ########################## MAIN ################################
 
@@ -607,8 +641,11 @@ int main(int argc, char **argv)
 	occ_pub = n.advertise<nav_msgs::OccupancyGrid>("/mapping/occ",1);
 	map_pub = n.advertise<nav_msgs::MapMetaData>("/mapping/map",1);
 	robo_pub = n.advertise<visualization_msgs::Marker>("/mapping/robot", 1);
-	odo_pub = n.advertise<visualization_msgs::Marker>("/mapping/odo", 1);
+	arrow_pub = n.advertise<visualization_msgs::Marker>("/mapping/robot_heading", 1);
 	corrected_map_pub = n.advertise<nav_msgs::OccupancyGrid>("/mapping/corrected_map",1);
+	odo_pub = n.advertise<theia_services::corrected_odo>("/mapping/corrected_odo",1);
+	
+	ros::ServiceServer map_sender = n.advertiseService("/mapping/ProcessedMap", provide_map);
 
 
 	ROS_INFO("Started the mapping Node");
@@ -624,11 +661,12 @@ int main(int argc, char **argv)
 
 		Occupancy_Grid=place_map(Occupancy_Grid,x_Current_Pose,y_Current_Pose,robot_delta_x,robot_delta_y,0);
 		if(wall==-1){
-			Correct_Map(robot_delta_x,robot_delta_y);
+			//Correct_Map(robot_delta_x,robot_delta_y);
 		}
 		place_ir();
 		update_robot();
 		Send_Message();
+		Send_Odometry();
 
 		loop_rate.sleep();
 		ros::spinOnce();

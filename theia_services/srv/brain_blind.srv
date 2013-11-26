@@ -1,5 +1,7 @@
 bool active
+int32 size
 int32[] commands
 float64[] vals
+uint8 heading
 ---
 bool done

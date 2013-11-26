@@ -950,7 +950,7 @@ int main(int argc, char ** argv){
 	ros::NodeHandle n;
 	ros::Rate loop_rate(freq);
 
-	ask_logic = n.serviceClient<theia_services::MotionCommand>("wall_follower/motion_command");
+	ask_logic = n.serviceClient<theia_services::MotionCommand>("/wall_follower/motion_command");
 
 	vw_pub = n.advertise<core_control_motor::vw>("/control_motion/vw",1);
 	odo_sub = n.subscribe("/core_sensors_odometry/odometry",1,odo_proc);

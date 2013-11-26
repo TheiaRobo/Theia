@@ -497,6 +497,7 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 	
 	if(!active){ // motion will have to ask somewhere else
 		res.B=0;
+		initialize_history();
 		return true;
 		
 	}
@@ -884,6 +885,7 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 bool status(theia_services::brain_wall::Request &req, theia_services::brain_wall::Response &res){
 	
 	active=req.active;
+	info_heading=req.heading;
 	res.ok=true;
 	
 	return true;
@@ -902,8 +904,8 @@ int main(int argc, char ** argv){
 	ros::NodeHandle n;
 	ros::Rate loop_rate(10);
 
-	ros::ServiceServer motion_command = n.advertiseService("wall_follower/motion_command", think); //Set up service server in this node
-	ros::ServiceServer orders = n.advertiseService("wall_follower/instructions", status);
+	ros::ServiceServer motion_command = n.advertiseService("/wall_follower/motion_command", think); //Set up service server in this node
+	ros::ServiceServer orders = n.advertiseService("/wall_follower/instructions", status);
 	ros::Subscriber ir_data = n.subscribe("/core_sensors_ir/ir", 1, readIrData);
 
 	info_pub = n.advertise<control_logic::info>("/logic/info",1);
