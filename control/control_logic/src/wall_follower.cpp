@@ -837,136 +837,216 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 	///////////////////////////////////////////////////
 	//If crossed
 	///////////////////////////////////////////////////
-	if( !wall_in_range(3, front_min) ){
+	if( !wall_in_range(3, front_min) ){ 
+		//There is a evil wall at front or an object 
 		if (!flag_turning){
-			if(history[1].driving_mode == 1){
+			if(!flag_avoid){
 
-				if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
-					//Nothing to do!
-				}else if ( !(wall_in_range(4,cross_thres1)) && (wall_in_range(4,cross_thres2))   ){
-					//Object to the right
-				}else if ( (wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
-					//Object to the left
-				}else{
-					//if ( (wall_in_range(4,cross_thres1)) && (wall_in_range(4,cross_thres2))   )
-				}				
-			}else if(history[1].driving_mode == 2){
-				if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
-					//Nothing to do!
-				}else if ( !(wall_in_range(4,cross_thres1)) && (wall_in_range(4,cross_thres2))   ){
-					//Object to the right
-				}else if ( (wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
-					//Object to the left
-				}else{
-					//if ( (wall_in_range(4,cross_thres1)) && (wall_in_range(4,cross_thres2))   )
-				}				
-			}else if(history[1].driving_mode == 3){
-				if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
-					//Nothing to do!
-				}else if ( !(wall_in_range(4,cross_thres1)) && (wall_in_range(4,cross_thres2))   ){
-					//Object to the right
-				}else if ( (wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
-					//Object to the left
-				}else{
-					//if ( (wall_in_range(4,cross_thres1)) && (wall_in_range(4,cross_thres2))   )
-				}				
+				//All cases are the same, we might generalize better
+				if(history[1].driving_mode == 1){
+					if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
+						//Nothing to do!
+					}else if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
+						history[0].driving_mode = 2;
+						history[0].driving_parameters=rotate2_not_last_wall();
+						flag_avoid = 1;
+					}			
+				}else if(history[1].driving_mode == 2){
+					if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
+						//Nothing to do!
+					}else if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
+						history[0].driving_mode = 2;
+						history[0].driving_parameters=rotate2_not_last_wall();
+						flag_avoid = 1;
+					}				
+				}else if(history[1].driving_mode == 3){
+					if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
+						//Nothing to do!
+					}else if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
+						history[0].driving_mode = 2;
+						history[0].driving_parameters=rotate2_not_last_wall();
+						flag_avoid = 1;
+					}				
+				}
+
+				//(flag_avoid)
+			}else{
+				if(history[1].driving_mode == 1){
+					if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
+						//Nothing to do!
+					}else if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
+						history[0].driving_mode = 2;
+						history[0].driving_parameters=rotate2_last_wall();
+					}				
+				}else if(history[1].driving_mode == 2){
+					if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
+						//Nothing to do!
+					}else if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
+						history[0].driving_mode = 2;
+						if (history[1].driving_parameters==rotate2_not_last_wall()){
+							//First stage of rotation
+							history[0].driving_mode = 1;
+							history[0].driving_parameters=fwd_standard;
+						}
+						else if(history[1].driving_parameters==rotate2_last_wall()){
+							//Second stage of rotation
+							history[0].driving_mode = 1;
+							history[0].driving_parameters=fwd_medium;
+							flag_avoid=0;
+						}
+						else{ROS_INFO("ERROR");
+						}
+					}				
+				}else if(history[1].driving_mode == 3){
+					if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
+						//Nothing to do!
+					}else if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
+						ROS_INFO("ERROR");	
+					}				
+				}
+
+
 			}
 
+			//(flag_avoid)
+		}else{
+			if(!flag_avoid){
+				if(history[1].driving_mode == 1){
+
+					if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
+						//Nothing to do!
+					}else if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
+						/*if (history[1].driving_parameters==fwd_standard){
+						history[0].driving_mode = 2;
+						history[0].driving_parameters=rotate2_not_last_wall();	
+					}else if (history[1].driving_parameters==fwd_medium){
+						history[0].driving_mode = 2;
+						history[0].driving_parameters=rotate2_not_last_wall();
+					}else if (history[1].driving_parameters==fwd_extended){
+						history[0].driving_mode = 2;
+						history[0].driving_parameters=rotate2_not_last_wall();
+					}*/
+						history[0].driving_mode = 2;
+						history[0].driving_parameters=rotate2_not_last_wall();
+						flag_avoid=1;
+
+					}
+				}else if(history[1].driving_mode == 2){
+					if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
+						//Nothing to do!
+					}else if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
+						//At least one sensor detects in front object
+					}else{
+						//if ( (wall_in_range(4,cross_thres1)) && (wall_in_range(4,cross_thres2))   )
+					}				
+				}else if(history[1].driving_mode == 3){
+					if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
+						//Nothing to do!
+					}else if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
+						//At least one sensor detects in front object
+					}else{
+						//if ( (wall_in_range(4,cross_thres1)) && (wall_in_range(4,cross_thres2))   )
+					}				
+				}
+
+			}else{
+
+			}
 
 		}
 	}
 
-		else{
-			//Nothing to do!
-		}
+	else{
+		//Nothing to do!
+	}
 
 
-		///////////////////////////////////////////////////
-		//Finished cases. Debug
-		///////////////////////////////////////////////////
+	///////////////////////////////////////////////////
+	//Finished cases. Debug
+	///////////////////////////////////////////////////
 
-		ROS_INFO("Last wall: %d",last_wall_followed());
-		ROS_INFO("Turn flag: %d",flag_turning);
+	ROS_INFO("Last wall: %d",last_wall_followed());
+	ROS_INFO("Turn flag: %d",flag_turning);
 
-		/*for(int i=1; i<10;i++){
+	/*for(int i=1; i<10;i++){
 		printf("Mode at i=%d : %d ",i,history[i].driving_mode);
 	}*/
-		printf("\n");
-		switch(history[0].driving_mode){
-		case 1:
-			ROS_INFO("GO FORWARD");
-			break;
-		case 2:
-			ROS_INFO("TURN %.2f",history[0].driving_parameters);
-			break;
-		case 3:
-			ROS_INFO("FOLLOW WALL: %.0f",history[0].driving_parameters);
-			break;
-		default:
-			ROS_INFO("ERROR");
-			break;
-		}
-
-		//getchar();
-
-		if(history[0].driving_parameters == -1){
-			//If an error is detected then the default behaviour is going forward
-			history[0].driving_mode=1;
-			history[0].driving_parameters=forward_standard;
-			res.B = history[0].driving_mode;
-			res.parameter = history[0].driving_parameters;
-			ROS_INFO("ERROR!! OMG! ERROR!! \n history[0].driving_parameters == -1");
-		}else{
-			//If an error is detected then the default behaviour is going forward as initialization and shifting function suggest
-			res.B = history[0].driving_mode;
-			res.parameter = history[0].driving_parameters;
-		}
-		publish_info();
-
-		//loop_rate.sleep();
-		//ros::spinOnce();
-
-		//Update in history vector
-		return true;
+	printf("\n");
+	switch(history[0].driving_mode){
+	case 1:
+		ROS_INFO("GO FORWARD");
+		break;
+	case 2:
+		ROS_INFO("TURN %.2f",history[0].driving_parameters);
+		break;
+	case 3:
+		ROS_INFO("FOLLOW WALL: %.0f",history[0].driving_parameters);
+		break;
+	default:
+		ROS_INFO("ERROR");
+		break;
 	}
 
-	bool status(theia_services::brain_wall::Request &req, theia_services::brain_wall::Response &res){
+	//getchar();
 
-		active=req.active;
-		info_heading=req.heading;
-		res.ok=true;
-
-		return true;
-
-
+	if(history[0].driving_parameters == -1){
+		//If an error is detected then the default behaviour is going forward
+		history[0].driving_mode=1;
+		history[0].driving_parameters=forward_standard;
+		res.B = history[0].driving_mode;
+		res.parameter = history[0].driving_parameters;
+		ROS_INFO("ERROR!! OMG! ERROR!! \n history[0].driving_parameters == -1");
+	}else{
+		//If an error is detected then the default behaviour is going forward as initialization and shifting function suggest
+		res.B = history[0].driving_mode;
+		res.parameter = history[0].driving_parameters;
 	}
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// 
-	// MAIN() SECTION
-	//  
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////
+	publish_info();
 
-	int main(int argc, char ** argv){
+	//loop_rate.sleep();
+	//ros::spinOnce();
 
-		ros::init(argc, argv, "wall_follower");
-		ros::NodeHandle n;
-		ros::Rate loop_rate(10);
+	//Update in history vector
+	return true;
+}
 
-		ros::ServiceServer motion_command = n.advertiseService("/wall_follower/motion_command", think); //Set up service server in this node
-		ros::ServiceServer orders = n.advertiseService("/wall_follower/instructions", status);
-		ros::Subscriber ir_data = n.subscribe("/core_sensors_ir/ir", 1, readIrData);
+bool status(theia_services::brain_wall::Request &req, theia_services::brain_wall::Response &res){
 
-		info_pub = n.advertise<control_logic::info>("/control_logic/info",1);
+	active=req.active;
+	info_heading=req.heading;
+	res.ok=true;
 
-		initialize_history();
-		initialize_ir_raw();
+	return true;
 
 
-		while(ros::ok()){
-			loop_rate.sleep();
-			ros::spinOnce();
-		}
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 
+// MAIN() SECTION
+//  
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		return 0;
+int main(int argc, char ** argv){
 
+	ros::init(argc, argv, "wall_follower");
+	ros::NodeHandle n;
+	ros::Rate loop_rate(10);
+
+	ros::ServiceServer motion_command = n.advertiseService("/wall_follower/motion_command", think); //Set up service server in this node
+	ros::ServiceServer orders = n.advertiseService("/wall_follower/instructions", status);
+	ros::Subscriber ir_data = n.subscribe("/core_sensors_ir/ir", 1, readIrData);
+
+	info_pub = n.advertise<control_logic::info>("/control_logic/info",1);
+
+	initialize_history();
+	initialize_ir_raw();
+
+
+	while(ros::ok()){
+		loop_rate.sleep();
+		ros::spinOnce();
 	}
+
+	return 0;
+
+}
