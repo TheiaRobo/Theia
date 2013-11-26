@@ -8,11 +8,14 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/vision_common</url>
+  <depend package="opencv2"/>
   <depend package="roscpp"/>
   <depend package="sensor_msgs"/>
   <depend package="pcl"/>
   <export>
-  	<cpp cflags="-I${prefix}/include"/>
+  	<cpp
+      cflags="-I${prefix}/include"
+      lflags="-L${prefix}/lib -lvision_common_cloud -lvision_common_file -lvision_common_image"/>
   </export>
 
 </package>
