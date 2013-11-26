@@ -11,7 +11,6 @@
   <depend package="vision_common"/>
   <depend package="vision_object"/>
   <depend package="vision_plane"/>
-  <depend package="vision_trial"/>
 
 </package>
 
