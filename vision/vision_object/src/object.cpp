@@ -55,7 +55,12 @@ int Object::match(
 	size_t numbData = objectDataVect.size();
 	for(size_t i = 0; i < numbData; i++){
 		ObjectDataResult currentResult;
+		ObjectData & data = objectDataVect[i];
 
+		// set angle
+		currentResult.angle = data.angle;
+
+		// set results
 		errorCode = objectDataVect[i].match(
 			inSampleData,
 			inContext,

@@ -10,6 +10,7 @@ using namespace cv;
 
 ColorImageContext::ColorImageContext(const ColorImageConfig & config) :
 detector(config.minHessian), extractor(), matcher(NORM_L2) {
+	maxMeanSquareError = config.maxMeanSquareError;
 	numbMatchesHomography = config.numbMatchesHomography;
 }
 
@@ -43,7 +44,15 @@ int ColorImageResult::getBestMatches(
 }
 
 bool ColorImageResult::isBetterThan(const ColorImageResult & result) const {
-	return (meanSquareError < result.meanSquareError);
+	return isBetterThan(result.meanSquareError);
+}
+
+bool ColorImageResult::isBetterThan(double maxMeanSquareError) const {
+	return (meanSquareError < maxMeanSquareError);
+}
+
+bool ColorImageResult::isGoodEnough(const ColorImageContext & inContext) const {
+	return isBetterThan(inContext.maxMeanSquareError);
 }
 
 int ColorImageData::findHomography(

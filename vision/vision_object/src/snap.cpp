@@ -27,6 +27,8 @@ ros::Subscriber colorImageSub;
 ros::Subscriber depthImageSub;
 
 void colorImageCallback(const ImageConstPtr & rosMsgPtr){
+	cout << "Running " << __FUNCTION__ << endl;
+
 	cv_bridge::CvImagePtr imgPtr;
 	imgPtr = cv_bridge::toCvCopy(rosMsgPtr, "mono8");
 
@@ -35,10 +37,13 @@ void colorImageCallback(const ImageConstPtr & rosMsgPtr){
 }
 
 void depthImageCallback(const ImageConstPtr & rosMsgPtr){
-	cv_bridge::CvImagePtr imgPtr;
-	imgPtr = cv_bridge::toCvCopy(rosMsgPtr, "mono8");
+	cout << "Running " << __FUNCTION__ << endl;
 
-	depthImage = imgPtr->image;
+	cv_bridge::CvImagePtr imgPtr;
+	imgPtr = cv_bridge::toCvCopy(rosMsgPtr);
+
+	// convert from floats to three 8 bit channels
+	imgPtr->image.convertTo(depthImage, CV_8UC3, 255);
 	depthImageSet = true;
 }
 
@@ -50,13 +55,16 @@ void imageSave(string & fileName){
 	}
 
 	try{
-		imwrite(fileName + "_color.png", colorImage);
-		imwrite(fileName + "_depth.png", depthImage);
+		cv::imwrite(fileName + "_color.png", colorImage);
+		cv::imwrite(fileName + "_depth.png", depthImage);
 	}catch(runtime_error & ex){
 		cout << "Error in " << __FUNCTION__ << endl;
 		cout << "Could not write images" << endl;
 		return;
 	}
+
+	colorImageSet = false;
+	depthImageSet = false;
 }
 
 int main(int argc, char ** argv){
@@ -78,10 +86,9 @@ int main(int argc, char ** argv){
 		string fileName;
 		cin >> fileName;
 
-		// update image
-		for(int i = 0; i < 255; i++){
+		do{
 			ros::spinOnce();
-		}
+		}while(!colorImageSet || !depthImageSet);
 
 		// save image
 		imageSave(fileName);
