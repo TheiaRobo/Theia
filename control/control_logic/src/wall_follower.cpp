@@ -50,7 +50,8 @@ typedef struct history_struct{
 
 driving_history history[hist_size];
 
-int flag_turning = 0; 
+int flag_turning = 0;
+int flag_avoid = 0;
 bool active=false;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -696,28 +697,6 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 				history[0].driving_mode = 2;
 				history[0].driving_parameters=rotate2_not_last_rotation(2);
 				info_wall=-1;
-				/*
-				if(history[2].driving_parameters==PI/2){
-					history[0].driving_parameters=-PI/2;
-					change_heading('L');
-				}else if(history[2].driving_parameters==-PI/2){
-					history[0].driving_parameters=PI/2;
-					change_heading('L');
-				}else {
-					switch(last_wall_followed()){
-					case 1:
-						history[0].driving_parameters=-PI/2;
-						change_heading('R');
-						break;
-					case 2:
-						history[0].driving_parameters=PI/2;
-						change_heading('L');
-						break;
-					default:
-						ROS_INFO("Case 2a: wtf");
-						history[0].driving_parameters=turn_random();
-					}
-				}*/
 
 			}else if(history[1].driving_mode == 2){
 				//e.g. when we rotate in an internal corner in a narrow path
@@ -839,7 +818,7 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 	///////////////////////////////////////////////////
 	if( !wall_in_range(3, front_min) ){ 
 		//There is a evil wall at front or an object 
-		if (!flag_turning){
+		if (1){	//BEFORE if (!flag_turning){
 			if(!flag_avoid){
 
 				//All cases are the same, we might generalize better
@@ -871,93 +850,49 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 
 				//(flag_avoid)
 			}else{
-				if(history[1].driving_mode == 1){
-					if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
-						//Nothing to do!
-					}else if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
+
+				if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
+					//If we are avoiding and object then we shouldn't see that object anymore, otherwise it is a new one
+					if(history[1].driving_mode == 1){
 						history[0].driving_mode = 2;
 						history[0].driving_parameters=rotate2_last_wall();
-					}				
-				}else if(history[1].driving_mode == 2){
-					if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
-						//Nothing to do!
-					}else if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
-						history[0].driving_mode = 2;
+					}else if(history[1].driving_mode == 2){
 						if (history[1].driving_parameters==rotate2_not_last_wall()){
 							//First stage of rotation
 							history[0].driving_mode = 1;
-							history[0].driving_parameters=fwd_standard;
+							history[0].driving_parameters=forward_standard;
 						}
 						else if(history[1].driving_parameters==rotate2_last_wall()){
 							//Second stage of rotation
 							history[0].driving_mode = 1;
-							history[0].driving_parameters=fwd_medium;
+							history[0].driving_parameters=forward_medium;
 							flag_avoid=0;
 						}
 						else{ROS_INFO("ERROR");
 						}
-					}				
-				}else if(history[1].driving_mode == 3){
-					if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
-						//Nothing to do!
-					}else if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
+					}else if(history[1].driving_mode == 3){
 						ROS_INFO("ERROR");	
-					}				
+					}	
+
+				}else{
+					//I see a new object in the front while avoiding
+					if(history[1].driving_mode == 1 || history[1].driving_mode == 2){
+						history[0].driving_mode = 2;
+						history[0].driving_parameters=rotate2_not_last_wall();
+						flag_avoid = 1;
+					}else if(history[1].driving_mode == 3){
+						ROS_INFO("ERROR");	
+					}		
 				}
-
-
 			}
 
-			//(flag_avoid)
 		}else{
-			if(!flag_avoid){
-				if(history[1].driving_mode == 1){
-
-					if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
-						//Nothing to do!
-					}else if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
-						/*if (history[1].driving_parameters==fwd_standard){
-						history[0].driving_mode = 2;
-						history[0].driving_parameters=rotate2_not_last_wall();	
-					}else if (history[1].driving_parameters==fwd_medium){
-						history[0].driving_mode = 2;
-						history[0].driving_parameters=rotate2_not_last_wall();
-					}else if (history[1].driving_parameters==fwd_extended){
-						history[0].driving_mode = 2;
-						history[0].driving_parameters=rotate2_not_last_wall();
-					}*/
-						history[0].driving_mode = 2;
-						history[0].driving_parameters=rotate2_not_last_wall();
-						flag_avoid=1;
-
-					}
-				}else if(history[1].driving_mode == 2){
-					if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
-						//Nothing to do!
-					}else if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
-						//At least one sensor detects in front object
-					}else{
-						//if ( (wall_in_range(4,cross_thres1)) && (wall_in_range(4,cross_thres2))   )
-					}				
-				}else if(history[1].driving_mode == 3){
-					if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
-						//Nothing to do!
-					}else if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
-						//At least one sensor detects in front object
-					}else{
-						//if ( (wall_in_range(4,cross_thres1)) && (wall_in_range(4,cross_thres2))   )
-					}				
-				}
-
-			}else{
-
-			}
-
+			//(flag_turning). Until now both cases are the same. We just now that when turning there is no following the wall
 		}
 	}
 
 	else{
-		//Nothing to do!
+		//Nothing to do! There is nothing at the front We could have the whole logic in this if statement
 	}
 
 
