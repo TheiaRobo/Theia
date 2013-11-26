@@ -19,7 +19,8 @@ double front_min = 6.0;
 double side_max = 20.0;
 double side_min = 4.0;
 double side_ref = 4.0;
-double cross_max = 500; // bigger value from the crossed sensors means the obstacle is closer
+double cross_thres1=250;
+double cross_thres2=250;
 
 int last_turn = 0;	//0 - null, 1 - left, 2 - right
 int last_direction = 0; //0 - null, 1 - left, 2 - right, 3 - forward
@@ -249,7 +250,7 @@ int wall_in_range(int side, double thres){
 		}
 		break;
 	case 4:
-		if((ir[6] > cross_max || ir[7] > cross_max) && ir[0] > front_max && ir[1] > front_max){
+		if((ir[6] > cross_thres1 || ir[7] > cross_thres2) && ir[0] > front_max && ir[1] > front_max){
 			return 1;
 		}else{
 			return 0;
@@ -478,7 +479,7 @@ void publish_info(){
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
-// BRAIN SECTION
+// WALL FOLLOWING SECTION
 //  
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -494,12 +495,12 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 		res.B=0;
 		return true;
 	}
-	
+
 	if(!active){ // motion will have to ask somewhere else
 		res.B=0;
 		initialize_history();
 		return true;
-		
+
 	}
 
 	info_wall=0;
@@ -513,7 +514,7 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 	//CASE 0: I am not seeing walls
 	///////////////////////////////////////////////////
 
-	if ( !wall_in_range(1, side_max) && !wall_in_range(2, side_max) && !wall_in_range(3, front_min) && !wall_in_range(4,cross_max) ){
+	if ( !wall_in_range(1, side_max) && !wall_in_range(2, side_max) && (!wall_in_range(3, front_min)          ) ){ // && !wall_in_range(4,cross_thres1) && !wall_in_range(4,cross_thres2))
 
 		if(!flag_turning){
 
@@ -596,7 +597,7 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 		///////////////////////////////////////////////////
 		//CASE 1: If I am seeing at least one wall AND there is no wall very close at the front
 		///////////////////////////////////////////////////
-	}else if (((wall_in_range(1, side_max) || wall_in_range(2, side_max)) ) && (!wall_in_range(3, front_min) && !wall_in_range(4,cross_max))){
+	}else if (((wall_in_range(1, side_max) || wall_in_range(2, side_max)) ) && (!wall_in_range(3, front_min) && !(wall_in_range(4,cross_thres1) && !wall_in_range(4,cross_thres2)))){
 
 		// flag_turning = 0
 		if (!flag_turning){
@@ -684,9 +685,9 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 		}
 
 		///////////////////////////////////////////////////
-		//CASE 2: If I am seeing at least one wall to the side AND there is a wall very close at the front
+		//CASE 2: If I am seeing at least one wall to the side AND there is a wall very close at the front or crossed
 		///////////////////////////////////////////////////
-	}else if (((wall_in_range(1, side_max) || wall_in_range(2, side_max)) ) && (wall_in_range(3, front_min)) || wall_in_range(4,cross_max)){
+	}else if (((wall_in_range(1, side_max) || wall_in_range(2, side_max)) ) && ((wall_in_range(3, front_min))        )){ //|| wall_in_range(4,cross_thres1) || wall_in_range(4,cross_thres2)
 
 		// flag_turning = 0
 		if (!flag_turning){
@@ -768,9 +769,9 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 		}
 
 		///////////////////////////////////////////////////
-		//CASE 3: If I am seeing no walls to the side AND there is a wall very close at the front
+		//CASE 3: If I am seeing no walls to the side AND there is a wall very close at the front or crossed
 		///////////////////////////////////////////////////
-	}else if (((!wall_in_range(1, side_max) && !wall_in_range(2, side_max)) ) && (wall_in_range(3, front_min)) || wall_in_range(4,cross_max)){
+	}else if (((!wall_in_range(1, side_max) && !wall_in_range(2, side_max)) ) && ((wall_in_range(3, front_min))                   )){ // || (wall_in_range(4,cross_thres1) || wall_in_range(4,cross_thres2))
 
 		rot_count=consecutive_rotations(); 
 
@@ -834,91 +835,138 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 	}
 
 	///////////////////////////////////////////////////
-	//Finished cases. Debug
+	//If crossed
 	///////////////////////////////////////////////////
+	if( !wall_in_range(3, front_min) ){
+		if (!flag_turning){
+			if(history[1].driving_mode == 1){
 
-	ROS_INFO("Last wall: %d",last_wall_followed());
-	ROS_INFO("Turn flag: %d",flag_turning);
+				if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
+					//Nothing to do!
+				}else if ( !(wall_in_range(4,cross_thres1)) && (wall_in_range(4,cross_thres2))   ){
+					//Object to the right
+				}else if ( (wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
+					//Object to the left
+				}else{
+					//if ( (wall_in_range(4,cross_thres1)) && (wall_in_range(4,cross_thres2))   )
+				}				
+			}else if(history[1].driving_mode == 2){
+				if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
+					//Nothing to do!
+				}else if ( !(wall_in_range(4,cross_thres1)) && (wall_in_range(4,cross_thres2))   ){
+					//Object to the right
+				}else if ( (wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
+					//Object to the left
+				}else{
+					//if ( (wall_in_range(4,cross_thres1)) && (wall_in_range(4,cross_thres2))   )
+				}				
+			}else if(history[1].driving_mode == 3){
+				if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
+					//Nothing to do!
+				}else if ( !(wall_in_range(4,cross_thres1)) && (wall_in_range(4,cross_thres2))   ){
+					//Object to the right
+				}else if ( (wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
+					//Object to the left
+				}else{
+					//if ( (wall_in_range(4,cross_thres1)) && (wall_in_range(4,cross_thres2))   )
+				}				
+			}
 
-	/*for(int i=1; i<10;i++){
+
+		}
+	}
+
+		else{
+			//Nothing to do!
+		}
+
+
+		///////////////////////////////////////////////////
+		//Finished cases. Debug
+		///////////////////////////////////////////////////
+
+		ROS_INFO("Last wall: %d",last_wall_followed());
+		ROS_INFO("Turn flag: %d",flag_turning);
+
+		/*for(int i=1; i<10;i++){
 		printf("Mode at i=%d : %d ",i,history[i].driving_mode);
 	}*/
-	printf("\n");
-	switch(history[0].driving_mode){
-	case 1:
-		ROS_INFO("GO FORWARD");
-		break;
-	case 2:
-		ROS_INFO("TURN %.2f",history[0].driving_parameters);
-		break;
-	case 3:
-		ROS_INFO("FOLLOW WALL: %.0f",history[0].driving_parameters);
-		break;
-	default:
-		ROS_INFO("ERROR");
-		break;
+		printf("\n");
+		switch(history[0].driving_mode){
+		case 1:
+			ROS_INFO("GO FORWARD");
+			break;
+		case 2:
+			ROS_INFO("TURN %.2f",history[0].driving_parameters);
+			break;
+		case 3:
+			ROS_INFO("FOLLOW WALL: %.0f",history[0].driving_parameters);
+			break;
+		default:
+			ROS_INFO("ERROR");
+			break;
+		}
+
+		//getchar();
+
+		if(history[0].driving_parameters == -1){
+			//If an error is detected then the default behaviour is going forward
+			history[0].driving_mode=1;
+			history[0].driving_parameters=forward_standard;
+			res.B = history[0].driving_mode;
+			res.parameter = history[0].driving_parameters;
+			ROS_INFO("ERROR!! OMG! ERROR!! \n history[0].driving_parameters == -1");
+		}else{
+			//If an error is detected then the default behaviour is going forward as initialization and shifting function suggest
+			res.B = history[0].driving_mode;
+			res.parameter = history[0].driving_parameters;
+		}
+		publish_info();
+
+		//loop_rate.sleep();
+		//ros::spinOnce();
+
+		//Update in history vector
+		return true;
 	}
 
-	//getchar();
+	bool status(theia_services::brain_wall::Request &req, theia_services::brain_wall::Response &res){
 
-	if(history[0].driving_parameters == -1){
-		//If an error is detected then the default behaviour is going forward
-		history[0].driving_mode=1;
-		history[0].driving_parameters=forward_standard;
-		res.B = history[0].driving_mode;
-		res.parameter = history[0].driving_parameters;
-		ROS_INFO("ERROR!! OMG! ERROR!! \n history[0].driving_parameters == -1");
-	}else{
-		//If an error is detected then the default behaviour is going forward as initialization and shifting function suggest
-		res.B = history[0].driving_mode;
-		res.parameter = history[0].driving_parameters;
+		active=req.active;
+		info_heading=req.heading;
+		res.ok=true;
+
+		return true;
+
+
 	}
-	publish_info();
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// 
+	// MAIN() SECTION
+	//  
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	//loop_rate.sleep();
-	//ros::spinOnce();
+	int main(int argc, char ** argv){
 
-	//Update in history vector
-	return true;
-}
+		ros::init(argc, argv, "wall_follower");
+		ros::NodeHandle n;
+		ros::Rate loop_rate(10);
 
-bool status(theia_services::brain_wall::Request &req, theia_services::brain_wall::Response &res){
-	
-	active=req.active;
-	info_heading=req.heading;
-	res.ok=true;
-	
-	return true;
-	
-	
-}
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 
-// MAIN() SECTION
-//  
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
+		ros::ServiceServer motion_command = n.advertiseService("/wall_follower/motion_command", think); //Set up service server in this node
+		ros::ServiceServer orders = n.advertiseService("/wall_follower/instructions", status);
+		ros::Subscriber ir_data = n.subscribe("/core_sensors_ir/ir", 1, readIrData);
 
-int main(int argc, char ** argv){
+		info_pub = n.advertise<control_logic::info>("/control_logic/info",1);
 
-	ros::init(argc, argv, "wall_follower");
-	ros::NodeHandle n;
-	ros::Rate loop_rate(10);
-
-	ros::ServiceServer motion_command = n.advertiseService("/wall_follower/motion_command", think); //Set up service server in this node
-	ros::ServiceServer orders = n.advertiseService("/wall_follower/instructions", status);
-	ros::Subscriber ir_data = n.subscribe("/core_sensors_ir/ir", 1, readIrData);
-
-	info_pub = n.advertise<control_logic::info>("/control_logic/info",1);
-
-	initialize_history();
-	initialize_ir_raw();
+		initialize_history();
+		initialize_ir_raw();
 
 
-	while(ros::ok()){
-		loop_rate.sleep();
-		ros::spinOnce();
+		while(ros::ok()){
+			loop_rate.sleep();
+			ros::spinOnce();
+		}
+
+		return 0;
+
 	}
-
-	return 0;
-
-}
