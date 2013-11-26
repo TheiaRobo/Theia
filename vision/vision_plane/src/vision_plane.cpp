@@ -7,7 +7,7 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
-#include <pcl/segmentation/extract_labeled_clusters.h>
+#include <pcl/segmentation/extract_clusters.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/ros/conversions.h>
 #include <ros/ros.h>
@@ -129,6 +129,35 @@ void filterPlanes(
 	*outObjects = TheiaCloud(*workingCloudPtr);
 }
 
+int findObjects(TheiaCloudPtr inCloud){
+	int errorCode = 0;
+
+	size_t numbPoints = inCloud->points.size();
+	if(!numbPoints){
+		std::cout << "Error in " << __FUNCTION__ << std::endl;
+		std::cout << "Cloud is empty" << std::endl;
+		return -1;
+	}
+
+	EuclideanClusterExtraction<TheiaPoint> extractor;
+	extractor.setClusterTolerance(config.objectSize);
+	extractor.setMinClusterSize(0.2 * numbPoints);
+	// extractor.setMaxLabels(3);
+	extractor.setInputCloud(inCloud);
+
+	std::vector<PointIndices> clusterVect;
+	extractor.extract(clusterVect);
+
+	size_t numbClusters = clusterVect.size();
+	for(size_t i = 0; i < numbClusters; i++){
+		std::cout << "Cluster " << i << std::endl;
+		std::cout << "Numb points " << clusterVect[i].indices.size();
+		std::cout << std::endl;
+	}
+
+	return errorCode;
+}
+
 void initConfig(){
 	ros::param::getCached("~config/leafSize", config.leafSize);
 	ros::param::getCached("~config/minPercentage", config.minPercentage);
@@ -151,6 +180,7 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
 	TheiaCloudPtr planeCloudPtr(new TheiaCloud());
 	TheiaCloudPtr objectCloudPtr(new TheiaCloud());
 	filterPlanes(scaledCloudPtr, planeCloudPtr, objectCloudPtr);
+	findObjects(objectCloudPtr);
 
 	// debug
 	visionCloudDebug(planeCloudPtr, debugPlanePub);
