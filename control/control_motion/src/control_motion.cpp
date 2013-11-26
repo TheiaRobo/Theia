@@ -77,7 +77,8 @@ double forward_distance=20.0;
 double heading_thres=0.005;
 double align_thres=100;//0.003;
 double dist_thres=6.0;
-double cross_thres=500;
+double cross_thres1=130;
+double cross_thres2=100;
 double dist_ref=3.0;
 double inf_thres=20.0;
 double rotation_error_thres=0.10;
@@ -302,7 +303,7 @@ int wall_in_range(int side, double thres, double ir[8]){
 		}
 		break;
 	case 4:
-		if((ir[6] > thres|| ir[7] > thres) && ir[0] > inf_thres && ir[1] > inf_thres){
+		if((ir[6] > cross_thres1|| ir[7] > cross_thres2) && ir[0] > inf_thres && ir[1] > inf_thres){
 			ROS_INFO("Crossed!");
 			return 1;
 		}else{
@@ -652,7 +653,7 @@ int forward(ros::Rate loop_rate){
 		std_velocity=10.0; // sorry :(
 
 		//Distance to wall < delay_thres ---> very close! STOP
-		if(wall_in_range(3,dist_thres,ir_readings) || wall_in_range(4,cross_thres,ir_readings)){ //
+		if(wall_in_range(3,dist_thres,ir_readings) || wall_in_range(4,cross_thres1,ir_readings)){ //
 			stop();
 			std_velocity=temp_s;
 			k_dist=temp_k;
@@ -865,7 +866,7 @@ int forward_wall(ros::Rate loop_rate){
 
 	while(ros::ok()){
 
-		if(wall_in_range(3,dist_thres,ir_readings) || wall_in_range(4,cross_thres,ir_readings)){ 		// check if obstacle ahead
+		if(wall_in_range(3,dist_thres,ir_readings) || wall_in_range(4,cross_thres1,ir_readings)){ 		// check if obstacle ahead
 			stop();
 			last_angle=0;
 			ROS_INFO("Stop! Obstacle ahead!\n");
