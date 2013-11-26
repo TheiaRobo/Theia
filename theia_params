@@ -14,7 +14,9 @@ vision_object:
 vision_plane:
   config:
     crop: {maxX: 20, maxY: 0.1, maxZ: 20, minX: -20, minY: -0.1, minZ: 0}
+    leafSize: 0.02
+    minPercentage: 0.15
     numbIterations: 1000
+    objectSize: 0.05
     planeDistThresh: 0.02
     planeOptimize: 1
-    minPercentage: 0.15
