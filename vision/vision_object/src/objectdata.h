@@ -25,6 +25,7 @@ class Context {
 
 class ObjectDataResult {
 	public:
+		int angle;
 		ColorImageResult colorImage;
 		DepthImageResult depthImage;
 

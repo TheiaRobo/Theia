@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <utility>
 #include <vector>
 #include <cv_bridge/cv_bridge.h>
 #include <message_filters/subscriber.h>
@@ -7,12 +8,14 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <std_msgs/Empty.h>
+#include <vision_object/Object.h>
 
 #include "object.h"
 
 #define NODE_NAME "vision_object"
 #define TOPIC_IN_COLOR "/camera/rgb/image_rect"
 #define TOPIC_IN_DEPTH "/camera/depth/image_rect"
+#define TOPIC_OUT_OBJECT "/vision/object"
 
 using namespace std;
 using namespace message_filters;
@@ -26,6 +29,7 @@ bool colorImageReady;
 bool depthImageReady;
 ros::Subscriber colorImageSub;
 ros::Subscriber depthImageSub;
+ros::Publisher objectPub;
 
 int init(){
 	int errorCode = 0;
@@ -65,28 +69,52 @@ int init(){
 	return errorCode;
 }
 
+int publishResults(
+	const vector< pair<Object, ObjectDataResult> > & inResults
+){
+	int errorCode = 0;
+
+	size_t numbResults = inResults.size();
+	for(size_t i = 0; i < numbResults; i++){
+		const Object & object = inResults[i].first;
+		const ObjectDataResult & result = inResults[i].second;
+
+		vision_object::Object msg;
+		msg.objectName = object.name;
+		msg.objectAngle = result.angle;
+
+		objectPub.publish(msg);
+	}
+	
+	return errorCode;
+}
+
 int match(){
 	int errorCode = 0;
 
 	size_t numbObjects = objectVect.size();
-	vector<ObjectDataResult> resultVect(numbObjects);
+	vector< pair<Object, ObjectDataResult> > resultVect;
 
 	for(size_t i = 0; i < numbObjects; i++){
 		ObjectDataResult result;
 
-		Object & data = objectVect[i];
-		errorCode = data.match(sampleData, context, result);
+		Object & object = objectVect[i];
+		errorCode = object.match(sampleData, context, result);
 		if(errorCode) return errorCode;
 
-		cout << "Object " << i << endl;
-		cout << " Score: " << result.colorImage.meanSquareError << endl;
+		cout << "Object: " << object.name << endl;
+		cout << "Score: " << result.colorImage.meanSquareError << endl;
 
 		if(result.isGoodEnough(context)){
-			cout << " Good enough" << endl;
-			resultVect.push_back(result);
-		}else{
-			cout << " Not good enough" << endl;
+			resultVect.push_back(make_pair(object, result));
 		}
+	}
+
+	errorCode = publishResults(resultVect);
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not publish results" << endl;
+		return -1;
 	}
 
 	return errorCode;
@@ -187,7 +215,7 @@ void depthCallback(const ImageConstPtr & depthMsgPtr){
 	// convert to grayscale
 	cv::Mat image;
 	imagePtr->image.convertTo(image, CV_8UC1, 255);
-	
+
 	DepthImageData & imageData = sampleData.depthImage;
 	DepthImageContext & imageContext = context.depthImage;
 	errorCode = imageData.train(image, imageContext);
@@ -215,6 +243,9 @@ int main(int argc, char ** argv){
 
 	colorImageSub = node.subscribe(TOPIC_IN_COLOR, 1, colorCallback);
 	depthImageSub = node.subscribe(TOPIC_IN_DEPTH, 1, depthCallback);
+	objectPub = node.advertise<vision_object::Object>(
+		TOPIC_OUT_OBJECT, 1
+	);
 
 	colorImageReady = false;
 	depthImageReady = false;
