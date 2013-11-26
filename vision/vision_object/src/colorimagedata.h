@@ -10,6 +10,7 @@
 class ColorImageConfig {
 	public:
 		int minHessian;
+		int numbMatchesHomography;
 };
 
 class ColorImageContext {
@@ -17,20 +18,25 @@ class ColorImageContext {
 		cv::SurfFeatureDetector detector;
 		cv::SurfDescriptorExtractor extractor;
 		cv::BFMatcher matcher;
+		int numbMatchesHomography;
 
 		ColorImageContext(const ColorImageConfig & config);
 };
 
 class ColorImageResult {
 	public:
-		static ColorImageResult worst();
-
 		double meanError;
 		double meanSquareError;
 		double variance;
+		cv::Mat homography;
 		std::vector<cv::DMatch> matches;
 
-		bool isBetterThan(const ColorImageResult & result);
+		ColorImageResult();
+		int getBestMatches(
+			int inNumbMatches,
+			std::vector<cv::DMatch> & outMatches
+		) const;
+		bool isBetterThan(const ColorImageResult & result) const;
 };
 
 class ColorImageData {
@@ -45,7 +51,15 @@ class ColorImageData {
 			const ColorImageContext & inContext,
 			ColorImageResult & outResult
 		);
-		int show();
+		int showHomography(
+			const ColorImageData & inSample,
+			const ColorImageResult & inResult
+		);
+		int showKeypoints();
+		int showMatches(
+			const ColorImageData & inSample,
+			const ColorImageResult & inResult
+		);
 		int train(const ColorImageContext & context);
 		int train(
 			const cv::Mat & image,
@@ -53,15 +67,15 @@ class ColorImageData {
 		);
 
 	protected:
+		int findHomography(
+			const ColorImageData & inSample,
+			const ColorImageContext & inContext,
+			ColorImageResult & ioResult
+		);
 		int matchKeypoints(
 			const ColorImageData & inSample,
 			const ColorImageContext & inContext,
 			ColorImageResult & outResult
-		);
-		int matchColors(
-			const ColorImageData & inSample,
-			const ColorImageContext & inContext,
-			ColorImageResult & inOutResult
 		);
 };
 

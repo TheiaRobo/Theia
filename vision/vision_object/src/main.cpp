@@ -2,6 +2,8 @@
 #include <string>
 #include <vector>
 #include <cv_bridge/cv_bridge.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <std_msgs/Empty.h>
@@ -9,14 +11,16 @@
 #include "object.h"
 
 #define NODE_NAME "vision_object"
-#define TOPIC_IN "/camera/rgb/image_mono"
+#define TOPIC_IN_COLOR "/camera/rgb/image_rect"
+#define TOPIC_IN_DEPTH "/camera/depth/image_rect"
 
 using namespace std;
+using namespace message_filters;
+using namespace sensor_msgs;
 
 Config config;
 Context context(config);
 vector<Object> objectVect;
-ros::Subscriber colorImageSub;
 
 int init(){
 	int errorCode = 0;
@@ -29,6 +33,10 @@ int init(){
 	ros::param::getCached(
 		"~config/colorImage/minHessian",
 		config.colorImage.minHessian
+	);
+	ros::param::getCached(
+		"~config/colorImage/numbMatchesHomography",
+		config.colorImage.numbMatchesHomography
 	);
 	ros::param::getCached(
 		"~config/depthImage/blurring",
@@ -92,8 +100,8 @@ int train(){
 		cout << " Show results .." << endl;
 		for(size_t j = 0; j < numbData; j++){
 			ObjectData & data = object.objectDataVect[j];
-			data.colorImage.show();
-			data.depthImage.show();
+			data.colorImage.showKeypoints();
+			// data.depthImage.show();
 		}
 
 	}
@@ -101,11 +109,14 @@ int train(){
 	return errorCode;
 }
 
-void colorImageCallback(const sensor_msgs::ImageConstPtr & rosMsgPtr){
+void imageCallback(
+	const ImageConstPtr & colorMsgPtr,
+	const ImageConstPtr & depthMsgPtr
+){
 	int errorCode = 0;
 
 	cv_bridge::CvImagePtr imagePtr;
-	imagePtr = cv_bridge::toCvCopy(rosMsgPtr, "mono8");
+	imagePtr = cv_bridge::toCvCopy(colorMsgPtr, "mono8");
 
 	ObjectData sampleData;
 	ColorImageData & colorImageData = sampleData.colorImage;
@@ -118,7 +129,7 @@ void colorImageCallback(const sensor_msgs::ImageConstPtr & rosMsgPtr){
 		return;
 	}
 
-	colorImageData.show();
+	colorImageData.showKeypoints();
 
 	errorCode = match(sampleData);
 	if(errorCode){
@@ -133,8 +144,11 @@ int main(int argc, char ** argv){
 
 	ros::init(argc, argv, NODE_NAME);
 	ros::NodeHandle node;
-
-	colorImageSub = node.subscribe(TOPIC_IN, 1, colorImageCallback);
+	
+	Subscriber<Image> colorImageSub(node, TOPIC_IN_COLOR, 1);
+	Subscriber<Image> depthImageSub(node, TOPIC_IN_DEPTH, 1);
+	TimeSynchronizer<Image, Image> sync(colorImageSub, depthImageSub, 10);
+	sync.registerCallback(imageCallback);
 
 	errorCode = init();
 	if(errorCode) return errorCode;

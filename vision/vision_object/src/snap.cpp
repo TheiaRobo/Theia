@@ -13,40 +13,49 @@
 #include <cv_bridge/cv_bridge.h>
 
 #define NODE_NAME "vision_object_snap"
-#define TOPIC_IN "/camera/rgb/image_mono"
+#define TOPIC_COLOR_IN "/camera/rgb/image_rect"
+#define TOPIC_DEPTH_IN "/camera/depth/image_rect"
 
 using namespace std;
+using namespace sensor_msgs;
 
-cv::Mat image;
-bool imageIsSet;
-ros::Subscriber imageSub;
+cv::Mat colorImage;
+cv::Mat depthImage;
+bool colorImageSet;
+bool depthImageSet;
+ros::Subscriber colorImageSub;
+ros::Subscriber depthImageSub;
 
-void imageCallback(const sensor_msgs::ImageConstPtr & rosMsgPtr);
-void imageSave(string & fileName);
-
-void imageCallback(const sensor_msgs::ImageConstPtr & rosMsgPtr){
-	ROS_INFO("Image Callback");
-	ROS_INFO("- Start");
-
+void colorImageCallback(const ImageConstPtr & rosMsgPtr){
 	cv_bridge::CvImagePtr imgPtr;
 	imgPtr = cv_bridge::toCvCopy(rosMsgPtr, "mono8");
 
-	image = imgPtr->image;
-	imageIsSet = true;
+	colorImage = imgPtr->image;
+	colorImageSet = true;
+}
 
-	ROS_INFO("- End");
+void depthImageCallback(const ImageConstPtr & rosMsgPtr){
+	cv_bridge::CvImagePtr imgPtr;
+	imgPtr = cv_bridge::toCvCopy(rosMsgPtr, "mono8");
+
+	depthImage = imgPtr->image;
+	depthImageSet = true;
 }
 
 void imageSave(string & fileName){
-	if(!imageIsSet){
-		ROS_INFO("Error: Image not set yet");
+	if(!colorImageSet || !depthImageSet){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Images not set" << endl;
 		return;
 	}
 
 	try{
-		imwrite(fileName, image);
+		imwrite(fileName + "_color.png", colorImage);
+		imwrite(fileName + "_depth.png", depthImage);
 	}catch(runtime_error & ex){
-		ROS_INFO("Error: Could not save image");
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not write images" << endl;
+		return;
 	}
 }
 
@@ -54,8 +63,11 @@ int main(int argc, char ** argv){
 	ros::init(argc, argv, NODE_NAME);
 	ros::NodeHandle node;
 
-	imageIsSet = false;
-	imageSub = node.subscribe(TOPIC_IN, 1, imageCallback);
+	colorImageSet = false;
+	depthImageSet = false;
+
+	colorImageSub = node.subscribe(TOPIC_COLOR_IN, 1, colorImageCallback);
+	depthImageSub = node.subscribe(TOPIC_DEPTH_IN, 1, depthImageCallback);
 
 	cout << "Welcome to Snapper" << endl;
 	cout << endl;
@@ -67,7 +79,9 @@ int main(int argc, char ** argv){
 		cin >> fileName;
 
 		// update image
-		ros::spinOnce();
+		for(int i = 0; i < 255; i++){
+			ros::spinOnce();
+		}
 
 		// save image
 		imageSave(fileName);
