@@ -50,10 +50,10 @@ int candToRect(
 	size_t imageCols = inImage.cols;
 	size_t imageRows = inImage.rows;
 
-	double minX = imageCols * (0.5 - inCand.minLatitude / camFOVLat);
-	double maxX = imageCols * (0.5 - inCand.maxLatitude / camFOVLat);
-	double minY = imageRows * (0.5 - inCand.minLongitude / camFOVLong);
-	double maxY = imageRows * (0.5 - inCand.maxLongitude / camFOVLong);
+	double minX = imageCols * (0.5 - inCand.minLongitude / camFOVLong);
+	double maxX = imageCols * (0.5 - inCand.maxLongitude / camFOVLong);
+	double minY = imageRows * (0.5 - inCand.minLatitude / camFOVLat);
+	double maxY = imageRows * (0.5 - inCand.maxLatitude / camFOVLat);
 
 	outRect = cv::Rect(
 		cv::Point(minX, minY),

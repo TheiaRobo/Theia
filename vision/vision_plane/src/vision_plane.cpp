@@ -50,7 +50,15 @@ int clusterToCandidate(
 	Eigen::Vector4f maxPoint;
 	getMinMax3D(*inCloud, inIndices, minPoint, maxPoint);
 
+	double means[3];
+	double distSquare = 0;
+	for(size_t i = 0; i < 3; i++){
+		means[i] = (minPoint[i] + maxPoint[i]) / 2; 
+		distSquare += means[i] * means[i];
+	}
+
 	Candidate cand;
+	cand.dist = sqrt(distSquare);
 	cand.minLatitude = -1 * asin(minPoint[1] / minPoint[2]);
 	cand.maxLatitude = -1 * asin(maxPoint[1] / minPoint[2]);
 	cand.minLongitude = -1 * asin(minPoint[0] / minPoint[2]);
