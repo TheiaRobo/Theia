@@ -661,7 +661,7 @@ int forward(ros::Rate loop_rate){
 		}
 	
 		std_velocity=10.0; // sorry :(
-
+		
 		//Distance to wall < delay_thres ---> very close! STOP
 		if(wall_in_range(3,dist_thres,ir_readings) || wall_in_range(4,cross_thres1,ir_readings)){ //
 			stop();
@@ -679,6 +679,7 @@ int forward(ros::Rate loop_rate){
 		
 		
 		if(dist_wall(1) != -1){
+			std_velocity=temp_s;
 			if(dist_wall(2) != -1){
 				if(dist_wall(1) < dist_wall(2)){
 					//ROS_INFO("IM SEEING A WALL TO THE LEFT!!");
@@ -707,6 +708,7 @@ int forward(ros::Rate loop_rate){
 					ir_wall[i]=ir_readings[i+2];
 			}
 		}else if(dist_wall(2) != -1){
+			std_velocity=temp_s;
 			//ROS_INFO("IM SEEING A WALL TO THE RIGHT!!");
 			if(dist_wall(2) < dist_ref)
 				far_away_flag=0;

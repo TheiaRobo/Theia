@@ -505,8 +505,8 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 	}
 
 	info_wall=0;
-	ros::Duration refresh(0.1);
-	refresh.sleep(); // wait a bit before sending new orders
+	//ros::Duration refresh(0.1);
+	//refresh.sleep(); // wait a bit before sending new orders
 
 	//Get empty space in history vector
 	shift_history();
