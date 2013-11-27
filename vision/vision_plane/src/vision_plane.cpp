@@ -27,13 +27,7 @@
 #define TOPIC_DEBUG_PLANE_OUT "/vision/plane/debug/plane"
 
 using namespace pcl;
-
-typedef struct {
-	double minLatitude;
-	double maxLatitude;
-	double minLongitude;
-	double maxLongitude;
-} Candidate;
+using namespace vision_plane;
 
 /**
 * Global variables
@@ -208,31 +202,9 @@ void initConfig(){
 	ros::param::getCached("~config/planeOptimize", config.planeOptimize);
 }
 
-void candidateToMessage(
-	Candidate & inCand,
-	vision_plane::Candidate & outMsg
-){
-	outMsg.minLatitude = inCand.minLatitude;
-	outMsg.maxLatitude = inCand.maxLatitude;
-	outMsg.minLongitude = inCand.minLongitude;
-	outMsg.maxLongitude = inCand.maxLongitude;
-}
-
 void publishCandidates(std::vector<Candidate> & inCandVect){
-	size_t numbCands = inCandVect.size();
-	std::vector<vision_plane::Candidate> candMsgVect;
-
-	for(size_t i = 0; i < numbCands; i++){
-		Candidate & cand = inCandVect[i];
-		vision_plane::Candidate candMsg;
-		candidateToMessage(cand, candMsg);
-
-		candMsgVect.push_back(candMsg);
-	}
-
-	vision_plane::Candidates candVectMsg;
-	candVectMsg.candidates = candMsgVect;
-
+	Candidates candVectMsg;
+	candVectMsg.candidates = inCandVect;
 	candPub.publish(candVectMsg);
 }
 
