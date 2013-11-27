@@ -1,5 +1,3 @@
-#include <opencv2/highgui/highgui.hpp>
-
 #include "candidate.h"
 
 using namespace std;
@@ -7,28 +5,26 @@ using namespace vision_plane;
 
 int candShow(
 	const vector<Candidate> & inCandVect,
-	const cv::Mat & inImage
+	const cv::Mat & inImage,
+	cv::Mat & outImage
 ){
 	int errorCode = 0;
 
 	size_t numbCands = inCandVect.size();
 	if(!numbCands) return errorCode;
 
-	cv::Mat image = inImage.clone();
+	outImage = inImage.clone();
 	const cv::Scalar color(0, 255, 255);
 
 	for(size_t i = 0; i < numbCands; i++){
 		const Candidate & cand = inCandVect[i];
 
 		cv::Rect rect;
-		errorCode = candToRect(cand, inImage, rect);
+		errorCode = candToRect(cand, outImage, rect);
 		if(errorCode) return errorCode;
 		
-		cv::rectangle(image, rect, color);
+		cv::rectangle(outImage, rect, color);
 	}
-
-	cv::imshow("Candidates", image);
-	cv::waitKey(0);
 
 	return errorCode;
 }

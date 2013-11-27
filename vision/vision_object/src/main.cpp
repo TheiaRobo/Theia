@@ -187,8 +187,16 @@ int showCandidates(){
 	if(!candVectReady) return errorCode;
 	if(!colorImageReady) return errorCode;
 
-	errorCode = candShow(candVect, sampleData.colorImage.image);
+	cv::Mat imageWithCandidates;
+	errorCode = candShow(
+		candVect,
+		sampleData.colorImage.image,
+		imageWithCandidates
+	);
 	if(errorCode) return errorCode;
+
+	cv::imshow("Candidates", imageWithCandidates);
+	cv::waitKey(0);
 
 	return errorCode;
 }

@@ -7,7 +7,8 @@
 
 int candShow(
 	const std::vector<vision_plane::Candidate> & inCandVect,
-	const cv::Mat & inImage
+	const cv::Mat & inImage,
+	cv::Mat & outImage
 );
 
 int candToRect(

@@ -177,7 +177,13 @@ int findObjects(
 
 	EuclideanClusterExtraction<TheiaPoint> extractor;
 	extractor.setClusterTolerance(config.objectSize);
-	extractor.setMinClusterSize(0.2 * numbPoints);
+	/**
+	* TODO
+	* Add new parameter to config file
+	*/
+	//extractor.setMinClusterSize(0.2 * numbPoints);
+	extractor.setMinClusterSize(5);
+	
 	extractor.setInputCloud(inCloud);
 
 	std::vector<PointIndices> clusterVect;
