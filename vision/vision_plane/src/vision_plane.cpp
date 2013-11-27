@@ -249,9 +249,7 @@ int main (int argc, char ** argv){
 	ros::NodeHandle node;
 
 	cloudSub = node.subscribe(TOPIC_IN, 1, cloudCallback);
-	candPub = node.advertise<vision_plane::Candidate>(
-		TOPIC_OUT_CAND, 5
-	);
+	candPub = node.advertise<Candidates>(TOPIC_OUT_CAND, 1);
 	debugCroppedPub = node.advertise<sensor_msgs::PointCloud2>(
 		TOPIC_DEBUG_CROPPED_OUT, 1
 	);

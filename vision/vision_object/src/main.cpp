@@ -151,7 +151,9 @@ int train(){
 		for(size_t j = 0; j < numbData; j++){
 			ObjectData & data = object.objectDataVect[j];
 			data.colorImage.showKeypoints();
-			// data.depthImage.show();
+/*
+			data.depthImage.show();
+*/
 		}
 
 	}
@@ -278,11 +280,14 @@ int main(int argc, char ** argv){
 
 	candSub = node.subscribe(TOPIC_IN_CAND, 5, candCallback);
 	colorImageSub = node.subscribe(TOPIC_IN_COLOR, 1, colorCallback);
+/*
 	depthImageSub = node.subscribe(TOPIC_IN_DEPTH, 1, depthCallback);
+*/
 	objectPub = node.advertise<vision_object::Object>(
 		TOPIC_OUT_OBJECT, 1
 	);
 
+	candVectReady = false;
 	colorImageReady = false;
 	depthImageReady = false;
 
