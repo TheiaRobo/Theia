@@ -98,7 +98,7 @@ double cell_round(double val){
 	
 }
 
-// Super simple since the other thing did not work
+
 void Get_Readings_Odometry(nav_msgs::Odometry::ConstPtr odometry_msg){
 
 	//double x_Pose_Odometry=odometry_msg->pose.pose.position.x*100; //odometry is comming in meters
@@ -533,27 +533,27 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 	
 	object_list.push_back(new_object);
 	
-	ROS_INFO("New object: %s",new_object.name.c_str());
+	ROS_INFO("New object: %s Num: %d",new_object.name.c_str(),new_object.num);
 	
 	switch(heading){
 		
 		case 'E':
-			Occupancy_Grid=place_map(Occupancy_Grid,cell_round(x_Current_Pose+msg->posDistance+robot_delta_x),y_Current_Pose,robot_delta_x,robot_delta_y,100);
+			Occupancy_Grid=place_map(Occupancy_Grid,cell_round(x_Current_Pose+msg->posDistance+robot_delta_x),y_Current_Pose,robot_delta_x,robot_delta_y,new_object.num);
 			pos_x=corrected_odo_x[0]+msg->posDistance*resolution_matrix+robot_delta_x*resolution_matrix;
 			pos_y=corrected_odo_y[0];
 			break;
 		case 'W':
-			Occupancy_Grid=place_map(Occupancy_Grid,cell_round(x_Current_Pose-msg->posDistance-robot_delta_x),y_Current_Pose,robot_delta_x,robot_delta_y,100);
+			Occupancy_Grid=place_map(Occupancy_Grid,cell_round(x_Current_Pose-msg->posDistance-robot_delta_x),y_Current_Pose,robot_delta_x,robot_delta_y,new_object.num);
 			pos_x=corrected_odo_x[0]-msg->posDistance*resolution_matrix-robot_delta_x*resolution_matrix;
 			pos_y=corrected_odo_y[0];
 			break;
 		case 'N':
-			Occupancy_Grid=place_map(Occupancy_Grid,x_Current_Pose,cell_round(y_Current_Pose+msg->posDistance+robot_delta_y),robot_delta_x,robot_delta_y,100);
+			Occupancy_Grid=place_map(Occupancy_Grid,x_Current_Pose,cell_round(y_Current_Pose+msg->posDistance+robot_delta_y),robot_delta_x,robot_delta_y,new_object.num);
 			pos_x=corrected_odo_x[0];
 			pos_y=corrected_odo_y[0]+msg->posDistance*resolution_matrix+robot_delta_y*resolution_matrix;
 			break;
 		case 'S':
-			Occupancy_Grid=place_map(Occupancy_Grid,x_Current_Pose,cell_round(y_Current_Pose-msg->posDistance-robot_delta_y),robot_delta_x,robot_delta_y,100);
+			Occupancy_Grid=place_map(Occupancy_Grid,x_Current_Pose,cell_round(y_Current_Pose-msg->posDistance-robot_delta_y),robot_delta_x,robot_delta_y,new_object.num);
 			pos_x=corrected_odo_x[0];
 			pos_y=corrected_odo_y[0]-msg->posDistance*resolution_matrix-robot_delta_y*resolution_matrix;
 			break;

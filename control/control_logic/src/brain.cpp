@@ -7,6 +7,7 @@
 #include <theia_services/brain_wall.h>
 #include <theia_services/brain_blind.h>
 #include <theia_services/corrected_odo.h>
+#include <theia_services/object.h>
 
 const int freq=100;
 const double NO_VAL=-1234567890;
@@ -14,12 +15,28 @@ double x=NO_VAL;
 double y=NO_VAL;
 char heading='E';
 
+const int black=100;
+const int blue=75;
+const int gray=50;
+const int white=0;
+
+const double resolution_matrix=0.01; // in meter!
+const int x_matrix=10/resolution_matrix; 
+const int y_matrix=10/resolution_matrix;
+
+std::vector<signed char>  Raw_Map(x_matrix*y_matrix,blue);
 
 void get_odo(theia_services::corrected_odo::ConstPtr msg){
 	
 	x=msg->x;
 	y=msg->y;
 	
+}
+
+void get_map(nav_msgs::OccupancyGrid::ConstPtr msg){
+
+	Raw_Map=msg->data;
+
 }
 
 void order_slaves(int slave,theia_services::brain_wall wall_req, theia_services::brain_blind blind_req,ros::ServiceClient order_wall,ros::ServiceClient order_blind,std::vector<int> commands, std::vector<double> vals){
@@ -71,6 +88,7 @@ int main(int argc, char ** argv){
 	ros::ServiceClient order_blind = n.serviceClient<theia_services::brain_blind>("/blind/instructions");
 	ros::Subscriber odo_sub = n.subscribe("/mapping/corrected_odo",1,get_odo);
 	ros::Subscriber info_sub = n.subscribe("/control_logic/info",1,get_info);
+	ros::Publisher object_pub = n.advertise<theia_services::object>("/control_logic/object",1);
 	
 	while(ros::ok()){
 		
