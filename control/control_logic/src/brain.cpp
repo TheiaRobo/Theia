@@ -70,6 +70,11 @@ void get_info(control_logic::info::ConstPtr msg){
 	
 }
 
+bool close_object(){
+
+	return false;
+}
+
 int main(int argc, char ** argv){
 
 	ros::init(argc, argv, "brain");
@@ -80,6 +85,7 @@ int main(int argc, char ** argv){
 	theia_services::mapsrv map_req;
 	theia_services::brain_wall wall_req;
 	theia_services::brain_blind blind_req;
+	theia_services::object object_msg;
 
 	int slave=1;
 
@@ -94,6 +100,11 @@ int main(int argc, char ** argv){
 		
 		// processing to decide what to do
 		
+		
+		if(close_object()){
+			object_msg.object=1;
+			object_pub.publish(object_msg);
+		}
 		order_slaves(slave,wall_req,blind_req,order_wall,order_blind,commands,vals);
 		loop_rate.sleep();
 		ros::spinOnce();
