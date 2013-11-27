@@ -20,11 +20,22 @@ const int blue=75;
 const int gray=50;
 const int white=0;
 
+
 const double resolution_matrix=0.01; // in meter!
 const int x_matrix=10/resolution_matrix; 
 const int y_matrix=10/resolution_matrix;
+const int obj_thres=20/(resolution_matrix*100); // in meter to cells
 
-std::vector<signed char>  Raw_Map(x_matrix*y_matrix,blue);
+std::vector<signed char>  Raw_Map(x_matrix*y_matrix,white);
+
+
+double cell_round(double val){
+	double cm_res=resolution_matrix*100;
+	
+	return round(val/cm_res);
+	
+}
+
 
 void get_odo(theia_services::corrected_odo::ConstPtr msg){
 	
@@ -34,8 +45,10 @@ void get_odo(theia_services::corrected_odo::ConstPtr msg){
 }
 
 void get_map(nav_msgs::OccupancyGrid::ConstPtr msg){
-
-	Raw_Map=msg->data;
+	
+	for(int i=0; i<Raw_Map.size();i++){
+		Raw_Map[i]=msg->data[i];
+	}
 
 }
 
@@ -71,7 +84,47 @@ void get_info(control_logic::info::ConstPtr msg){
 }
 
 bool close_object(){
+	
+	int x_cell,y_cell;
 
+	if(x!=NO_VAL){
+		x_cell=cell_round(x*100);
+		y_cell=cell_round(y*100);
+		
+		switch(heading){
+	
+		case 'E':
+			for(int i=1; i<=obj_thres; i++){
+				if(Raw_Map[x_cell+i+y_cell*y_matrix]!=white && Raw_Map[x_cell+i+y_cell*y_matrix] != gray && Raw_Map[x_cell+i+y_cell*y_matrix] != blue && Raw_Map[x_cell+i+y_cell*y_matrix] != black){
+					return true;
+				}
+			}
+			break;
+		case 'W':
+			for(int i=1; i<=obj_thres; i++){
+				if(Raw_Map[x_cell-i+y_cell*y_matrix]!=white && Raw_Map[x_cell-i+y_cell*y_matrix] != gray && Raw_Map[x_cell-i+y_cell*y_matrix] != blue && Raw_Map[x_cell-i+y_cell*y_matrix] != black){
+					return true;
+				}
+			}
+			break;
+		case 'N':
+			for(int i=1; i<=obj_thres; i++){
+				if(Raw_Map[x_cell+(y_cell+i)*y_matrix]!=white && Raw_Map[x_cell+(y_cell+i)*y_matrix] != gray && Raw_Map[x_cell+(y_cell+i)*y_matrix] != blue && Raw_Map[x_cell+(y_cell+i)*y_matrix] != black){
+					return true;
+				}
+			}
+			break;
+		case 'S':
+			for(int i=1; i<=obj_thres; i++){
+				if(Raw_Map[x_cell+(y_cell-i)*y_matrix]!=white && Raw_Map[x_cell+(y_cell-i)*y_matrix] != gray && Raw_Map[x_cell+(y_cell-i)*y_matrix] != blue && Raw_Map[x_cell+(y_cell-i)*y_matrix] != black){
+					return true;
+				}
+			}
+			break;
+	
+		}
+	}
+	
 	return false;
 }
 
@@ -94,6 +147,7 @@ int main(int argc, char ** argv){
 	ros::ServiceClient order_blind = n.serviceClient<theia_services::brain_blind>("/blind/instructions");
 	ros::Subscriber odo_sub = n.subscribe("/mapping/corrected_odo",1,get_odo);
 	ros::Subscriber info_sub = n.subscribe("/control_logic/info",1,get_info);
+	ros::Subscriber raw_sub = n.subscribe("/mapping/occ",1,get_map);
 	ros::Publisher object_pub = n.advertise<theia_services::object>("/control_logic/object",1);
 	
 	while(ros::ok()){
@@ -102,6 +156,7 @@ int main(int argc, char ** argv){
 		
 		
 		if(close_object()){
+			ROS_INFO("OBJECT TOO CLOSE OMGWTFBBQ");
 			object_msg.object=1;
 			object_pub.publish(object_msg);
 		}

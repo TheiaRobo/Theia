@@ -91,7 +91,7 @@ ros::Subscriber ir_sub;
 /* cell_round
  * Rounds the received value to the nearest cell coordinate
  */
-double cell_round(double val){
+int cell_round(double val){
 	double cm_res=resolution_matrix*100;
 	
 	return round(val/cm_res);
@@ -153,7 +153,7 @@ void Get_Readings_Odometry(nav_msgs::Odometry::ConstPtr odometry_msg){
 	x_Current_Pose=cell_round(corrected_odo_x[0]*100);
 	y_Current_Pose=cell_round(corrected_odo_y[0]*100);
 	
-	//ROS_INFO("x_Current_Pose: %d\ny_Current_Pose: %d",x_Current_Pose,y_Current_Pose);
+	ROS_INFO("x_Current_Pose: %d\ny_Current_Pose: %d",x_Current_Pose,y_Current_Pose);
 	
 }
 
@@ -538,22 +538,23 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 	switch(heading){
 		
 		case 'E':
-			Occupancy_Grid=place_map(Occupancy_Grid,cell_round(x_Current_Pose+msg->posDistance+robot_delta_x),y_Current_Pose,robot_delta_x,robot_delta_y,new_object.num);
+			Occupancy_Grid=place_map(Occupancy_Grid,x_Current_Pose+cell_round(msg->posDistance)+robot_delta_x,y_Current_Pose,robot_delta_x,robot_delta_y,new_object.num);
 			pos_x=corrected_odo_x[0]+msg->posDistance*resolution_matrix+robot_delta_x*resolution_matrix;
 			pos_y=corrected_odo_y[0];
+			ROS_INFO("Placing object at (%d,%d) :)",x_Current_Pose+cell_round(msg->posDistance)+robot_delta_x,y_Current_Pose);
 			break;
 		case 'W':
-			Occupancy_Grid=place_map(Occupancy_Grid,cell_round(x_Current_Pose-msg->posDistance-robot_delta_x),y_Current_Pose,robot_delta_x,robot_delta_y,new_object.num);
+			Occupancy_Grid=place_map(Occupancy_Grid,x_Current_Pose-cell_round(msg->posDistance)-robot_delta_x,y_Current_Pose,robot_delta_x,robot_delta_y,new_object.num);
 			pos_x=corrected_odo_x[0]-msg->posDistance*resolution_matrix-robot_delta_x*resolution_matrix;
 			pos_y=corrected_odo_y[0];
 			break;
 		case 'N':
-			Occupancy_Grid=place_map(Occupancy_Grid,x_Current_Pose,cell_round(y_Current_Pose+msg->posDistance+robot_delta_y),robot_delta_x,robot_delta_y,new_object.num);
+			Occupancy_Grid=place_map(Occupancy_Grid,x_Current_Pose,y_Current_Pose+cell_round(msg->posDistance)+robot_delta_y,robot_delta_x,robot_delta_y,new_object.num);
 			pos_x=corrected_odo_x[0];
 			pos_y=corrected_odo_y[0]+msg->posDistance*resolution_matrix+robot_delta_y*resolution_matrix;
 			break;
 		case 'S':
-			Occupancy_Grid=place_map(Occupancy_Grid,x_Current_Pose,cell_round(y_Current_Pose-msg->posDistance-robot_delta_y),robot_delta_x,robot_delta_y,new_object.num);
+			Occupancy_Grid=place_map(Occupancy_Grid,x_Current_Pose,y_Current_Pose-cell_round(msg->posDistance)-robot_delta_y,robot_delta_x,robot_delta_y,new_object.num);
 			pos_x=corrected_odo_x[0];
 			pos_y=corrected_odo_y[0]-msg->posDistance*resolution_matrix-robot_delta_y*resolution_matrix;
 			break;
