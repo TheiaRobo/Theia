@@ -178,11 +178,7 @@ int findObjects(
 	size_t numbClusters = clusterVect.size();
 	for(size_t i = 0; i < numbClusters; i++){
 		PointIndices & cluster = clusterVect[i];
-
-		std::cout << "Cluster " << i << std::endl;
-		std::cout << "Numb points " << cluster.indices.size();
-		std::cout << std::endl;
-
+		
 		Candidate cand;
 		errorCode = clusterToCandidate(inCloud, cluster, cand);
 		if(errorCode) return errorCode;
@@ -225,16 +221,6 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
 	std::vector<Candidate> candVect;
 	findObjects(objectCloudPtr, candVect);
 	publishCandidates(candVect);
-
-	size_t numbCands = candVect.size();
-	for(size_t i = 0; i < numbCands; i++){
-		Candidate & cand = candVect[i];
-		std::cout << "Candidate " << i << std::endl;
-		std::cout << "Min Latitude "<< cand.minLatitude << std::endl;
-		std::cout << "Max Latitude "<< cand.maxLatitude << std::endl;
-		std::cout << "Min Longitude "<< cand.minLongitude << std::endl;
-		std::cout << "Max Longitude "<< cand.maxLongitude << std::endl;
-	}
 
 	// debug
 	visionCloudDebug(planeCloudPtr, debugPlanePub);

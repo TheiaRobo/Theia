@@ -3,6 +3,9 @@ core: {L: 21.35, R1: 5.0, R2: 5.0}
 vision_object:
   config:
     path: /home/amotta/Documents/Theia/vision/vision_object/train
+    camera:
+       fovLat: 45,
+       fovLong: 57.5
     colorImage:
         minHessian: 400
         maxMeanSquareError: 0.35

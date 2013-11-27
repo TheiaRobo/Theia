@@ -5,6 +5,8 @@
 #include <cv_bridge/cv_bridge.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <std_msgs/Empty.h>
@@ -178,23 +180,70 @@ int tryToMatch(){
 	return errorCode;
 }
 
+int showCandidates(){
+	/**
+	* TODO
+	* Put this in parameter server
+	*/
+	static double camFOVLat = 45 * M_PI / 180;
+	static double camFOVLong = 57.5 * M_PI / 180;
+
+	int errorCode = 0;
+
+	if(!candVectReady) return errorCode;
+	if(!colorImageReady) return errorCode;
+
+	cv::Mat image = sampleData.colorImage.image.clone();
+	
+	size_t numbCands = candVect.size();
+	if(!numbCands) return errorCode;
+
+	double pxPerLat = image.rows / camFOVLat;
+	double pxPerLong = image.cols / camFOVLong;
+
+	for(size_t i = 0; i < numbCands; i++){
+		Candidate & cand = candVect[i];
+
+		double minRow = image.rows / 2 - cand.minLatitude * pxPerLat;
+		double maxRow = image.rows / 2 - cand.maxLatitude * pxPerLat;
+		double minCol = image.cols / 2 - cand.minLongitude * pxPerLong;
+		double maxCol = image.cols / 2 - cand.maxLongitude * pxPerLong;
+
+		cv::Point pointArr[4];
+		pointArr[0] = cv::Point(minCol, minRow);
+		pointArr[1] = cv::Point(minCol, maxRow);
+		pointArr[2] = cv::Point(maxCol, maxRow);
+		pointArr[3] = cv::Point(maxCol, minRow);
+
+		for(size_t j = 0; j < 4; j++){
+			cv::line(
+				image,
+				pointArr[j],
+				pointArr[(j + 1) % 4],
+				cv::Scalar( 0, 255, 255 )
+			);
+		}
+	}
+
+	cv::imshow("Candidates", image);
+	cv::waitKey(0);
+
+	return errorCode;
+}
+
 void candCallback(const CandidatesConstPtr & candsMsgPtr){
 	int errorCode = 0;
 
-	const vector<Candidate> & candVect = candsMsgPtr->candidates;
-	size_t numbCands = candVect.size();
+	// copy candidates
+	candVect = vector<Candidate>(candsMsgPtr->candidates);
+	candVectReady = true;
 
-	for(size_t i = 0; i < numbCands; i++){
-		const Candidate & cand = candVect[i];
-		cout << "Candidate " << i << endl;
-		cout << "Min Latitude "<< cand.minLatitude << endl;
-		cout << "Max Latitude "<< cand.maxLatitude << endl;
-		cout << "Min Longitude "<< cand.minLongitude << endl;
-		cout << "Max Longitude "<< cand.maxLongitude << endl;
+	errorCode = showCandidates();
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not show candidates" << endl;
+		return;
 	}
-
-	// TODO: enable
-	// candVectReady = true;
 
 	errorCode = tryToMatch();
 	if(errorCode){
