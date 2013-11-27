@@ -16,6 +16,7 @@
   <depend package="visualization_msgs"/>
   <depend package="tf"/>
   <depend package="theia_services"/>
+  <depend package="vision_object"/>
 
 </package>
 

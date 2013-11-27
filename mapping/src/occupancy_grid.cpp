@@ -9,16 +9,27 @@
 #include <control_logic/info.h>
 #include <core_sensors/ir.h>
 #include <vector>
+#include <string>
 #include <visualization_msgs/Marker.h>
 #include <tf/transform_broadcaster.h>
 #include <theia_services/mapsrv.h>
 #include <theia_services/corrected_odo.h>
+#include <vision_object/Object.h>
 
  //Initialize
 const float PI=3.1415926f;
 const double resolution_matrix=0.01; // in meter!
 const int x_matrix=10/resolution_matrix; 
 const int y_matrix=10/resolution_matrix;
+
+typedef struct _object{
+	std::string name;
+	int num;
+}object;
+
+std::vector<object> object_list;
+std::vector<geometry_msgs::Point> pos_list;
+
 
 // robot size: 2*delta_x+1, 2*delta_y+1
 const int robot_delta_x=10; // robot is a dot
@@ -68,6 +79,7 @@ ros::Publisher occ_pub;
 ros::Publisher map_pub;
 ros::Publisher robo_pub;
 ros::Publisher arrow_pub;
+ros::Publisher object_pub;
 ros::Publisher odo_pub;
 ros::Publisher corrected_map_pub;
 ros::Subscriber	odometry_sub;
@@ -508,7 +520,83 @@ void Send_Message(){
 	corrected_map_pub.publish(Correct_Map_Msg);
 }
 
-void Receive_Camera(int x_position, int y_position) {
+void Place_Object(vision_object::Object::ConstPtr msg) {
+	
+	object new_object;
+	visualization_msgs::Marker object_marker;
+	double pos_x,pos_y;
+	geometry_msgs::Point pos;
+	
+	new_object.name=msg->objectName;
+	
+	new_object.num=object_list.size()+1;
+	
+	object_list.push_back(new_object);
+	
+	ROS_INFO("New object: %s",new_object.name.c_str());
+	
+	switch(heading){
+		
+		case 'E':
+			Occupancy_Grid=place_map(Occupancy_Grid,cell_round(x_Current_Pose+msg->posDistance+robot_delta_x),y_Current_Pose,robot_delta_x,robot_delta_y,100);
+			pos_x=corrected_odo_x[0]+msg->posDistance*resolution_matrix+robot_delta_x*resolution_matrix;
+			pos_y=corrected_odo_y[0];
+			break;
+		case 'W':
+			Occupancy_Grid=place_map(Occupancy_Grid,cell_round(x_Current_Pose-msg->posDistance-robot_delta_x),y_Current_Pose,robot_delta_x,robot_delta_y,100);
+			pos_x=corrected_odo_x[0]-msg->posDistance*resolution_matrix-robot_delta_x*resolution_matrix;
+			pos_y=corrected_odo_y[0];
+			break;
+		case 'N':
+			Occupancy_Grid=place_map(Occupancy_Grid,x_Current_Pose,cell_round(y_Current_Pose+msg->posDistance+robot_delta_y),robot_delta_x,robot_delta_y,100);
+			pos_x=corrected_odo_x[0];
+			pos_y=corrected_odo_y[0]+msg->posDistance*resolution_matrix+robot_delta_y*resolution_matrix;
+			break;
+		case 'S':
+			Occupancy_Grid=place_map(Occupancy_Grid,x_Current_Pose,cell_round(y_Current_Pose-msg->posDistance-robot_delta_y),robot_delta_x,robot_delta_y,100);
+			pos_x=corrected_odo_x[0];
+			pos_y=corrected_odo_y[0]-msg->posDistance*resolution_matrix-robot_delta_y*resolution_matrix;
+			break;
+	
+	}
+	
+	object_marker.header.frame_id = "/mapping";
+	object_marker.header.stamp = ros::Time::now();
+
+	// Set the namespace and id for this marker.  This serves to create a unique ID
+	// Any marker sent with the same namespace and id will overwrite the old one
+	object_marker.ns = "object_pos";
+	object_marker.id = 0;
+
+	object_marker.type = visualization_msgs::Marker::CUBE_LIST;
+
+	// Set the marker action.  Options are ADD and DELETE
+	object_marker.action = visualization_msgs::Marker::ADD;
+
+	// Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
+
+	pos.x=pos_x;
+	pos.y=pos_y;
+	pos.z=0;
+
+	pos_list.push_back(pos);
+	
+		
+	object_marker.points=pos_list;
+	
+	object_marker.scale.x = 0.2;
+	object_marker.scale.y = 0.2;
+	object_marker.scale.z = 0.2;
+
+	// Set the color -- be sure to set alpha to something non-zero!
+	object_marker.color.r = 1.0f;
+	object_marker.color.g = 0.0f;
+	object_marker.color.b = 0.0f;
+	object_marker.color.a = 1.0;
+
+	object_marker.lifetime = ros::Duration();
+	
+	object_pub.publish(object_marker);
 
 }
 
@@ -637,13 +725,16 @@ int main(int argc, char **argv)
 	odometry_sub = n.subscribe("/core_sensors_odometry/odometry",100000,Get_Readings_Odometry);
 	logic_sub = n.subscribe("/logic/info",100000,Get_Motion_Info);
 	ir_sub = n.subscribe("/core_sensors_ir/ir",100000,Get_Ir);
+	camera_sub = n.subscribe("/vision/object",1,Place_Object);
 	
 	occ_pub = n.advertise<nav_msgs::OccupancyGrid>("/mapping/occ",1);
 	map_pub = n.advertise<nav_msgs::MapMetaData>("/mapping/map",1);
 	robo_pub = n.advertise<visualization_msgs::Marker>("/mapping/robot", 1);
 	arrow_pub = n.advertise<visualization_msgs::Marker>("/mapping/robot_heading", 1);
+	object_pub = n.advertise<visualization_msgs::Marker>("/mapping/object",1);
 	corrected_map_pub = n.advertise<nav_msgs::OccupancyGrid>("/mapping/corrected_map",1);
 	odo_pub = n.advertise<theia_services::corrected_odo>("/mapping/corrected_odo",1);
+	
 	
 	ros::ServiceServer map_sender = n.advertiseService("/mapping/ProcessedMap", provide_map);
 
