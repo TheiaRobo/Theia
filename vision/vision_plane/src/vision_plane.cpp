@@ -15,6 +15,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <vision/cloud.h>
 #include <vision_plane/Candidate.h>
+#include <vision_plane/Candidates.h>
 
 #include "vision_plane.h"
 
@@ -207,14 +208,32 @@ void initConfig(){
 	ros::param::getCached("~config/planeOptimize", config.planeOptimize);
 }
 
-void publishCandidate(Candidate & cand){
-	vision_plane::Candidate candMsg;
-	candMsg.minLatitude = cand.minLatitude;
-	candMsg.maxLatitude = cand.maxLatitude;
-	candMsg.minLongitude = cand.minLongitude;
-	candMsg.maxLongitude = cand.maxLongitude;
+void candidateToMessage(
+	Candidate & inCand,
+	vision_plane::Candidate & outMsg
+){
+	outMsg.minLatitude = inCand.minLatitude;
+	outMsg.maxLatitude = inCand.maxLatitude;
+	outMsg.minLongitude = inCand.minLongitude;
+	outMsg.maxLongitude = inCand.maxLongitude;
+}
 
-	candPub.publish(candMsg);
+void publishCandidates(std::vector<Candidate> & inCandVect){
+	size_t numbCands = inCandVect.size();
+	std::vector<vision_plane::Candidate> candMsgVect;
+
+	for(size_t i = 0; i < numbCands; i++){
+		Candidate & cand = inCandVect[i];
+		vision_plane::Candidate candMsg;
+		candidateToMessage(cand, candMsg);
+
+		candMsgVect.push_back(candMsg);
+	}
+
+	vision_plane::Candidates candVectMsg;
+	candVectMsg.candidates = candMsgVect;
+
+	candPub.publish(candVectMsg);
 }
 
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
@@ -233,12 +252,11 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
 
 	std::vector<Candidate> candVect;
 	findObjects(objectCloudPtr, candVect);
+	publishCandidates(candVect);
 
 	size_t numbCands = candVect.size();
 	for(size_t i = 0; i < numbCands; i++){
 		Candidate & cand = candVect[i];
-		publishCandidate(cand);
-
 		std::cout << "Candidate " << i << std::endl;
 		std::cout << "Min Latitude "<< cand.minLatitude << std::endl;
 		std::cout << "Max Latitude "<< cand.maxLatitude << std::endl;

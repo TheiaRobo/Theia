@@ -9,24 +9,31 @@
 #include <sensor_msgs/Image.h>
 #include <std_msgs/Empty.h>
 #include <vision_object/Object.h>
+#include <vision_plane/Candidate.h>
+#include <vision_plane/Candidates.h>
 
 #include "object.h"
 
 #define NODE_NAME "vision_object"
+#define TOPIC_IN_CAND "/vision/plane/cand"
 #define TOPIC_IN_COLOR "/camera/rgb/image_rect"
 #define TOPIC_IN_DEPTH "/camera/depth/image_rect"
 #define TOPIC_OUT_OBJECT "/vision/object"
 
 using namespace std;
 using namespace message_filters;
+using namespace vision_plane;
 using namespace sensor_msgs;
 
 Config config;
 Context context(config);
+vector<Candidate> candVect;
 vector<Object> objectVect;
 ObjectData sampleData;
+bool candVectReady;
 bool colorImageReady;
 bool depthImageReady;
+ros::Subscriber candSub;
 ros::Subscriber colorImageSub;
 ros::Subscriber depthImageSub;
 ros::Publisher objectPub;
@@ -155,16 +162,44 @@ int train(){
 int tryToMatch(){
 	int errorCode = 0;
 
+	if(!candVectReady) return 0;
 	if(!colorImageReady) return 0;
 	if(!depthImageReady) return 0;
 
 	errorCode = match();
 	if(errorCode) return errorCode;
 
+	candVectReady = false;
 	colorImageReady = false;
 	colorImageReady = false;
 
 	return errorCode;
+}
+
+void candCallback(const CandidatesConstPtr & candsMsgPtr){
+	int errorCode = 0;
+
+	const vector<Candidate> & candVect = candsMsgPtr->candidates;
+	size_t numbCands = candVect.size();
+
+	for(size_t i = 0; i < numbCands; i++){
+		const Candidate & cand = candVect[i];
+		cout << "Candidate " << i << endl;
+		cout << "Min Latitude "<< cand.minLatitude << endl;
+		cout << "Max Latitude "<< cand.maxLatitude << endl;
+		cout << "Min Longitude "<< cand.minLongitude << endl;
+		cout << "Max Longitude "<< cand.maxLongitude << endl;
+	}
+
+	// TODO: enable
+	// candVectReady = true;
+
+	errorCode = tryToMatch();
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Matching failed" << endl;
+		return;
+	}
 }
 
 void colorCallback(const ImageConstPtr & colorMsgPtr){
@@ -241,6 +276,7 @@ int main(int argc, char ** argv){
 	ros::init(argc, argv, NODE_NAME);
 	ros::NodeHandle node;
 
+	candSub = node.subscribe(TOPIC_IN_CAND, 5, candCallback);
 	colorImageSub = node.subscribe(TOPIC_IN_COLOR, 1, colorCallback);
 	depthImageSub = node.subscribe(TOPIC_IN_DEPTH, 1, depthCallback);
 	objectPub = node.advertise<vision_object::Object>(

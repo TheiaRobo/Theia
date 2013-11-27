@@ -1,5 +1,4 @@
-#Object candidate message
-Header header
+#Candidate message
 float32 minLatitude
 float32 maxLatitude
 float32 minLongitude
