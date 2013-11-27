@@ -6,6 +6,7 @@
 #include <theia_services/MotionCommand.h>
 #include <tf/transform_datatypes.h>
 #include <control_motion/params.h>
+#include <theia_services/stop.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
@@ -87,6 +88,7 @@ double delay_thres=3.0; // no real time :(
 //0 - None; 1 - Forward; 2 - Rotate xº; 3 - Forward with wall
 int behavior=0; 
 int wall_to_follow=0;
+int stop_flag=0;
 
 // Debug
 int count=0;
@@ -112,6 +114,7 @@ theia_services::MotionCommand srv;
 ros::Subscriber	odo_sub;
 ros::Subscriber ir_sub;
 ros::Subscriber params_sub;
+ros::Subscriber stop_sub;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
@@ -650,6 +653,13 @@ int forward(ros::Rate loop_rate){
 	ROS_INFO("Will go forward %.2f cm!",forward_distance);
 	// Will keep moving forward until sensors report obstacle or forward_distance is achieved
 	while(curr_dist<forward_distance){ 
+	
+		if(stop_flag){
+			stop();
+			ROS_INFO("Object ahead!\n");
+			return 0;
+		}
+	
 		std_velocity=10.0; // sorry :(
 
 		//Distance to wall < delay_thres ---> very close! STOP
@@ -865,6 +875,12 @@ int forward_wall(ros::Rate loop_rate){
 	}
 
 	while(ros::ok()){
+	
+		if(stop_flag){
+			stop();
+			ROS_INFO("Object ahead!\n");
+			return 0;
+		}
 
 		if(wall_in_range(3,dist_thres,ir_readings) || wall_in_range(4,cross_thres1,ir_readings)){ 		// check if obstacle ahead
 			stop();
@@ -939,6 +955,12 @@ int forward_wall(ros::Rate loop_rate){
 
 }
 
+void object_stop(theia_services::stop::ConstPtr msg){
+	
+	stop_flag=msg->stop;
+
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
 // MAIN() FUNCTION
@@ -957,6 +979,7 @@ int main(int argc, char ** argv){
 	odo_sub = n.subscribe("/core_sensors_odometry/odometry",1,odo_proc);
 	ir_sub = n.subscribe("/core_sensors_ir/ir",1,ir_proc);
 	params_sub = n.subscribe("/control_motion/params",1,update_params);
+	stop_sub = n.subscribe("/control_motion/stop",1,object_stop);
 
 	//ROS_INFO("Started the control_motion node");
 
