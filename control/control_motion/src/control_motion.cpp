@@ -78,8 +78,8 @@ double forward_distance=20.0;
 double heading_thres=0.005;
 double align_thres=100;//0.003;
 double dist_thres=6.0;
-double cross_thres1=250;
-double cross_thres2=250;
+double cross_thres1=10;
+double cross_thres2=10;
 double dist_ref=3.0;
 double inf_thres=20.0;
 double rotation_error_thres=0.10;
@@ -306,7 +306,7 @@ int wall_in_range(int side, double thres, double ir[8]){
 		}
 		break;
 	case 4:
-		if((ir[6] > cross_thres1|| ir[7] > cross_thres2) && ir[0] > inf_thres && ir[1] > inf_thres){
+		if((ir[6] < cross_thres1|| ir[7] < cross_thres2) && ir[0] > inf_thres && ir[1] > inf_thres){
 			ROS_INFO("Crossed!");
 			return 1;
 		}else{
