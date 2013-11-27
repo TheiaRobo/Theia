@@ -14,27 +14,57 @@
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <vision/cloud.h>
+#include <vision_plane/Candidate.h>
 
 #include "vision_plane.h"
 
 #define NODE_NAME "vision_plane"
 #define TOPIC_IN "/camera/depth_registered/points"
-#define TOPIC_OUT "/vision/plane/angle"
+#define TOPIC_OUT_CAND "/vision/plane/cand"
 #define TOPIC_DEBUG_CROPPED_OUT "/vision/plane/debug/cropped"
 #define TOPIC_DEBUG_NON_PLANE_OUT "/vision/plane/debug/nonPlane"
 #define TOPIC_DEBUG_PLANE_OUT "/vision/plane/debug/plane"
 
 using namespace pcl;
 
+typedef struct {
+	double minLatitude;
+	double maxLatitude;
+	double minLongitude;
+	double maxLongitude;
+} Candidate;
+
 /**
 * Global variables
 */
 Config config;
 ros::Subscriber cloudSub;
+ros::Publisher candPub;
 ros::Publisher debugCroppedPub;
 ros::Publisher debugNonPlanePub;
 ros::Publisher debugPlanePub;
-ros::Publisher anglePub;
+
+int clusterToCandidate(
+	TheiaCloudPtr inCloud,
+	PointIndices & inIndices,
+	Candidate & outCand
+){
+	int errorCode = 0;
+
+	Eigen::Vector4f minPoint;
+	Eigen::Vector4f maxPoint;
+	getMinMax3D(*inCloud, inIndices, minPoint, maxPoint);
+
+	Candidate cand;
+	cand.minLatitude = -1 * asin(minPoint[1] / minPoint[2]);
+	cand.maxLatitude = -1 * asin(maxPoint[1] / minPoint[2]);
+	cand.minLongitude = -1 * asin(minPoint[0] / minPoint[2]);
+	cand.maxLongitude = -1 * asin(maxPoint[0] / minPoint[2]);
+
+	outCand = cand;
+
+	return errorCode;
+}
 
 /**
 * Scaling down the cloud
@@ -90,7 +120,7 @@ void filterPlanes(
 	// prepare extractor
 	ExtractIndices<TheiaPoint> extract;
 
-	do{
+	while(workingCloudPtr->points.size() >= 4){
 		seg.setInputCloud(workingCloudPtr);
 		seg.segment(*inliers, *coefficients);
 
@@ -123,13 +153,16 @@ void filterPlanes(
 		* But only use remaining point cloud
 		*/
 		workingCloudPtr->swap(*remainingCloudPtr);
-	}while(true);
+	}
 
 	*outPlanes = TheiaCloud(*allPlanesCloudPtr);
 	*outObjects = TheiaCloud(*workingCloudPtr);
 }
 
-int findObjects(TheiaCloudPtr inCloud){
+int findObjects(
+	TheiaCloudPtr inCloud,
+	std::vector<Candidate> & outCandVect
+){
 	int errorCode = 0;
 
 	size_t numbPoints = inCloud->points.size();
@@ -142,7 +175,6 @@ int findObjects(TheiaCloudPtr inCloud){
 	EuclideanClusterExtraction<TheiaPoint> extractor;
 	extractor.setClusterTolerance(config.objectSize);
 	extractor.setMinClusterSize(0.2 * numbPoints);
-	// extractor.setMaxLabels(3);
 	extractor.setInputCloud(inCloud);
 
 	std::vector<PointIndices> clusterVect;
@@ -150,9 +182,17 @@ int findObjects(TheiaCloudPtr inCloud){
 
 	size_t numbClusters = clusterVect.size();
 	for(size_t i = 0; i < numbClusters; i++){
+		PointIndices & cluster = clusterVect[i];
+
 		std::cout << "Cluster " << i << std::endl;
-		std::cout << "Numb points " << clusterVect[i].indices.size();
+		std::cout << "Numb points " << cluster.indices.size();
 		std::cout << std::endl;
+
+		Candidate cand;
+		errorCode = clusterToCandidate(inCloud, cluster, cand);
+		if(errorCode) return errorCode;
+	
+		outCandVect.push_back(cand);
 	}
 
 	return errorCode;
@@ -165,6 +205,16 @@ void initConfig(){
 	ros::param::getCached("~config/numbIterations", config.numbIterations);
 	ros::param::getCached("~config/planeDistThresh", config.planeDistThresh);
 	ros::param::getCached("~config/planeOptimize", config.planeOptimize);
+}
+
+void publishCandidate(Candidate & cand){
+	vision_plane::Candidate candMsg;
+	candMsg.minLatitude = cand.minLatitude;
+	candMsg.maxLatitude = cand.maxLatitude;
+	candMsg.minLongitude = cand.minLongitude;
+	candMsg.maxLongitude = cand.maxLongitude;
+
+	candPub.publish(candMsg);
 }
 
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
@@ -180,7 +230,21 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
 	TheiaCloudPtr planeCloudPtr(new TheiaCloud());
 	TheiaCloudPtr objectCloudPtr(new TheiaCloud());
 	filterPlanes(scaledCloudPtr, planeCloudPtr, objectCloudPtr);
-	findObjects(objectCloudPtr);
+
+	std::vector<Candidate> candVect;
+	findObjects(objectCloudPtr, candVect);
+
+	size_t numbCands = candVect.size();
+	for(size_t i = 0; i < numbCands; i++){
+		Candidate & cand = candVect[i];
+		publishCandidate(cand);
+
+		std::cout << "Candidate " << i << std::endl;
+		std::cout << "Min Latitude "<< cand.minLatitude << std::endl;
+		std::cout << "Max Latitude "<< cand.maxLatitude << std::endl;
+		std::cout << "Min Longitude "<< cand.minLongitude << std::endl;
+		std::cout << "Max Longitude "<< cand.maxLongitude << std::endl;
+	}
 
 	// debug
 	visionCloudDebug(planeCloudPtr, debugPlanePub);
@@ -195,6 +259,9 @@ int main (int argc, char ** argv){
 	ros::NodeHandle node;
 
 	cloudSub = node.subscribe(TOPIC_IN, 1, cloudCallback);
+	candPub = node.advertise<vision_plane::Candidate>(
+		TOPIC_OUT_CAND, 5
+	);
 	debugCroppedPub = node.advertise<sensor_msgs::PointCloud2>(
 		TOPIC_DEBUG_CROPPED_OUT, 1
 	);
@@ -204,7 +271,6 @@ int main (int argc, char ** argv){
 	debugPlanePub = node.advertise<sensor_msgs::PointCloud2>(
 		TOPIC_DEBUG_PLANE_OUT, 1
 	);
-	anglePub = node.advertise<std_msgs::Float64>(TOPIC_OUT, 1);
 
 	ros::spin();
 }
