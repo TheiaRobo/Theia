@@ -8,7 +8,7 @@
 #include "camera.h"
 
 bool candCheckIfValid(
-	const std::vector<vision_plane::Candidate> & inCandVect,
+	const vision_plane::Candidate & inCand,
 	const CameraContext & inContext
 );
 
@@ -21,8 +21,7 @@ int candFilterValid(
 
 int candShow(
 	const std::vector<vision_plane::Candidate> & inCandVect,
-	const cv::Mat & inImage,
-	cv::Mat & outImage
+	const cv::Mat & inImage
 );
 
 int candToRect(

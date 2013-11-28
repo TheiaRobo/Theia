@@ -33,6 +33,7 @@ Config config;
 CameraConfig cameraConfig;
 Context context(config);
 bool candValid;
+vector<Candidate> validCandVect;
 vector<Candidate> candVect;
 vector<Object> objectVect;
 ObjectData sampleData;
@@ -108,21 +109,29 @@ int publishResults(
 	const vector< pair<Object, ObjectDataResult> > & inResults
 ){
 	int errorCode = 0;
-
+	
 	if(inResults.empty()) return errorCode;
-
+	if(validCandVect.empty()) return errorCode;
+	
 	// sort results
 	vector< pair<Object, ObjectDataResult> > workingVect(inResults);
 	sort(workingVect.begin(), workingVect.end(), compareResultPairs);
 
 	const Object & object = inResults[0].first;
 	const ObjectDataResult & result = inResults[0].second;
-
-	cout << "Best Object: " << object.name;
+	cout << "Best Object: " << object.name << endl;
+	
+	const Candidate & cand = validCandVect[0];
+	double posLatitude = (cand.minLatitude + cand.maxLatitude) / 2;
+	double posLongitude = (cand.minLongitude + cand.maxLongitude) / 2;
+	double posDistance = cand.dist;
 	
 	vision_object::Object msg;
 	msg.objectName = object.name;
 	msg.objectAngle = result.angle;
+	msg.posLatitude = posLatitude;
+	msg.posLongitude = posLongitude;
+	msg.posDistance = posDistance;
 
 	objectPub.publish(msg);
 
@@ -131,15 +140,13 @@ int publishResults(
 
 int match(){
 	int errorCode = 0;
-
-	candValid = candCheckIfValid(candVect, context.camera);
-
-	if(candValid){
-		cout << "Valid object found" << endl;
-	}else{
+	
+	if(!candValid){
 		cout << "No valid object found" << endl;
 		return errorCode;
 	}
+	
+	cout << "Valid object found" << endl;
 
 /*
 	errorCode = candDebug();
@@ -238,18 +245,11 @@ int candDebug(){
 	if(!candVectReady) return errorCode;
 	if(!colorImageReady) return errorCode;
 
-/*
-	cv::Mat image;
 	errorCode = candShow(
 		candVect,
-		sampleData.colorImage.image,
-		image
+		sampleData.colorImage.image
 	);
 	if(errorCode) return errorCode;
-
-	cv::imshow("Candidates", image);
-	cv::waitKey(0);
-*/
 
 	return errorCode;
 }
@@ -260,6 +260,27 @@ void candCallback(const CandidatesConstPtr & candsMsgPtr){
 	// copy candidates
 	candVect = vector<Candidate>(candsMsgPtr->candidates);
 	candVectReady = true;
+	
+	// filter
+	validCandVect.clear();
+	
+	size_t numbCands = candVect.size();
+	for(size_t i = 0; i < numbCands; i++){
+		Candidate & cand = candVect[i];
+		if(candCheckIfValid(cand, context.camera)){
+			validCandVect.push_back(cand);
+		}
+	}
+	
+	size_t numbValidCands = validCandVect.size();
+	candValid = (numbValidCands > 0);
+	
+	errorCode = candDebug();
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not debug object candidates" << endl;
+		return;
+	}
 
 	errorCode = tryToMatch();
 	if(errorCode){

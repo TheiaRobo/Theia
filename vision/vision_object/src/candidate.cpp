@@ -1,4 +1,5 @@
 #include <cmath>
+#include <opencv2/highgui/highgui.hpp>
 
 #include "candidate.h"
 
@@ -6,12 +7,9 @@ using namespace std;
 using namespace vision_plane;
 
 bool candCheckIfValid(
-	const vector<Candidate> & inCandVect,
+	const Candidate & inCand,
 	const CameraContext & inContext
 ){
-	size_t numbCands = inCandVect.size();
-	if(!numbCands) return false;
-
 	double validLatDeg = inContext.validFovLat;
 	double validLongDeg = inContext.validFovLong;
 
@@ -20,46 +18,42 @@ bool candCheckIfValid(
 	double validLongMin = -0.5 * M_PI / 180 * validLongDeg;
 	double validLongMax = +0.5 * M_PI / 180 * validLongDeg;
 
-	for(size_t i = 0; i < numbCands; i++){
-		const Candidate & cand = inCandVect[i];
-
-		if(cand.minLatitude > validLatMax) continue;
-		if(cand.minLatitude < validLatMin) continue;
-		if(cand.maxLatitude > validLatMax) continue;
-		if(cand.maxLatitude < validLatMin) continue;
-		if(cand.minLongitude > validLongMax) continue;
-		if(cand.minLongitude < validLongMin) continue;
-		if(cand.maxLongitude > validLongMax) continue;
-		if(cand.maxLongitude < validLongMin) continue;
-		
-		return true;
-	}
-
-	return false;
+	if(inCand.minLatitude > validLatMax) return false;
+	if(inCand.minLatitude < validLatMin) return false;
+	if(inCand.maxLatitude > validLatMax) return false;
+	if(inCand.maxLatitude < validLatMin) return false;
+	if(inCand.minLongitude > validLongMax) return false;
+	if(inCand.minLongitude < validLongMin) return false;
+	if(inCand.maxLongitude > validLongMax) return false;
+	if(inCand.maxLongitude < validLongMin) return false;
+	
+	return true;
 }
 
 int candShow(
 	const vector<Candidate> & inCandVect,
-	const cv::Mat & inImage,
-	cv::Mat & outImage
+	const cv::Mat & inImage
 ){
 	int errorCode = 0;
 
 	size_t numbCands = inCandVect.size();
 	if(!numbCands) return errorCode;
 
-	outImage = inImage.clone();
+	cv::Mat image = inImage.clone();
 	const cv::Scalar color(0, 255, 255);
 
 	for(size_t i = 0; i < numbCands; i++){
 		const Candidate & cand = inCandVect[i];
 
 		cv::Rect rect;
-		errorCode = candToRect(cand, outImage, rect);
+		errorCode = candToRect(cand, image, rect);
 		if(errorCode) return errorCode;
 		
-		cv::rectangle(outImage, rect, color);
+		cv::rectangle(image, rect, color);
 	}
+	
+	cv::imshow("Candidates", image);
+	cv::waitKey(0);
 
 	return errorCode;
 }
