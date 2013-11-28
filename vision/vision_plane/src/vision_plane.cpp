@@ -1,15 +1,15 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
-#include <pcl/common/centroid.h>
-#include <pcl/ModelCoefficients.h>
-#include <pcl/filters/extract_indices.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/segmentation/extract_clusters.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/ros/conversions.h>
+#include <pcl16/common/centroid.h>
+#include <pcl16/ModelCoefficients.h>
+#include <pcl16/filters/extract_indices.h>
+#include <pcl16/filters/voxel_grid.h>
+#include <pcl16/sample_consensus/method_types.h>
+#include <pcl16/sample_consensus/model_types.h>
+#include <pcl16/segmentation/extract_clusters.h>
+#include <pcl16/segmentation/sac_segmentation.h>
+#include <pcl16/ros/conversions.h>
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/PointCloud2.h>
@@ -26,7 +26,7 @@
 #define TOPIC_DEBUG_NON_PLANE_OUT "/vision/plane/debug/nonPlane"
 #define TOPIC_DEBUG_PLANE_OUT "/vision/plane/debug/plane"
 
-using namespace pcl;
+using namespace pcl16;
 using namespace vision_plane;
 
 /**
@@ -50,7 +50,15 @@ int clusterToCandidate(
 	Eigen::Vector4f maxPoint;
 	getMinMax3D(*inCloud, inIndices, minPoint, maxPoint);
 
+	double means[3];
+	double distSquare = 0;
+	for(size_t i = 0; i < 3; i++){
+		means[i] = (minPoint[i] + maxPoint[i]) / 2; 
+		distSquare += means[i] * means[i];
+	}
+
 	Candidate cand;
+	cand.dist = sqrt(distSquare);
 	cand.minLatitude = -1 * asin(minPoint[1] / minPoint[2]);
 	cand.maxLatitude = -1 * asin(maxPoint[1] / minPoint[2]);
 	cand.minLongitude = -1 * asin(minPoint[0] / minPoint[2]);
@@ -70,7 +78,7 @@ void scaleCloud(
 	double inLeafSize,
 	TheiaCloudPtr out
 ){
-	pcl::VoxelGrid<TheiaPoint> grid;
+	VoxelGrid<TheiaPoint> grid;
 	grid.setLeafSize(inLeafSize, inLeafSize, inLeafSize);
 
 	grid.setInputCloud(in);
@@ -101,8 +109,8 @@ void filterPlanes(
 
 
 	TheiaCloudPtr allPlanesCloudPtr(new TheiaCloud());
-	PointIndices::Ptr inliers(new pcl::PointIndices());
-	ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
+	PointIndices::Ptr inliers(new PointIndices());
+	ModelCoefficients::Ptr coefficients(new ModelCoefficients());
 
 	// prepare plane segmentation
 	SACSegmentation<TheiaPoint> seg;
@@ -169,7 +177,12 @@ int findObjects(
 
 	EuclideanClusterExtraction<TheiaPoint> extractor;
 	extractor.setClusterTolerance(config.objectSize);
-	extractor.setMinClusterSize(0.2 * numbPoints);
+	/**
+	* TODO
+	* Add new parameter to config file
+	*/
+	//extractor.setMinClusterSize(0.2 * numbPoints);
+	extractor.setMinClusterSize(5);
 	extractor.setInputCloud(inCloud);
 
 	std::vector<PointIndices> clusterVect;
@@ -208,7 +221,7 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
 	initConfig();
 
 	TheiaCloudPtr cloudPtr(new TheiaCloud());
-	pcl::fromROSMsg(*rosMsgPtr, *cloudPtr);
+	fromROSMsg(*rosMsgPtr, *cloudPtr);
 
 	TheiaCloudPtr scaledCloudPtr(new TheiaCloud());
 	scaleCloud(cloudPtr, config.leafSize, scaledCloudPtr);

@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <utility>
@@ -14,6 +15,7 @@
 #include <vision_plane/Candidate.h>
 #include <vision_plane/Candidates.h>
 
+#include "candidate.h"
 #include "object.h"
 
 #define NODE_NAME "vision_object"
@@ -28,7 +30,9 @@ using namespace vision_plane;
 using namespace sensor_msgs;
 
 Config config;
+CameraConfig cameraConfig;
 Context context(config);
+bool candValid;
 vector<Candidate> candVect;
 vector<Object> objectVect;
 ObjectData sampleData;
@@ -44,6 +48,22 @@ int init(){
 	int errorCode = 0;
 
 	config = Config();
+	ros::param::getCached(
+		"~config/camera/totalFOVLat",
+		config.camera.fovLat
+	);
+	ros::param::getCached(
+		"~config/camera/totalFOVLong",
+		config.camera.fovLong
+	);
+	ros::param::getCached(
+		"~config/camera/validFOVLat",
+		config.camera.validFovLat
+	);
+	ros::param::getCached(
+		"~config/camera/validFOVLong",
+		config.camera.validFovLong
+	);
 	ros::param::getCached(
 		"~config/path",
 		config.path
@@ -72,10 +92,16 @@ int init(){
 		"~config/depthImage/cannyLevelTwo",
 		config.depthImage.cannyLevelTwo
 	);
-
 	context = Context(config);
 
 	return errorCode;
+}
+
+bool compareResultPairs(
+	const pair<Object, ObjectDataResult> & inOne,
+	const pair<Object, ObjectDataResult> & inTwo
+){
+	return inOne.second.isBetterThan(inTwo.second);
 }
 
 int publishResults(
@@ -83,25 +109,49 @@ int publishResults(
 ){
 	int errorCode = 0;
 
-	size_t numbResults = inResults.size();
-	for(size_t i = 0; i < numbResults; i++){
-		const Object & object = inResults[i].first;
-		const ObjectDataResult & result = inResults[i].second;
+	if(inResults.empty()) return errorCode;
 
-		vision_object::Object msg;
-		msg.objectName = object.name;
-		msg.objectAngle = result.angle;
+	// sort results
+	vector< pair<Object, ObjectDataResult> > workingVect(inResults);
+	sort(workingVect.begin(), workingVect.end(), compareResultPairs);
 
-		objectPub.publish(msg);
-	}
+	const Object & object = inResults[0].first;
+	const ObjectDataResult & result = inResults[0].second;
+
+	cout << "Best Object: " << object.name;
 	
+	vision_object::Object msg;
+	msg.objectName = object.name;
+	msg.objectAngle = result.angle;
+
+	objectPub.publish(msg);
+
 	return errorCode;
 }
 
 int match(){
 	int errorCode = 0;
 
+	candValid = candCheckIfValid(candVect, context.camera);
+
+	if(candValid){
+		cout << "Valid object found" << endl;
+	}else{
+		cout << "No valid object found" << endl;
+		return errorCode;
+	}
+
+/*
+	errorCode = candDebug();
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not show candidates" << endl;
+		return errorCode;
+	}
+*/
+
 	size_t numbObjects = objectVect.size();
+	pair<Object, ObjectDataResult> bestResult;
 	vector< pair<Object, ObjectDataResult> > resultVect;
 
 	for(size_t i = 0; i < numbObjects; i++){
@@ -168,7 +218,9 @@ int tryToMatch(){
 
 	if(!candVectReady) return 0;
 	if(!colorImageReady) return 0;
+/*
 	if(!depthImageReady) return 0;
+*/
 
 	errorCode = match();
 	if(errorCode) return errorCode;
@@ -180,53 +232,24 @@ int tryToMatch(){
 	return errorCode;
 }
 
-int showCandidates(){
-	/**
-	* TODO
-	* Put this in parameter server
-	*/
-	static double camFOVLat = 45 * M_PI / 180;
-	static double camFOVLong = 57.5 * M_PI / 180;
-
+int candDebug(){
 	int errorCode = 0;
 
 	if(!candVectReady) return errorCode;
 	if(!colorImageReady) return errorCode;
 
-	cv::Mat image = sampleData.colorImage.image.clone();
-	
-	size_t numbCands = candVect.size();
-	if(!numbCands) return errorCode;
-
-	double pxPerLat = image.rows / camFOVLat;
-	double pxPerLong = image.cols / camFOVLong;
-
-	for(size_t i = 0; i < numbCands; i++){
-		Candidate & cand = candVect[i];
-
-		double minRow = image.rows / 2 - cand.minLatitude * pxPerLat;
-		double maxRow = image.rows / 2 - cand.maxLatitude * pxPerLat;
-		double minCol = image.cols / 2 - cand.minLongitude * pxPerLong;
-		double maxCol = image.cols / 2 - cand.maxLongitude * pxPerLong;
-
-		cv::Point pointArr[4];
-		pointArr[0] = cv::Point(minCol, minRow);
-		pointArr[1] = cv::Point(minCol, maxRow);
-		pointArr[2] = cv::Point(maxCol, maxRow);
-		pointArr[3] = cv::Point(maxCol, minRow);
-
-		for(size_t j = 0; j < 4; j++){
-			cv::line(
-				image,
-				pointArr[j],
-				pointArr[(j + 1) % 4],
-				cv::Scalar( 0, 255, 255 )
-			);
-		}
-	}
+/*
+	cv::Mat image;
+	errorCode = candShow(
+		candVect,
+		sampleData.colorImage.image,
+		image
+	);
+	if(errorCode) return errorCode;
 
 	cv::imshow("Candidates", image);
 	cv::waitKey(0);
+*/
 
 	return errorCode;
 }
@@ -237,13 +260,6 @@ void candCallback(const CandidatesConstPtr & candsMsgPtr){
 	// copy candidates
 	candVect = vector<Candidate>(candsMsgPtr->candidates);
 	candVectReady = true;
-
-	errorCode = showCandidates();
-	if(errorCode){
-		cout << "Error in " << __FUNCTION__ << endl;
-		cout << "Could not show candidates" << endl;
-		return;
-	}
 
 	errorCode = tryToMatch();
 	if(errorCode){
@@ -336,6 +352,7 @@ int main(int argc, char ** argv){
 		TOPIC_OUT_OBJECT, 1
 	);
 
+	candValid = false;
 	candVectReady = false;
 	colorImageReady = false;
 	depthImageReady = false;

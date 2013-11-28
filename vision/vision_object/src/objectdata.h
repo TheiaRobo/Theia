@@ -4,12 +4,14 @@
 #include <string>
 #include <vector>
 
+#include "camera.h"
 #include "colorimagedata.h"
 #include "depthimagedata.h"
 
 class Config {
 	public:
 		std::string path;
+		CameraConfig camera;
 		ColorImageConfig colorImage;
 		DepthImageConfig depthImage;
 };
@@ -17,6 +19,7 @@ class Config {
 class Context {
 	public:
 		std::string path;
+		CameraContext camera;
 		ColorImageContext colorImage;
 		DepthImageContext depthImage;
 

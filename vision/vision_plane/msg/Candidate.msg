@@ -1,4 +1,5 @@
-#Candidate message
+# Object candidate message
+float32 dist
 float32 minLatitude
 float32 maxLatitude
 float32 minLongitude
