@@ -1,25 +1,26 @@
 control_mux: {V_MAX: 10.0, W_MAX: 1.0}
 core: {L: 21.35, R1: 5.0, R2: 5.0}
 vision_object:
-  config:
-    path: /home/amotta/Documents/Theia/vision/vision_object/train
-    camera:
-       fovLat: 45,
-       fovLong: 57.5
-    colorImage:
-        minHessian: 400
-        maxMeanSquareError: 0.35
-        numbMatchesHomography: 6
-    depthImage:
-        blurring: 3
-        cannyLevelOne: 3
-        cannyLevelTwo: 9
+    config:
+        camera:
+            totalFOVLat: 45
+            totalFOVLong: 57.5
+            validFOVLat: 45
+            validFOVLong: 25
+        path: /home/amotta/Documents/Theia/vision/vision_object/train
+        colorImage:
+            minHessian: 400
+            maxMeanSquareError: 0.35
+            numbMatchesHomography: 6
+        depthImage:
+            blurring: 3
+            cannyLevelOne: 3
+            cannyLevelTwo: 9
 vision_plane:
-  config:
-    crop: {maxX: 20, maxY: 0.1, maxZ: 20, minX: -20, minY: -0.1, minZ: 0}
-    leafSize: 0.02
-    minPercentage: 0.15
-    numbIterations: 1000
-    objectSize: 0.05
-    planeDistThresh: 0.02
-    planeOptimize: 1
+    config:
+        leafSize: 0.02
+        minPercentage: 0.15
+        numbIterations: 1000
+        objectSize: 0.05
+        planeDistThresh: 0.02
+        planeOptimize: 1

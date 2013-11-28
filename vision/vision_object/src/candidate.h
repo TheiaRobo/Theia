@@ -5,6 +5,13 @@
 #include <opencv2/core/core.hpp>
 #include <vision_plane/Candidate.h>
 
+#include "camera.h"
+
+bool candCheckIfValid(
+	const std::vector<vision_plane::Candidate> & inCandVect,
+	const CameraContext & inContext
+);
+
 int candShow(
 	const std::vector<vision_plane::Candidate> & inCandVect,
 	const cv::Mat & inImage,

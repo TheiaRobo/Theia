@@ -1,7 +1,42 @@
+#include <cmath>
+
 #include "candidate.h"
 
 using namespace std;
 using namespace vision_plane;
+
+bool candCheckIfValid(
+	const vector<Candidate> & inCandVect,
+	const CameraContext & inContext
+){
+	size_t numbCands = inCandVect.size();
+	if(!numbCands) return false;
+
+	double validLatDeg = inContext.validFovLat;
+	double validLongDeg = inContext.validFovLong;
+
+	double validLatMin = -0.5 * M_PI / 180 * validLatDeg;
+	double validLatMax = +0.5 * M_PI / 180 * validLatDeg;
+	double validLongMin = -0.5 * M_PI / 180 * validLongDeg;
+	double validLongMax = +0.5 * M_PI / 180 * validLongDeg;
+
+	for(size_t i = 0; i < numbCands; i++){
+		const Candidate & cand = inCandVect[i];
+
+		if(cand.minLatitude > validLatMax) continue;
+		if(cand.minLatitude < validLatMin) continue;
+		if(cand.maxLatitude > validLatMax) continue;
+		if(cand.maxLatitude < validLatMin) continue;
+		if(cand.minLongitude > validLongMax) continue;
+		if(cand.minLongitude < validLongMin) continue;
+		if(cand.maxLongitude > validLongMax) continue;
+		if(cand.maxLongitude < validLongMin) continue;
+		
+		return true;
+	}
+
+	return false;
+}
 
 int candShow(
 	const vector<Candidate> & inCandVect,

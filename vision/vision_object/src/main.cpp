@@ -29,7 +29,9 @@ using namespace vision_plane;
 using namespace sensor_msgs;
 
 Config config;
+CameraConfig cameraConfig;
 Context context(config);
+bool candValid;
 vector<Candidate> candVect;
 vector<Object> objectVect;
 ObjectData sampleData;
@@ -45,6 +47,22 @@ int init(){
 	int errorCode = 0;
 
 	config = Config();
+	ros::param::getCached(
+		"~config/camera/totalFOVLat",
+		config.camera.fovLat
+	);
+	ros::param::getCached(
+		"~config/camera/totalFOVLong",
+		config.camera.fovLong
+	);
+	ros::param::getCached(
+		"~config/camera/validFOVLat",
+		config.camera.validFovLat
+	);
+	ros::param::getCached(
+		"~config/camera/validFOVLong",
+		config.camera.validFovLong
+	);
 	ros::param::getCached(
 		"~config/path",
 		config.path
@@ -73,7 +91,6 @@ int init(){
 		"~config/depthImage/cannyLevelTwo",
 		config.depthImage.cannyLevelTwo
 	);
-
 	context = Context(config);
 
 	return errorCode;
@@ -181,21 +198,21 @@ int tryToMatch(){
 	return errorCode;
 }
 
-int showCandidates(){
+int candDebug(){
 	int errorCode = 0;
 
 	if(!candVectReady) return errorCode;
 	if(!colorImageReady) return errorCode;
 
-	cv::Mat imageWithCandidates;
+	cv::Mat image;
 	errorCode = candShow(
 		candVect,
 		sampleData.colorImage.image,
-		imageWithCandidates
+		image
 	);
 	if(errorCode) return errorCode;
 
-	cv::imshow("Candidates", imageWithCandidates);
+	cv::imshow("Candidates", image);
 	cv::waitKey(0);
 
 	return errorCode;
@@ -204,17 +221,28 @@ int showCandidates(){
 void candCallback(const CandidatesConstPtr & candsMsgPtr){
 	int errorCode = 0;
 
+	ROS_INFO(__FUNCTION__);
+
 	// copy candidates
 	candVect = vector<Candidate>(candsMsgPtr->candidates);
 	candVectReady = true;
+	candValid = candCheckIfValid(candVect, context.camera);
 
-	errorCode = showCandidates();
+	if(candValid){
+		cout << "Valid object found" << endl;
+	}else{
+		cout << "No valid object found" << endl;
+	}
+
+/*
+	errorCode = candDebug();
 	if(errorCode){
 		cout << "Error in " << __FUNCTION__ << endl;
 		cout << "Could not show candidates" << endl;
 		return;
 	}
-
+*/
+	
 	errorCode = tryToMatch();
 	if(errorCode){
 		cout << "Error in " << __FUNCTION__ << endl;
@@ -225,6 +253,8 @@ void candCallback(const CandidatesConstPtr & candsMsgPtr){
 
 void colorCallback(const ImageConstPtr & colorMsgPtr){
 	int errorCode = 0;
+
+	ROS_INFO(__FUNCTION__);
 
 	cv_bridge::CvImagePtr imagePtr;
 	imagePtr = cv_bridge::toCvCopy(colorMsgPtr);
@@ -306,6 +336,7 @@ int main(int argc, char ** argv){
 		TOPIC_OUT_OBJECT, 1
 	);
 
+	candValid = false;
 	candVectReady = false;
 	colorImageReady = false;
 	depthImageReady = false;
