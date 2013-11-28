@@ -118,7 +118,7 @@ int publishResults(
 	const Object & object = inResults[0].first;
 	const ObjectDataResult & result = inResults[0].second;
 
-	cout << "Best Object: " << object.name;
+	cout << "Best Object: " << object.name << endl;
 	
 	vision_object::Object msg;
 	msg.objectName = object.name;
@@ -133,13 +133,13 @@ int match(){
 	int errorCode = 0;
 
 	candValid = candCheckIfValid(candVect, context.camera);
-
-	if(candValid){
-		cout << "Valid object found" << endl;
-	}else{
+	
+	if(!candValid){
 		cout << "No valid object found" << endl;
 		return errorCode;
 	}
+	
+	cout << "Valid object found" << endl;
 
 /*
 	errorCode = candDebug();
