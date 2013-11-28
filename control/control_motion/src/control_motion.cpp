@@ -657,6 +657,7 @@ int forward(ros::Rate loop_rate){
 		if(stop_flag){
 			stop();
 			ROS_INFO("Object ahead!\n");
+			stop_flag = 0;
 			return 0;
 		}
 	
@@ -854,6 +855,7 @@ int rotate(ros::Rate loop_rate){
 	} 
 	ROS_INFO("Finished rotating");
 	last_angle = 0;
+	stop_flag = 0;
 	return 0;
 }
 
@@ -881,6 +883,7 @@ int forward_wall(ros::Rate loop_rate){
 		if(stop_flag){
 			stop();
 			ROS_INFO("Object ahead!\n");
+			stop_flag=0;
 			return 0;
 		}
 

@@ -4,6 +4,7 @@
 #include "control_logic/info.h"
 #include <core_sensors/ir.h>
 #include <theia_services/brain_wall.h>
+#include <theia_services/stop.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
@@ -38,7 +39,7 @@ const int median_size = 3;
 char info_heading='E';
 int info_wall=0;
 ros::Publisher info_pub;
-
+ros::Publisher stop_pub;
 
 double ir[ir_size] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
 double ir_raw[ir_size][median_size];
@@ -108,11 +109,20 @@ void readIrData(core_sensors::ir::ConstPtr ir_msg){
  * */
 void readObjectData(theia_services::object::ConstPtr msg){
 
-	object_in_front = msg -> object;
+	theia_services::stop stop_msg;
 
-	if (object_in_front){
-		flag_object = 1;
+	if(!flag_object){
+		stop_msg.stop=1;
+
+		stop_pub.publish(stop_msg);
+
+		object_in_front = msg -> object;
+
+		if (object_in_front){
+			flag_object = 1;
+		}
 	}
+
 
 }
 
@@ -563,16 +573,16 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 	//Get empty space in history vector
 	shift_history();
 
-	if( !wall_in_range(3, front_min) || flag_avoid){ 
+	if( !wall_in_range(3, front_min) || flag_avoid || flag_object){ 
 		//There is an evil wall at front 
+		
 		if(!flag_avoid){
 
 			if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
 				history[0].driving_mode = 2;
 				history[0].driving_parameters=rotate2_not_last_wall();
 				flag_avoid = 1;
-			}		
-
+			}
 		}else{
 			//(flag_avoid)
 			//If we are avoiding and object then we shouldn't see that object anymore
@@ -582,14 +592,30 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 					history[0].driving_mode = 2;
 					history[0].driving_parameters=rotate2_not_last_wall();
 					flag_avoid = 1;
+					flag_object = 0;
 				}
-			}else if(history[1].driving_mode == 2){
+			}else if(history[1].driving_mode == 2 && flag_avoid){
 				flag_turning = 1;
 				flag_avoid=0;
 				history[0].driving_mode = 1;
 				history[0].driving_parameters=forward_standard;
-			}
+			
 
+			}else if(flag_object!=0){
+
+				if(flag_object==1){
+
+					history[0].driving_mode = 2;
+					history[0].driving_parameters=rotate2_not_last_wall();
+					flag_object=2;
+
+				}else if (flag_object==2){
+					flag_turning = 1;
+					flag_object = 0;
+					history[0].driving_mode = 1;
+					history[0].driving_parameters=forward_standard;		
+				}
+			}
 		}
 
 	}else{
@@ -968,6 +994,7 @@ int main(int argc, char ** argv){
 	//ros::Subscriber camera_data = n.subscribe("/core_sensors_ir/ir", 1, readCameraData);
 	ros::Subscriber object_subs = n.subscribe<theia_services::object>("/control_logic/object",1,readObjectData);
 
+	stop_pub = n.advertise<theia_services::stop>("/control_motion/stop",1);
 	info_pub = n.advertise<control_logic::info>("/control_logic/info",1);
 
 	initialize_history();
