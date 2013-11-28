@@ -17,7 +17,7 @@
 ros::Publisher dist_pub;
 long num;
 
-const int AVG_MAX=5;
+const int AVG_MAX=1;
 double avg[8][AVG_MAX];
 double med[8][AVG_MAX];
 
@@ -133,6 +133,22 @@ double convert(int raw,int sensor){
 	p[5][4]=-1.88*pow(10,0);
 	p[5][5]=1.11*pow(10,2);*/
 	
+	// left crossed sensor
+	
+	p[6][0]=2.1719*pow(10,-9);
+	p[6][1]=-3.2012*pow(10,-6);
+	p[6][2]=1.7810*pow(10,-3);
+	p[6][3]=-4.6580*pow(10,-1);
+	p[6][4]=5.2260*pow(10,1);
+	
+	// right crossed sensor
+	
+	p[7][0]=1.3181*pow(10,-9);
+	p[7][1]=-2.1593*pow(10,-6);
+	p[7][2]=1.3337*pow(10,-3);
+	p[7][3]=-3.8647*pow(10,-1);
+	p[7][4]=4.7809*pow(10,1);
+	
 	return (double) p[sensor-1][0]*pow(raw,4)+p[sensor-1][1]*pow(raw,3)+p[sensor-1][2]*pow(raw,2)+p[sensor-1][3]*pow(raw,1)+p[sensor-1][4]*pow(raw,0);
 
 }
@@ -146,7 +162,7 @@ void get_distance(const differential_drive::AnalogC::ConstPtr msg){
 	core_sensors::ir dist_msg;
 	
 	
-	for(int i=0; i<7; i++)
+	for(int i=0; i<8; i++)
 		for(int j=0; j<AVG_MAX-1; j++)
 			avg[i][j+1]=avg[i][j];
 
@@ -160,7 +176,7 @@ void get_distance(const differential_drive::AnalogC::ConstPtr msg){
 	avg[6][0]=convert(msg->ch7,7);
 	avg[7][0]=convert(msg->ch8,8);
 	
-	for(int i=0; i<7;i++)
+	for(int i=0; i<8;i++)
 		for(int j=0; j<AVG_MAX;j++)
 			med[i][j]=avg[i][j]; //so that we keep the temporal order after the qsort
 
@@ -168,7 +184,7 @@ void get_distance(const differential_drive::AnalogC::ConstPtr msg){
 	
 	// To do an average
 	
-	for(int i=0; i<7; i++){
+	for(int i=0; i<8; i++){
 		dist_msg.dist[i]=0;
 		for(int j=0; j<AVG_MAX;j++)
 			dist_msg.dist[i]+=avg[i][j]/AVG_MAX;

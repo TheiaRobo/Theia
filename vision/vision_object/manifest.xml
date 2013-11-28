@@ -15,6 +15,7 @@
   <depend package="sensor_msgs"/>
   <depend package="std_msgs"/>
   <depend package="vision_common"/>
+  <depend package="vision_plane"/>
 </package>
 
 

@@ -5,28 +5,37 @@
 #include <cv_bridge/cv_bridge.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <std_msgs/Empty.h>
 #include <vision_object/Object.h>
+#include <vision_plane/Candidate.h>
+#include <vision_plane/Candidates.h>
 
 #include "object.h"
 
 #define NODE_NAME "vision_object"
+#define TOPIC_IN_CAND "/vision/plane/cand"
 #define TOPIC_IN_COLOR "/camera/rgb/image_rect"
 #define TOPIC_IN_DEPTH "/camera/depth/image_rect"
 #define TOPIC_OUT_OBJECT "/vision/object"
 
 using namespace std;
 using namespace message_filters;
+using namespace vision_plane;
 using namespace sensor_msgs;
 
 Config config;
 Context context(config);
+vector<Candidate> candVect;
 vector<Object> objectVect;
 ObjectData sampleData;
+bool candVectReady;
 bool colorImageReady;
 bool depthImageReady;
+ros::Subscriber candSub;
 ros::Subscriber colorImageSub;
 ros::Subscriber depthImageSub;
 ros::Publisher objectPub;
@@ -144,7 +153,9 @@ int train(){
 		for(size_t j = 0; j < numbData; j++){
 			ObjectData & data = object.objectDataVect[j];
 			data.colorImage.showKeypoints();
-			// data.depthImage.show();
+/*
+			data.depthImage.show();
+*/
 		}
 
 	}
@@ -155,16 +166,91 @@ int train(){
 int tryToMatch(){
 	int errorCode = 0;
 
+	if(!candVectReady) return 0;
 	if(!colorImageReady) return 0;
 	if(!depthImageReady) return 0;
 
 	errorCode = match();
 	if(errorCode) return errorCode;
 
+	candVectReady = false;
 	colorImageReady = false;
 	colorImageReady = false;
 
 	return errorCode;
+}
+
+int showCandidates(){
+	/**
+	* TODO
+	* Put this in parameter server
+	*/
+	static double camFOVLat = 45 * M_PI / 180;
+	static double camFOVLong = 57.5 * M_PI / 180;
+
+	int errorCode = 0;
+
+	if(!candVectReady) return errorCode;
+	if(!colorImageReady) return errorCode;
+
+	cv::Mat image = sampleData.colorImage.image.clone();
+	
+	size_t numbCands = candVect.size();
+	if(!numbCands) return errorCode;
+
+	double pxPerLat = image.rows / camFOVLat;
+	double pxPerLong = image.cols / camFOVLong;
+
+	for(size_t i = 0; i < numbCands; i++){
+		Candidate & cand = candVect[i];
+
+		double minRow = image.rows / 2 - cand.minLatitude * pxPerLat;
+		double maxRow = image.rows / 2 - cand.maxLatitude * pxPerLat;
+		double minCol = image.cols / 2 - cand.minLongitude * pxPerLong;
+		double maxCol = image.cols / 2 - cand.maxLongitude * pxPerLong;
+
+		cv::Point pointArr[4];
+		pointArr[0] = cv::Point(minCol, minRow);
+		pointArr[1] = cv::Point(minCol, maxRow);
+		pointArr[2] = cv::Point(maxCol, maxRow);
+		pointArr[3] = cv::Point(maxCol, minRow);
+
+		for(size_t j = 0; j < 4; j++){
+			cv::line(
+				image,
+				pointArr[j],
+				pointArr[(j + 1) % 4],
+				cv::Scalar( 0, 255, 255 )
+			);
+		}
+	}
+
+	cv::imshow("Candidates", image);
+	cv::waitKey(0);
+
+	return errorCode;
+}
+
+void candCallback(const CandidatesConstPtr & candsMsgPtr){
+	int errorCode = 0;
+
+	// copy candidates
+	candVect = vector<Candidate>(candsMsgPtr->candidates);
+	candVectReady = true;
+
+	errorCode = showCandidates();
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not show candidates" << endl;
+		return;
+	}
+
+	errorCode = tryToMatch();
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Matching failed" << endl;
+		return;
+	}
 }
 
 void colorCallback(const ImageConstPtr & colorMsgPtr){
@@ -241,12 +327,16 @@ int main(int argc, char ** argv){
 	ros::init(argc, argv, NODE_NAME);
 	ros::NodeHandle node;
 
+	candSub = node.subscribe(TOPIC_IN_CAND, 5, candCallback);
 	colorImageSub = node.subscribe(TOPIC_IN_COLOR, 1, colorCallback);
+/*
 	depthImageSub = node.subscribe(TOPIC_IN_DEPTH, 1, depthCallback);
+*/
 	objectPub = node.advertise<vision_object::Object>(
 		TOPIC_OUT_OBJECT, 1
 	);
 
+	candVectReady = false;
 	colorImageReady = false;
 	depthImageReady = false;
 

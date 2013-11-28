@@ -4,7 +4,7 @@
      mapping
 
   </description>
-  <author>Jimmy_Robo</author>
+  <author>Robo</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/mapping</url>
@@ -13,6 +13,10 @@
   <depend package="core_sensors"/>
   <depend package="control_logic"/>
   <depend package="nav_msgs"/>
+  <depend package="visualization_msgs"/>
+  <depend package="tf"/>
+  <depend package="theia_services"/>
+  <depend package="vision_object"/>
 
 </package>
 

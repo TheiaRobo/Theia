@@ -3,6 +3,9 @@ core: {L: 21.35, R1: 5.0, R2: 5.0}
 vision_object:
   config:
     path: /home/amotta/Documents/Theia/vision/vision_object/train
+    camera:
+       fovLat: 45,
+       fovLong: 57.5
     colorImage:
         minHessian: 400
         maxMeanSquareError: 0.35
@@ -14,4 +17,9 @@ vision_object:
 vision_plane:
   config:
     crop: {maxX: 20, maxY: 0.1, maxZ: 20, minX: -20, minY: -0.1, minZ: 0}
-    plane: {percentage: 0.25}
+    leafSize: 0.02
+    minPercentage: 0.15
+    numbIterations: 1000
+    objectSize: 0.05
+    planeDistThresh: 0.02
+    planeOptimize: 1
