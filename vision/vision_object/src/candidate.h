@@ -8,7 +8,7 @@
 #include "camera.h"
 
 bool candCheckIfValid(
-	const std::vector<vision_plane::Candidate> & inCandVect,
+	const vision_plane::Candidate & inCand,
 	const CameraContext & inContext
 );
 
