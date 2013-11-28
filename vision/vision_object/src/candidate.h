@@ -12,6 +12,13 @@ bool candCheckIfValid(
 	const CameraContext & inContext
 );
 
+/*
+int candFilterValid(
+	const CameraContext & inContext,
+	std::vector<vision_plane::Candidate> & ioCandVect
+);
+*/
+
 int candShow(
 	const std::vector<vision_plane::Candidate> & inCandVect,
 	const cv::Mat & inImage,

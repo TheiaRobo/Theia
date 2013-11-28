@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <utility>
@@ -96,30 +97,61 @@ int init(){
 	return errorCode;
 }
 
+bool compareResultPairs(
+	const pair<Object, ObjectDataResult> & inOne,
+	const pair<Object, ObjectDataResult> & inTwo
+){
+	return inOne.second.isBetterThan(inTwo.second);
+}
+
 int publishResults(
 	const vector< pair<Object, ObjectDataResult> > & inResults
 ){
 	int errorCode = 0;
 
-	size_t numbResults = inResults.size();
-	for(size_t i = 0; i < numbResults; i++){
-		const Object & object = inResults[i].first;
-		const ObjectDataResult & result = inResults[i].second;
+	if(inResults.empty()) return errorCode;
 
-		vision_object::Object msg;
-		msg.objectName = object.name;
-		msg.objectAngle = result.angle;
+	// sort results
+	vector< pair<Object, ObjectDataResult> > workingVect(inResults);
+	sort(workingVect.begin(), workingVect.end(), compareResultPairs);
 
-		objectPub.publish(msg);
-	}
+	const Object & object = inResults[0].first;
+	const ObjectDataResult & result = inResults[0].second;
+
+	cout << "Best Object: " << object.name;
 	
+	vision_object::Object msg;
+	msg.objectName = object.name;
+	msg.objectAngle = result.angle;
+
+	objectPub.publish(msg);
+
 	return errorCode;
 }
 
 int match(){
 	int errorCode = 0;
 
+	candValid = candCheckIfValid(candVect, context.camera);
+
+	if(candValid){
+		cout << "Valid object found" << endl;
+	}else{
+		cout << "No valid object found" << endl;
+		return errorCode;
+	}
+
+/*
+	errorCode = candDebug();
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not show candidates" << endl;
+		return errorCode;
+	}
+*/
+
 	size_t numbObjects = objectVect.size();
+	pair<Object, ObjectDataResult> bestResult;
 	vector< pair<Object, ObjectDataResult> > resultVect;
 
 	for(size_t i = 0; i < numbObjects; i++){
@@ -186,7 +218,9 @@ int tryToMatch(){
 
 	if(!candVectReady) return 0;
 	if(!colorImageReady) return 0;
+/*
 	if(!depthImageReady) return 0;
+*/
 
 	errorCode = match();
 	if(errorCode) return errorCode;
@@ -204,6 +238,7 @@ int candDebug(){
 	if(!candVectReady) return errorCode;
 	if(!colorImageReady) return errorCode;
 
+/*
 	cv::Mat image;
 	errorCode = candShow(
 		candVect,
@@ -214,6 +249,7 @@ int candDebug(){
 
 	cv::imshow("Candidates", image);
 	cv::waitKey(0);
+*/
 
 	return errorCode;
 }
@@ -221,28 +257,10 @@ int candDebug(){
 void candCallback(const CandidatesConstPtr & candsMsgPtr){
 	int errorCode = 0;
 
-	ROS_INFO(__FUNCTION__);
-
 	// copy candidates
 	candVect = vector<Candidate>(candsMsgPtr->candidates);
 	candVectReady = true;
-	candValid = candCheckIfValid(candVect, context.camera);
 
-	if(candValid){
-		cout << "Valid object found" << endl;
-	}else{
-		cout << "No valid object found" << endl;
-	}
-
-/*
-	errorCode = candDebug();
-	if(errorCode){
-		cout << "Error in " << __FUNCTION__ << endl;
-		cout << "Could not show candidates" << endl;
-		return;
-	}
-*/
-	
 	errorCode = tryToMatch();
 	if(errorCode){
 		cout << "Error in " << __FUNCTION__ << endl;
@@ -253,8 +271,6 @@ void candCallback(const CandidatesConstPtr & candsMsgPtr){
 
 void colorCallback(const ImageConstPtr & colorMsgPtr){
 	int errorCode = 0;
-
-	ROS_INFO(__FUNCTION__);
 
 	cv_bridge::CvImagePtr imagePtr;
 	imagePtr = cv_bridge::toCvCopy(colorMsgPtr);
