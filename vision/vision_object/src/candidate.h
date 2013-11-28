@@ -21,8 +21,7 @@ int candFilterValid(
 
 int candShow(
 	const std::vector<vision_plane::Candidate> & inCandVect,
-	const cv::Mat & inImage,
-	cv::Mat & outImage
+	const cv::Mat & inImage
 );
 
 int candToRect(

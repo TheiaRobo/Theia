@@ -1,4 +1,5 @@
 #include <cmath>
+#include <opencv2/highgui/highgui.hpp>
 
 #include "candidate.h"
 
@@ -40,26 +41,28 @@ bool candCheckIfValid(
 
 int candShow(
 	const vector<Candidate> & inCandVect,
-	const cv::Mat & inImage,
-	cv::Mat & outImage
+	const cv::Mat & inImage
 ){
 	int errorCode = 0;
 
 	size_t numbCands = inCandVect.size();
 	if(!numbCands) return errorCode;
 
-	outImage = inImage.clone();
+	cv::Mat image = inImage.clone();
 	const cv::Scalar color(0, 255, 255);
 
 	for(size_t i = 0; i < numbCands; i++){
 		const Candidate & cand = inCandVect[i];
 
 		cv::Rect rect;
-		errorCode = candToRect(cand, outImage, rect);
+		errorCode = candToRect(cand, image, rect);
 		if(errorCode) return errorCode;
 		
-		cv::rectangle(outImage, rect, color);
+		cv::rectangle(image, rect, color);
 	}
+	
+	cv::imshow("Candidates", image);
+	cv::waitKey(0);
 
 	return errorCode;
 }

@@ -238,18 +238,11 @@ int candDebug(){
 	if(!candVectReady) return errorCode;
 	if(!colorImageReady) return errorCode;
 
-/*
-	cv::Mat image;
 	errorCode = candShow(
 		candVect,
-		sampleData.colorImage.image,
-		image
+		sampleData.colorImage.image
 	);
 	if(errorCode) return errorCode;
-
-	cv::imshow("Candidates", image);
-	cv::waitKey(0);
-*/
 
 	return errorCode;
 }
@@ -260,6 +253,13 @@ void candCallback(const CandidatesConstPtr & candsMsgPtr){
 	// copy candidates
 	candVect = vector<Candidate>(candsMsgPtr->candidates);
 	candVectReady = true;
+	
+	errorCode = candDebug();
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not debug object candidates" << endl;
+		return;
+	}
 
 	errorCode = tryToMatch();
 	if(errorCode){
