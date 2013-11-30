@@ -45,15 +45,15 @@ search_set::search_set(node start_node){
 
 void search_set::add_node(node new_node){
 
-	node_list.push(new_node);
+	node_list.push_back(new_node);
 
 }
 
 void search_set::remove_node(int coords[2]){
 	
-	for(int i=0; i < node_list.size(); i++){
-		if(node_list[i].coords[0] == coords[0] && node_list[i].coords[1] == coords[1])
-			node_list.remove(i);
+	for(std::vector<node>::iterator i=node_list.begin(); i < node_list.end(); i++){
+		if(i->coords[0] == coords[0] && i->coords[1] == coords[1])
+			node_list.erase(i);
 	}
 	
 	return;
