@@ -52,6 +52,7 @@ double heur(int coords[2], int goal_coords[2]){
 
 }
 
+
 int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int val_to_find){
 	int lateral_size=std::sqrt(matrix_array.size());
 	std::vector<std::vector<signed char> >matrix(lateral_size);
@@ -136,32 +137,27 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 		
 		if(current.coords[0]-1>=0){
 			
-			n.coords[0]=current.coords[0]-1;
-			n.coords[1]=current.coords[1];
+			coords[0]=current.coords[0]-1;
+			coords[1]=current.coords[1];
 			
 			t_h=heur(n.coords,goal_coords);
 			t_g = current.t_g + 1;
 			t_f = t_g + t_h;
 			
-			if(nodes_set.check_if_in_set(n.coords)){
+			if(nodes_set.check_if_in_set(coords)){
 				
 				n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
 				
 			}else{
+				n=create_node(coords,t_f,t_g,current.coords);
 				
-				n.t_g=t_g;
-				n.t_f=t_f;				
 			}
 			
 			if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
 				
-				n.prev=&current;
-				n.t_g=t_g;
-				n.t_f=t_f;
-				
 				if(!openset.check_if_in_set(n.coords))
 					openset.push_node(n);
-				else{
+				else{ // update the value of the node in openset
 					openset.pop_requested(n.coords);
 					openset.push_node(n);
 				}
@@ -169,9 +165,6 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 				nodes_set.push_node(n);
 				
 			}
-			
-			
-			
 			
 		}
 		
