@@ -103,6 +103,13 @@ void readIrData(core_sensors::ir::ConstPtr ir_msg){
 		ir[i]=median(ir_raw[i]);
 	}
     
+    if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2)) )
+    {
+        flag_pointy=1;
+    }
+
+    
+    
 }
 
 /*
@@ -553,8 +560,9 @@ int give_info_wall(int resB, double resparameter)
 }
 
 int cross_detection(void){
-    if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2)) )
+    if ( flag_pointy )
     {
+        flag_pointy=0;
         return 1;
     }else
         return 0;
