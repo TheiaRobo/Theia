@@ -1,6 +1,6 @@
+
 #include <ros/ros.h>
-#include <theia_services/MotionCommand.h>
-#include <theia_services/object.h>
+#include "theia_services/MotionCommand.h"
 #include "control_logic/info.h"
 #include <core_sensors/ir.h>
 #include <theia_services/brain_wall.h>
@@ -52,8 +52,6 @@ driving_history history[hist_size];
 
 int flag_turning = 0;
 int flag_avoid = 0;
-int flag_object = 0;
-int object_in_front = 0;
 bool active=false;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -99,19 +97,6 @@ void readIrData(core_sensors::ir::ConstPtr ir_msg){
 	for(int i=0; i<ir_size; i++){
 		ir_raw[i][0]=ir_msg->dist[i];
 		ir[i]=median(ir_raw[i]);
-	}
-
-}
-
-/* 
- * readObjectData: updates the IR values obtained from the core, then filtering.
- * */
-void readObjectData(theia_services::object::ConstPtr msg){
-
-	object_in_front = msg -> object;
-
-	if (object_in_front){
-		flag_object = 1;
 	}
 
 }
@@ -239,18 +224,6 @@ void shift_history(void){
 }
 
 /* 
- * object_in_range: Checks from sensor camera if there is an object in front
- **/
-int object_in_range(void){ 
-
-	if(object_in_front){
-		return 1;
-	}else{
-		return 0;
-	}
-}
-
-/* 
  * wall_in_range: Checks for a nearby wall for a given threshold, thres. Side: 1 - Left, 2 - Right, 3 - front, 4- crossed
  **/
 int wall_in_range(int side, double thres){ 
@@ -329,27 +302,6 @@ int closest_wall(void){
 		return -1;
 	}
 }
-
-
-
-/** 
- * closest_frontal_wall: returns the closest frontal wall with the cross sensors
- * wall = 1 (left); wall = 2 (right);	
- **/
-/*int closest_frontal_wall(void){
-
-	double closest_wall_left = 0.0;
-	double closest_wall_right = 0.0;
-
-	if (!wall_in_range(3, front_min) ){
-		return 2;
-	}
-
-	//No wall in range ( !wall_in_range(1, side_max) && !wall_in_range(2, side_max))
-	ROS_INFO("Error closest_wall = -1");
-	return -1;
-	}
-}*/
 
 /*
  * last_wall_followed: search last wall followed. Looks if history.driving_mode == 3 (FOLLOW_W)
@@ -528,12 +480,8 @@ void publish_info(){
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 
 // WALL FOLLOWING SECTION
 //  
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*
@@ -563,91 +511,150 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 	//Get empty space in history vector
 	shift_history();
 
-	if( !wall_in_range(3, front_min) || flag_avoid){ 
-		//There is an evil wall at front 
-		if(!flag_avoid){
+	///////////////////////////////////////////////////
+	//CASE 0: I am not seeing walls
+	///////////////////////////////////////////////////
 
-			if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
-				history[0].driving_mode = 2;
-				history[0].driving_parameters=rotate2_not_last_wall();
-				flag_avoid = 1;
-			}		
+	if ( !wall_in_range(1, side_max) && !wall_in_range(2, side_max) && (!wall_in_range(3, front_min)          ) ){ // && !wall_in_range(4,cross_thres1) && !wall_in_range(4,cross_thres2))
+
+		if(!flag_turning){
+
+			if(history[1].driving_mode == 1){
+				//Going forward trying to find a wall
+				//Might want to go infinite distance
+				history[0].driving_mode = 1;
+				history[0].driving_parameters = forward_standard;
+				flag_turning=0;
+			}
+
+			else if(history[1].driving_mode == 2){
+				/*We rotated because we saw a wall in the front and after rotated 
+				we stopped seeing it. We want now to go around it. FWD... then ROTATE*/
+				history[0].driving_mode = 1;
+				history[0].driving_parameters = forward_standard;
+				flag_turning=1;
+			}
+
+			else if(history[1].driving_mode == 3){
+				//I was following a wall and I lost it
+				history[0].driving_mode = 1;
+				history[0].driving_parameters = forward_standard;
+				flag_turning=1;
+
+			}else{
+				//COMING FROM NOWHERE
+				if(history[1].driving_mode==0){
+					ROS_INFO("Coming from nowhere");
+					history[0].driving_mode = 3;
+					history[0].driving_parameters = closest_wall();					   //Follow the closest wall
+					info_wall=closest_wall();
+					flag_turning = 0;
+				}else{
+					ROS_INFO("Case 0a: Impossible case flag_turning=0 and coming driving_mode = %d", history[1].driving_mode);
+				}
+			}
+
 
 		}else{
-			//(flag_avoid)
-			//If we are avoiding and object then we shouldn't see that object anymore
-			if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
-				//If we see a new object in the front while avoiding, then we sort of begin to avoid
-				if(history[1].driving_mode == 1 || history[1].driving_mode == 2){
+			// flag_turning = 1
+
+			//Same code as in the case of at least 1 wall when I am detecting the wall I was not following
+			if(history[1].driving_mode == 1){
+
+				if(history[1].driving_parameters==forward_standard){
 					history[0].driving_mode = 2;
-					history[0].driving_parameters=rotate2_not_last_wall();
-					flag_avoid = 1;
+					info_wall=-1;
+					history[0].driving_parameters=rotate2_last_wall();
+
+				}else if(history[1].driving_parameters==forward_medium){
+					history[0].driving_mode = 2;
+					info_wall=-1;
+					history[0].driving_parameters=rotate2_last_rotation(2);
+
+				}else if(history[1].driving_parameters==forward_extended){
+					ROS_INFO("Case 0b: I did not find a wall to follow\nImpossible case history[1].driving_parameters = %.2f",history[1].driving_parameters);
+				}else{
+					ROS_INFO("Case 0b: Error: history[1].driving_parameters = %.2f",history[1].driving_parameters);
 				}
-			}else if(history[1].driving_mode == 2){
-				flag_turning = 1;
-				flag_avoid=0;
+			}
+
+			else if(history[1].driving_mode == 2){
 				history[0].driving_mode = 1;
-				history[0].driving_parameters=forward_standard;
+				if(history[2].driving_parameters==forward_standard){
+					history[0].driving_parameters = forward_medium;
+				}else{
+					history[0].driving_parameters = forward_extended;
+					flag_turning = 0;
+				}
+
+			}else if(history[1].driving_mode == 3){
+				ROS_INFO("Case 0b: Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
+			}else{
+				ROS_INFO("Case 0b: Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
 			}
 
 		}
 
-	}else{
-
 		///////////////////////////////////////////////////
-		//CASE 0: I am not seeing walls
+		//CASE 1: If I am seeing at least one wall AND there is no wall very close at the front
 		///////////////////////////////////////////////////
+	}else if (((wall_in_range(1, side_max) || wall_in_range(2, side_max)) ) && (!wall_in_range(3, front_min) && !(wall_in_range(4,cross_thres1) && !wall_in_range(4,cross_thres2)))){
 
-		if ( !wall_in_range(1, side_max) && !wall_in_range(2, side_max) && (!wall_in_range(3, front_min)          ) ){ // && !wall_in_range(4,cross_thres1) && !wall_in_range(4,cross_thres2))
+		// flag_turning = 0
+		if (!flag_turning){
+			if(history[1].driving_mode == 1){
+				//Follow the wall if I am not turning around
+				history[0].driving_mode = 3;
+				history[0].driving_parameters = last_wall_followed();					   
+				info_wall=last_wall_followed();
+				//Previous instruction correcting bug in the defined
+				/*history[0].driving_parameters = closest_wall();					   
+				info_wall=closest_wall();*/
+				//END Previous instruction
+				flag_turning=0;
 
-			if(!flag_turning){
+			}else if(history[1].driving_mode == 2){
+				//We might be in a corner after rotation
+				history[0].driving_mode = 3;
+				history[0].driving_parameters = last_wall_followed();					   
+				info_wall=last_wall_followed();
+				flag_turning=0;
 
-				if(history[1].driving_mode == 1){
-					//Going forward trying to find a wall
-					//Might want to go infinite distance
-					history[0].driving_mode = 1;
-					history[0].driving_parameters = forward_standard;
-					flag_turning=0;
-				}
-
-				else if(history[1].driving_mode == 2){
-					/*We rotated because we saw a wall in the front and after rotated 
-						we stopped seeing it. We want now to go around it. FWD... then ROTATE*/
-					history[0].driving_mode = 1;
-					history[0].driving_parameters = forward_standard;
-					flag_turning=1;
-				}
-
-				else if(history[1].driving_mode == 3){
-					//I was following a wall and I lost it
-					history[0].driving_mode = 1;
-					history[0].driving_parameters = forward_standard;
-					flag_turning=1;
-
-				}else{
-					//COMING FROM NOWHERE
-					if(history[1].driving_mode==0){
-						ROS_INFO("Coming from nowhere");
-						history[0].driving_mode = 3;
-						history[0].driving_parameters = closest_wall();					   //Follow the closest wall
-						info_wall=closest_wall();
-						flag_turning = 0;
-					}else{
-						ROS_INFO("Case 0a: Impossible case flag_turning=0 and coming driving_mode = %d", history[1].driving_mode);
-					}
-				}
-
+			}else if(history[1].driving_mode == 3){
+				//I was following a wall and I lost it. Start to turn around
+				history[0].driving_mode = 1;
+				history[0].driving_parameters = forward_standard;
+				flag_turning=1;
 
 			}else{
-				// flag_turning = 1
+				//COMING FROM NOWHERE
+				ROS_INFO("Case 1a: Impossible case flag_turning=0 and coming driving_mode = %d", history[1].driving_mode);
+				history[0].driving_mode = 3;
+				history[0].driving_parameters = closest_wall();					   
+				info_wall=closest_wall();
+				flag_turning = 0;
+			}
 
-				//Same code as in the case of at least 1 wall when I am detecting the wall I was not following
+
+		}else{
+			// flag_turning = 1
+
+			if (wall_in_range(last_wall_followed(), side_max)){
+				//Then it means that I am seeing the wall I was following before I started turning
+				history[0].driving_mode = 3;
+				history[0].driving_parameters=last_wall_followed();
+				info_wall=last_wall_followed();
+				flag_turning = 0;	
+			}else{
+
 				if(history[1].driving_mode == 1){
 
 					if(history[1].driving_parameters==forward_standard){
 						history[0].driving_mode = 2;
 						info_wall=-1;
+
 						history[0].driving_parameters=rotate2_last_wall();
+
 
 					}else if(history[1].driving_parameters==forward_medium){
 						history[0].driving_mode = 2;
@@ -655,9 +662,9 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 						history[0].driving_parameters=rotate2_last_rotation(2);
 
 					}else if(history[1].driving_parameters==forward_extended){
-						ROS_INFO("Case 0b: I did not find a wall to follow\nImpossible case history[1].driving_parameters = %.2f",history[1].driving_parameters);
+						ROS_INFO("Case 1b: I did not find a wall to follow\nImpossible case history[1].driving_parameters = %.2f",history[1].driving_parameters);
 					}else{
-						ROS_INFO("Case 0b: Error: history[1].driving_parameters = %.2f",history[1].driving_parameters);
+						ROS_INFO("Case 1b: Error: history[1].driving_parameters = %.2f",history[1].driving_parameters);
 					}
 				}
 
@@ -671,246 +678,235 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 					}
 
 				}else if(history[1].driving_mode == 3){
-					ROS_INFO("Case 0b: Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
+					ROS_INFO("Case 1b: Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
 				}else{
-					ROS_INFO("Case 0b: Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
+					ROS_INFO("Case 1b: Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
 				}
-
 			}
+		}
 
-			///////////////////////////////////////////////////
-			//CASE 1: If I am seeing at least one wall AND there is no wall very close at the front
-			///////////////////////////////////////////////////
-		}else if (((wall_in_range(1, side_max) || wall_in_range(2, side_max)) ) && (!wall_in_range(3, front_min) && !(wall_in_range(4,cross_thres1) && !wall_in_range(4,cross_thres2)))){
+		///////////////////////////////////////////////////
+		//CASE 2: If I am seeing at least one wall to the side AND there is a wall very close at the front or crossed
+		///////////////////////////////////////////////////
+	}else if (((wall_in_range(1, side_max) || wall_in_range(2, side_max)) ) && ((wall_in_range(3, front_min))        )){ //|| wall_in_range(4,cross_thres1) || wall_in_range(4,cross_thres2)
 
-			// flag_turning = 0
-			if (!flag_turning){
-				if(history[1].driving_mode == 1){
-					//Follow the wall if I am not turning around
-					history[0].driving_mode = 3;
-					history[0].driving_parameters = last_wall_followed();					   
-					info_wall=last_wall_followed();
-					//Previous instruction correcting bug in the defined
-					/*history[0].driving_parameters = closest_wall();					   
-						info_wall=closest_wall();*/
-					//END Previous instruction
-					flag_turning=0;
+		// flag_turning = 0
+		if (!flag_turning){
+			if(history[1].driving_mode == 1){
+				//e.g. when we finished turning mode and we face a wall
+				history[0].driving_mode = 2;
+				history[0].driving_parameters=rotate2_not_last_rotation(2);
+				info_wall=-1;
 
-				}else if(history[1].driving_mode == 2){
-					//We might be in a corner after rotation
-					history[0].driving_mode = 3;
-					history[0].driving_parameters = last_wall_followed();					   
-					info_wall=last_wall_followed();
-					flag_turning=0;
+			}else if(history[1].driving_mode == 2){
+				//e.g. when we rotate in an internal corner in a narrow path
+				history[0].driving_mode = 2;
+				history[0].driving_parameters=rotate2_last_rotation(1);
+				info_wall=-1;
 
-				}else if(history[1].driving_mode == 3){
-					//I was following a wall and I lost it. Start to turn around
-					history[0].driving_mode = 1;
-					history[0].driving_parameters = forward_standard;
-					flag_turning=1;
-
-				}else{
-					//COMING FROM NOWHERE
-					ROS_INFO("Case 1a: Impossible case flag_turning=0 and coming driving_mode = %d", history[1].driving_mode);
-					history[0].driving_mode = 3;
-					history[0].driving_parameters = closest_wall();					   
-					info_wall=closest_wall();
-					flag_turning = 0;
-				}
-
+			}else if(history[1].driving_mode == 3){
+				//Internal corner
+				history[0].driving_mode = 2;
+				history[0].driving_parameters=rotate2_not_last_wall();
+				info_wall=-1;
 
 			}else{
-				// flag_turning = 1
+				ROS_INFO("Case 2a: Impossible case flag_turning=0 and coming driving_mode = %d", history[1].driving_mode);
+			}
+		}
 
-				if (wall_in_range(last_wall_followed(), side_max)){
-					//Then it means that I am seeing the wall I was following before I started turning
-					history[0].driving_mode = 3;
-					history[0].driving_parameters=last_wall_followed();
-					info_wall=last_wall_followed();
-					flag_turning = 0;	
-				}else{
+		// flag_turning = 1
+		else{
 
-					if(history[1].driving_mode == 1){
-
-						if(history[1].driving_parameters==forward_standard){
-							history[0].driving_mode = 2;
-							info_wall=-1;
-
-							history[0].driving_parameters=rotate2_last_wall();
-
-
-						}else if(history[1].driving_parameters==forward_medium){
-							history[0].driving_mode = 2;
-							info_wall=-1;
-							history[0].driving_parameters=rotate2_last_rotation(2);
-
-						}else if(history[1].driving_parameters==forward_extended){
-							ROS_INFO("Case 1b: I did not find a wall to follow\nImpossible case history[1].driving_parameters = %.2f",history[1].driving_parameters);
-						}else{
-							ROS_INFO("Case 1b: Error: history[1].driving_parameters = %.2f",history[1].driving_parameters);
-						}
-					}
-
-					else if(history[1].driving_mode == 2){
-						history[0].driving_mode = 1;
-						if(history[2].driving_parameters==forward_standard){
-							history[0].driving_parameters = forward_medium;
-						}else{
-							history[0].driving_parameters = forward_extended;
-							flag_turning = 0;
-						}
-
-					}else if(history[1].driving_mode == 3){
-						ROS_INFO("Case 1b: Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
-					}else{
-						ROS_INFO("Case 1b: Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
-					}
-				}
+			if (wall_in_range(last_wall_followed(), side_max)){
+				//Then it means that I am seeing the wall I following before I started turning
+				history[0].driving_mode = 2;
+				history[0].driving_parameters=rotate2_not_last_wall();
+				info_wall=-1;
+				flag_turning = 0;	
 			}
 
-			///////////////////////////////////////////////////
-			//CASE 2: If I am seeing at least one wall to the side AND there is a wall very close at the front or crossed
-			///////////////////////////////////////////////////
-		}else if (((wall_in_range(1, side_max) || wall_in_range(2, side_max)) ) && ((wall_in_range(3, front_min))        )){ //|| wall_in_range(4,cross_thres1) || wall_in_range(4,cross_thres2)
-
-			// flag_turning = 0
-			if (!flag_turning){
+			else{
 				if(history[1].driving_mode == 1){
-					//e.g. when we finished turning mode and we face a wall
 					history[0].driving_mode = 2;
-					history[0].driving_parameters=rotate2_not_last_rotation(2);
 					info_wall=-1;
+					history[0].driving_parameters=rotate2_last_wall();
+					flag_turning = 0;					
 
 				}else if(history[1].driving_mode == 2){
-					//e.g. when we rotate in an internal corner in a narrow path
 					history[0].driving_mode = 2;
-					history[0].driving_parameters=rotate2_last_rotation(1);
+					history[0].driving_parameters=rotate2_last_wall();
 					info_wall=-1;
+					flag_turning = 0;
 
 				}else if(history[1].driving_mode == 3){
-					//Internal corner
-					history[0].driving_mode = 2;
-					history[0].driving_parameters=rotate2_not_last_wall();
-					info_wall=-1;
-
+					ROS_INFO("Case 2b: Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
 				}else{
-					ROS_INFO("Case 2a: Impossible case flag_turning=0 and coming driving_mode = %d", history[1].driving_mode);
+					ROS_INFO("Case 2b: Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
 				}
 			}
+		}
 
-			// flag_turning = 1
-			else{
+		///////////////////////////////////////////////////
+		//CASE 3: If I am seeing no walls to the side AND there is a wall very close at the front or crossed
+		///////////////////////////////////////////////////
+	}else if (((!wall_in_range(1, side_max) && !wall_in_range(2, side_max)) ) && ((wall_in_range(3, front_min))                   )){ // || (wall_in_range(4,cross_thres1) || wall_in_range(4,cross_thres2))
 
-				if (wall_in_range(last_wall_followed(), side_max)){
-					//Then it means that I am seeing the wall I following before I started turning
+		rot_count=consecutive_rotations(); 
+
+		// flag_turning = 0
+		if (!flag_turning){
+			if(history[1].driving_mode == 1){
+
+				if(rot_count[0]==3){
 					history[0].driving_mode = 2;
-					history[0].driving_parameters=rotate2_not_last_wall();
+					history[0].driving_parameters = -history[rot_count[1]].driving_parameters; //Change the sign of rotation
 					info_wall=-1;
-					flag_turning = 0;	
+					if(history[rot_count[1]].driving_parameters==PI/2)
+						change_heading('R');
+					else
+						change_heading('L');
+				}else{
+					history[0].driving_mode = 2;
+					history[0].driving_parameters=rotate2_last_wall();
+					info_wall=-1;
 				}
 
-				else{
+			}else if(history[1].driving_mode == 2){
+				//e.g., Turning in a corner in a narrow path
+				history[0].driving_mode = 2;
+				history[0].driving_parameters=rotate2_last_wall();
+				info_wall=-1;
+			}else if(history[1].driving_mode == 3){
+				ROS_INFO("Case 3a: Error flag_turning has to be 1");
+
+			}else{
+				ROS_INFO("Case 3a: Impossible case flag_turning=0 and coming driving_mode = %d", history[1].driving_mode);
+			}
+		}
+
+		// flag_turning = 1
+		else{
+			if(history[1].driving_mode == 1){
+				history[0].driving_mode = 2;
+				history[0].driving_parameters=rotate2_last_wall();
+				info_wall=-1;
+			}else if(history[1].driving_mode == 2){
+				//e.g., Trying to access a very narrow gap when turning, and there is no space in front to go FWD
+				history[0].driving_mode = 2;
+				history[0].driving_parameters=rotate2_not_last_rotation(1);
+				info_wall=-1;
+			}else if(history[1].driving_mode == 3){
+				ROS_INFO("Case 3: ERROR I cannot be in history[1].driving_mode = %d and flag=1",history[1].driving_mode);
+			}else{
+				ROS_INFO("Case 3: Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
+			}
+		}
+
+		delete [] rot_count;
+	}
+
+	///////////////////////////////////////////////////
+	//CASE default: No defined case
+	///////////////////////////////////////////////////
+	else {
+		ROS_INFO("\nI am not in any case =(");
+	}
+
+	///////////////////////////////////////////////////
+	//If crossed
+	///////////////////////////////////////////////////
+	if( !wall_in_range(3, front_min) ){ 
+		//There is a evil wall at front or an object 
+		if (1){	//BEFORE if (!flag_turning){
+			if(!flag_avoid){
+
+				//All cases are the same, we might generalize better
+				if(history[1].driving_mode == 1){
+					if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
+						//Nothing to do!
+					}else if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
+						history[0].driving_mode = 2;
+						history[0].driving_parameters=rotate2_not_last_wall();
+						flag_avoid = 1;
+					}			
+				}else if(history[1].driving_mode == 2){
+					if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
+						//Nothing to do!
+					}else if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
+						history[0].driving_mode = 2;
+						history[0].driving_parameters=rotate2_not_last_wall();
+						flag_avoid = 1;
+					}				
+				}else if(history[1].driving_mode == 3){
+					if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
+						//Nothing to do!
+					}else if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2))   ){
+						history[0].driving_mode = 2;
+						history[0].driving_parameters=rotate2_not_last_wall();
+						flag_avoid = 1;
+					}				
+				}
+
+				//(flag_avoid)
+			}else{
+
+				if ( !(wall_in_range(4,cross_thres1)) && !(wall_in_range(4,cross_thres2))   ){
+					//If we are avoiding and object then we shouldn't see that object anymore, otherwise it is a new one
 					if(history[1].driving_mode == 1){
 						history[0].driving_mode = 2;
-						info_wall=-1;
 						history[0].driving_parameters=rotate2_last_wall();
-						flag_turning = 0;					
-
 					}else if(history[1].driving_mode == 2){
-						history[0].driving_mode = 2;
-						history[0].driving_parameters=rotate2_last_wall();
-						info_wall=-1;
-						flag_turning = 0;
-
+						if (history[1].driving_parameters==rotate2_not_last_wall()){
+							//First stage of rotation
+							history[0].driving_mode = 1;
+							history[0].driving_parameters=forward_standard;
+						}
+						else if(history[1].driving_parameters==rotate2_last_wall()){
+							//Second stage of rotation
+							history[0].driving_mode = 1;
+							history[0].driving_parameters=forward_medium;
+							flag_avoid=0;
+						}
+						else{ROS_INFO("ERROR");
+						}
 					}else if(history[1].driving_mode == 3){
-						ROS_INFO("Case 2b: Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
-					}else{
-						ROS_INFO("Case 2b: Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
-					}
-				}
-			}
-
-			///////////////////////////////////////////////////
-			//CASE 3: If I am seeing no walls to the side AND there is a wall very close at the front
-			///////////////////////////////////////////////////
-		}else if (((!wall_in_range(1, side_max) && !wall_in_range(2, side_max)) ) && ((wall_in_range(3, front_min))                   )){ // || (wall_in_range(4,cross_thres1) || wall_in_range(4,cross_thres2))
-
-			rot_count=consecutive_rotations(); 
-
-			// flag_turning = 0
-			if (!flag_turning){
-				if(history[1].driving_mode == 1){
-
-					if(rot_count[0]==3){
-						history[0].driving_mode = 2;
-						history[0].driving_parameters = -history[rot_count[1]].driving_parameters; //Change the sign of rotation
-						info_wall=-1;
-						if(history[rot_count[1]].driving_parameters==PI/2)
-							change_heading('R');
-						else
-							change_heading('L');
-					}else{
-						history[0].driving_mode = 2;
-						history[0].driving_parameters=rotate2_last_wall();
-						info_wall=-1;
-					}
-
-				}else if(history[1].driving_mode == 2){
-					//e.g., Turning in a corner in a narrow path
-					history[0].driving_mode = 2;
-					history[0].driving_parameters=rotate2_last_wall();
-					info_wall=-1;
-				}else if(history[1].driving_mode == 3){
-					ROS_INFO("Case 3a: Error flag_turning has to be 1");
+						ROS_INFO("ERROR");	
+					}	
 
 				}else{
-					ROS_INFO("Case 3a: Impossible case flag_turning=0 and coming driving_mode = %d", history[1].driving_mode);
+					//I see a new object in the front while avoiding
+					if(history[1].driving_mode == 1 || history[1].driving_mode == 2){
+						history[0].driving_mode = 2;
+						history[0].driving_parameters=rotate2_not_last_wall();
+						flag_avoid = 1;
+					}else if(history[1].driving_mode == 3){
+						ROS_INFO("ERROR");	
+					}		
 				}
 			}
 
-			// flag_turning = 1
-			else{
-				if(history[1].driving_mode == 1){
-					history[0].driving_mode = 2;
-					history[0].driving_parameters=rotate2_last_wall();
-					info_wall=-1;
-				}else if(history[1].driving_mode == 2){
-					//e.g., Trying to access a very narrow gap when turning, and there is no space in front to go FWD
-					history[0].driving_mode = 2;
-					history[0].driving_parameters=rotate2_not_last_rotation(1);
-					info_wall=-1;
-				}else if(history[1].driving_mode == 3){
-					ROS_INFO("Case 3: ERROR I cannot be in history[1].driving_mode = %d and flag=1",history[1].driving_mode);
-				}else{
-					ROS_INFO("Case 3: Impossible case flag_turning=1 and coming driving_mode = %d", history[1].driving_mode);
-				}
-			}
-
-			delete [] rot_count;
+		}else{
+			//(flag_turning). Until now both cases are the same. We just now that when turning there is no following the wall
 		}
+	}
 
-		///////////////////////////////////////////////////
-		//CASE default: No defined case
-		///////////////////////////////////////////////////
-		else {
-			ROS_INFO("\nI am not in any case =(");
-		}
-
+	else{
+		//Nothing to do! There is nothing at the front We could have the whole logic in this if statement
 	}
 
 
-
-	///////////////////////////////////////////////////
 	///////////////////////////////////////////////////
 	//Finished cases. Debug
-	///////////////////////////////////////////////////
 	///////////////////////////////////////////////////
 
 	ROS_INFO("Last wall: %d",last_wall_followed());
 	ROS_INFO("Turn flag: %d",flag_turning);
 
+	/*for(int i=1; i<10;i++){
+		printf("Mode at i=%d : %d ",i,history[i].driving_mode);
+	}*/
 	printf("\n");
-
 	switch(history[0].driving_mode){
 	case 1:
 		ROS_INFO("GO FORWARD");
@@ -922,16 +918,24 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 		ROS_INFO("FOLLOW WALL: %.0f",history[0].driving_parameters);
 		break;
 	default:
-		//If an error is detected then the default behaviour is going forward as initialization and shifting function suggest
-		history[0].driving_mode=1;
-		history[0].driving_parameters=forward_standard;
-		ROS_INFO("ERROR!! OMG! ERROR!! \n history[0].driving_parameters == -1");
+		ROS_INFO("ERROR");
 		break;
 	}
 
 	//getchar();
-	res.B = history[0].driving_mode;
-	res.parameter = history[0].driving_parameters;
+
+	if(history[0].driving_parameters == -1){
+		//If an error is detected then the default behaviour is going forward
+		history[0].driving_mode=1;
+		history[0].driving_parameters=forward_standard;
+		res.B = history[0].driving_mode;
+		res.parameter = history[0].driving_parameters;
+		ROS_INFO("ERROR!! OMG! ERROR!! \n history[0].driving_parameters == -1");
+	}else{
+		//If an error is detected then the default behaviour is going forward as initialization and shifting function suggest
+		res.B = history[0].driving_mode;
+		res.parameter = history[0].driving_parameters;
+	}
 	publish_info();
 
 	//loop_rate.sleep();
@@ -949,6 +953,7 @@ bool status(theia_services::brain_wall::Request &req, theia_services::brain_wall
 
 	return true;
 
+
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
@@ -965,8 +970,6 @@ int main(int argc, char ** argv){
 	ros::ServiceServer motion_command = n.advertiseService("/wall_follower/motion_command", think); //Set up service server in this node
 	ros::ServiceServer orders = n.advertiseService("/wall_follower/instructions", status);
 	ros::Subscriber ir_data = n.subscribe("/core_sensors_ir/ir", 1, readIrData);
-	//ros::Subscriber camera_data = n.subscribe("/core_sensors_ir/ir", 1, readCameraData);
-	ros::Subscriber object_subs = n.subscribe<theia_services::object>("/control_logic/object",1,readObjectData);
 
 	info_pub = n.advertise<control_logic::info>("/control_logic/info",1);
 

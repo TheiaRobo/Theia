@@ -19,8 +19,8 @@
  //Initialize
 const float PI=3.1415926f;
 const double resolution_matrix=0.01; // in meter!
-const int x_matrix=10/resolution_matrix; 
-const int y_matrix=10/resolution_matrix;
+const int x_matrix=15/resolution_matrix; 
+const int y_matrix=15/resolution_matrix;
 
 typedef struct _object{
 	std::string name;
@@ -44,7 +44,7 @@ const int white=0;
 // sensor array
 
 double ir[8];
-double inf_thres=7;
+double inf_thres=20;
 
 
 int x_Current_Pose=round(x_matrix/2); //x,y coordinates
@@ -56,8 +56,8 @@ int y_Current_Pose=round(y_matrix/2); //x,y coordinates
 double odo_x[2]={x_matrix*resolution_matrix/2,x_matrix*resolution_matrix/2};
 double odo_y[2]={y_matrix*resolution_matrix/2,y_matrix*resolution_matrix/2};
 double odo_theta=0.0;
-double camera_initial_z=35;
-double Lat_0 = 22.5*pi/180;
+double camera_initial_z=0;
+double Lat_0 = 22.5*PI/180;
 double Long_0 = 0;
 
 // corrected odometry
@@ -156,7 +156,7 @@ void Get_Readings_Odometry(nav_msgs::Odometry::ConstPtr odometry_msg){
 	x_Current_Pose=cell_round(corrected_odo_x[0]*100);
 	y_Current_Pose=cell_round(corrected_odo_y[0]*100);
 	
-	ROS_INFO("x_Current_Pose: %d\ny_Current_Pose: %d",x_Current_Pose,y_Current_Pose);
+	//ROS_INFO("x_Current_Pose: %d\ny_Current_Pose: %d",x_Current_Pose,y_Current_Pose);
 	
 }
 
@@ -523,26 +523,35 @@ void Send_Message(){
 	corrected_map_pub.publish(Correct_Map_Msg);
 }
 
+/*
+EVERZTHING IN METERZ
+*/
 double * convert_object_distance(double Lat, double Long, double dist){
+	ROS_INFO("Lat %.5f", Lat);
+	ROS_INFO("Long %.5f", Long);
+	ROS_INFO("Dist: %.5f", dist);
 	
 	double * ret_val;
-	double x_0=corrected_odo_x[0]*100;
-	double y_0=corrected_odo_y[0]*100;
+	double x_0=0.0;
+	double y_0=0.0;
 	double z_0=camera_initial_z; //cms already
-		
+	double x_i=0.0, y_i=0.0, z_i=0.35;
+	
 	// insert code to convert to (dx,dy)	
-	//x_i=(y_i-y_0)*tan(Lat-Lat_0)+x_0;
-	x_i=(-z_i-(-z_0))*tan(Lat-Lat_0)+x_0;
+	//x_i=(y_i-y_0)*tan(Lat?Lat_0)+x_0;
+	// x_i = 0.35 * tan(Lat + Lat_0) + x_0;
+	x_i = dist * sin(Lat + Lat_0) + x_0;
+	// x_i=(z_i-(z_0))*tan(Lat-Lat_0)+x_0;
 	//z_i=(x_i-x_0)*tan(Long-Long_0)+z_0;
-	y_i=-((x_i-x_0)*tan(Long-Long_0)+(-y_0));
+	// y_i=-((x_i-x_0)*tan(Long-Long_0)+(-y_0));
+	y_i = -(x_i - x_0) * tan(Long+Long_0);
 	//y_i=y_0;
 	//z_i=z_0;
 		
-	
 	ret_val=new double(2);
 	
-	ret_val[0]=dist;
-	ret_val[1]=dist;
+	ret_val[0]= x_i + 0.15;
+	ret_val[1]= y_i;
 	
 	return ret_val;
 	
@@ -554,6 +563,13 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 	visualization_msgs::Marker object_marker;
 	double pos_x,pos_y,*distance=0;
 	geometry_msgs::Point pos;
+	std::string new_name=msg->objectName;
+	
+	for(int i=0; i<object_list.size();i++){ // IMPROVE LATER
+		if(object_list[i].name==new_name)
+			return;
+	}
+	
 	
 	new_object.name=msg->objectName;
 	new_object.num=object_list.size()+1;	
@@ -593,7 +609,7 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 	
 	}
 	
-	Occupancy_Grid=place_map(Occupancy_Grid,cell_round(pos_x*100),cell_round(pos_y*100),robot_delta_x,robot_delta_y,new_object.num);
+	Occupancy_Grid=place_map(Occupancy_Grid,cell_round(pos_x*100)+robot_delta_x,cell_round(pos_y*100)+robot_delta_y,robot_delta_x,robot_delta_y,new_object.num);
 	
 	ROS_INFO("New object: %s Num: %d at (%d,%d)",new_object.name.c_str(),new_object.num,cell_round(pos_x*100),cell_round(pos_y*100));
 	
@@ -641,6 +657,8 @@ void Get_Ir(core_sensors::ir::ConstPtr ir_msg){
 	
 	for(int i=0; i<8; i++)
 		ir[i]=ir_msg->dist[i];
+		
+	ROS_INFO("ir[0]: %.2f",ir[0]);
 	
 }
 
@@ -649,7 +667,7 @@ void Get_Motion_Info(control_logic::info::ConstPtr logic_msg) {
 	wall=logic_msg->info_wall;
 	heading=logic_msg->info_heading;
 	
-	//ROS_INFO("Heading: %c Wall: %d",heading,wall);
+	ROS_INFO("Heading: %c Wall: %d",heading,wall);
 	
 }
 

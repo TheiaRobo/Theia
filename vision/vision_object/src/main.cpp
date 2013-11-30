@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <utility>
@@ -14,6 +15,7 @@
 #include <vision_plane/Candidate.h>
 #include <vision_plane/Candidates.h>
 
+#include "candidate.h"
 #include "object.h"
 
 #define NODE_NAME "vision_object"
@@ -28,7 +30,10 @@ using namespace vision_plane;
 using namespace sensor_msgs;
 
 Config config;
+CameraConfig cameraConfig;
 Context context(config);
+bool candValid;
+vector<Candidate> validCandVect;
 vector<Candidate> candVect;
 vector<Object> objectVect;
 ObjectData sampleData;
@@ -44,6 +49,22 @@ int init(){
 	int errorCode = 0;
 
 	config = Config();
+	ros::param::getCached(
+		"~config/camera/totalFOVLat",
+		config.camera.fovLat
+	);
+	ros::param::getCached(
+		"~config/camera/totalFOVLong",
+		config.camera.fovLong
+	);
+	ros::param::getCached(
+		"~config/camera/validFOVLat",
+		config.camera.validFovLat
+	);
+	ros::param::getCached(
+		"~config/camera/validFOVLong",
+		config.camera.validFovLong
+	);
 	ros::param::getCached(
 		"~config/path",
 		config.path
@@ -72,36 +93,72 @@ int init(){
 		"~config/depthImage/cannyLevelTwo",
 		config.depthImage.cannyLevelTwo
 	);
-
 	context = Context(config);
 
 	return errorCode;
+}
+
+bool compareResultPairs(
+	const pair<Object, ObjectDataResult> & inOne,
+	const pair<Object, ObjectDataResult> & inTwo
+){
+	return inOne.second.isBetterThan(inTwo.second);
 }
 
 int publishResults(
 	const vector< pair<Object, ObjectDataResult> > & inResults
 ){
 	int errorCode = 0;
-
-	size_t numbResults = inResults.size();
-	for(size_t i = 0; i < numbResults; i++){
-		const Object & object = inResults[i].first;
-		const ObjectDataResult & result = inResults[i].second;
-
-		vision_object::Object msg;
-		msg.objectName = object.name;
-		msg.objectAngle = result.angle;
-
-		objectPub.publish(msg);
-	}
 	
+	if(inResults.empty()) return errorCode;
+	if(validCandVect.empty()) return errorCode;
+	
+	// sort results
+	vector< pair<Object, ObjectDataResult> > workingVect(inResults);
+	sort(workingVect.begin(), workingVect.end(), compareResultPairs);
+
+	const Object & object = inResults[0].first;
+	const ObjectDataResult & result = inResults[0].second;
+	cout << "Best Object: " << object.name << endl;
+	
+	const Candidate & cand = validCandVect[0];
+	double posLatitude = (cand.minLatitude + cand.maxLatitude) / 2;
+	double posLongitude = (cand.minLongitude + cand.maxLongitude) / 2;
+	double posDistance = cand.dist;
+	
+	vision_object::Object msg;
+	msg.objectName = object.name;
+	msg.objectAngle = result.angle;
+	msg.posLatitude = posLatitude;
+	msg.posLongitude = posLongitude;
+	msg.posDistance = posDistance;
+
+	objectPub.publish(msg);
+
 	return errorCode;
 }
 
 int match(){
 	int errorCode = 0;
+	
+	if(!candValid){
+		cout << "No valid object found" << endl;
+		return errorCode;
+	}
+	
+	cout << "Valid object found" << endl;
+
+/*
+	errorCode = candDebug();
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not show candidates" << endl;
+		return errorCode;
+	}
+*/
 
 	size_t numbObjects = objectVect.size();
+	pair<Object, ObjectDataResult> bestResult;
 	vector< pair<Object, ObjectDataResult> > resultVect;
 
 	for(size_t i = 0; i < numbObjects; i++){
@@ -152,8 +209,8 @@ int train(){
 		cout << " Show results .." << endl;
 		for(size_t j = 0; j < numbData; j++){
 			ObjectData & data = object.objectDataVect[j];
+/*			
 			data.colorImage.showKeypoints();
-/*
 			data.depthImage.show();
 */
 		}
@@ -168,7 +225,9 @@ int tryToMatch(){
 
 	if(!candVectReady) return 0;
 	if(!colorImageReady) return 0;
+/*
 	if(!depthImageReady) return 0;
+*/
 
 	errorCode = match();
 	if(errorCode) return errorCode;
@@ -180,53 +239,17 @@ int tryToMatch(){
 	return errorCode;
 }
 
-int showCandidates(){
-	/**
-	* TODO
-	* Put this in parameter server
-	*/
-	static double camFOVLat = 45 * M_PI / 180;
-	static double camFOVLong = 57.5 * M_PI / 180;
-
+int candDebug(){
 	int errorCode = 0;
 
 	if(!candVectReady) return errorCode;
 	if(!colorImageReady) return errorCode;
 
-	cv::Mat image = sampleData.colorImage.image.clone();
-	
-	size_t numbCands = candVect.size();
-	if(!numbCands) return errorCode;
-
-	double pxPerLat = image.rows / camFOVLat;
-	double pxPerLong = image.cols / camFOVLong;
-
-	for(size_t i = 0; i < numbCands; i++){
-		Candidate & cand = candVect[i];
-
-		double minRow = image.rows / 2 - cand.minLatitude * pxPerLat;
-		double maxRow = image.rows / 2 - cand.maxLatitude * pxPerLat;
-		double minCol = image.cols / 2 - cand.minLongitude * pxPerLong;
-		double maxCol = image.cols / 2 - cand.maxLongitude * pxPerLong;
-
-		cv::Point pointArr[4];
-		pointArr[0] = cv::Point(minCol, minRow);
-		pointArr[1] = cv::Point(minCol, maxRow);
-		pointArr[2] = cv::Point(maxCol, maxRow);
-		pointArr[3] = cv::Point(maxCol, minRow);
-
-		for(size_t j = 0; j < 4; j++){
-			cv::line(
-				image,
-				pointArr[j],
-				pointArr[(j + 1) % 4],
-				cv::Scalar( 0, 255, 255 )
-			);
-		}
-	}
-
-	cv::imshow("Candidates", image);
-	cv::waitKey(0);
+	errorCode = candShow(
+		candVect,
+		sampleData.colorImage.image
+	);
+	if(errorCode) return errorCode;
 
 	return errorCode;
 }
@@ -237,13 +260,29 @@ void candCallback(const CandidatesConstPtr & candsMsgPtr){
 	// copy candidates
 	candVect = vector<Candidate>(candsMsgPtr->candidates);
 	candVectReady = true;
+	
+	// filter
+	validCandVect.clear();
+	
+	size_t numbCands = candVect.size();
+	for(size_t i = 0; i < numbCands; i++){
+		Candidate & cand = candVect[i];
+		if(candCheckIfValid(cand, context.camera)){
+			validCandVect.push_back(cand);
+		}
+	}
+	
+	size_t numbValidCands = validCandVect.size();
+	candValid = (numbValidCands > 0);
 
-	errorCode = showCandidates();
+/*	
+	errorCode = candDebug();
 	if(errorCode){
 		cout << "Error in " << __FUNCTION__ << endl;
-		cout << "Could not show candidates" << endl;
+		cout << "Could not debug object candidates" << endl;
 		return;
 	}
+*/
 
 	errorCode = tryToMatch();
 	if(errorCode){
@@ -336,6 +375,7 @@ int main(int argc, char ** argv){
 		TOPIC_OUT_OBJECT, 1
 	);
 
+	candValid = false;
 	candVectReady = false;
 	colorImageReady = false;
 	depthImageReady = false;

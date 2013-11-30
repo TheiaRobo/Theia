@@ -1,3 +1,3 @@
-#List of object candidates
+# List of object candidates
 Header header
 Candidate[] candidates

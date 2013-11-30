@@ -7,6 +7,7 @@ using namespace std;
 
 Context::Context(const Config & config)
 : colorImage(config.colorImage), depthImage(config.depthImage) {
+	camera = config.camera;
 	path = config.path;
 }
 

@@ -13,6 +13,8 @@ const int freq=100;
 const double NO_VAL=-1234567890;
 double x=NO_VAL;
 double y=NO_VAL;
+double x_i=NO_VAL;
+double y_i=NO_VAL;
 char heading='E';
 
 const int black=100;
@@ -22,8 +24,8 @@ const int white=0;
 
 
 const double resolution_matrix=0.01; // in meter!
-const int x_matrix=10/resolution_matrix; 
-const int y_matrix=10/resolution_matrix;
+const int x_matrix=15/resolution_matrix; 
+const int y_matrix=15/resolution_matrix;
 const int obj_thres=20/(resolution_matrix*100); // in meter to cells
 
 std::vector<signed char>  Raw_Map(x_matrix*y_matrix,white);
@@ -69,6 +71,13 @@ void order_slaves(int slave,theia_services::brain_wall wall_req, theia_services:
 		blind_req.request.commands=commands;
 		blind_req.request.vals=vals;
 		blind_req.request.heading=heading;
+		order_wall.call(wall_req);
+		order_blind.call(blind_req);
+		break;
+	default:
+		wall_req.request.active=false;
+		blind_req.request.active=false;
+		wall_req.request.heading=heading;
 		order_wall.call(wall_req);
 		order_blind.call(blind_req);
 		break;
@@ -146,7 +155,7 @@ int main(int argc, char ** argv){
 	ros::ServiceClient order_wall = n.serviceClient<theia_services::brain_wall>("/wall_follower/instructions");
 	ros::ServiceClient order_blind = n.serviceClient<theia_services::brain_blind>("/blind/instructions");
 	ros::Subscriber odo_sub = n.subscribe("/mapping/corrected_odo",1,get_odo);
-	ros::Subscriber info_sub = n.subscribe("/control_logic/info",1,get_info);
+	ros::Subscriber info_sub = n.subscribe("/logic/info",1,get_info);
 	ros::Subscriber raw_sub = n.subscribe("/mapping/occ",1,get_map);
 	ros::Publisher object_pub = n.advertise<theia_services::object>("/control_logic/object",1);
 	
@@ -154,6 +163,10 @@ int main(int argc, char ** argv){
 		
 		// processing to decide what to do
 		
+		if(closed_perimeter(init_time)){
+			ROS_INFO("Closed a perimeter");
+			slave=0;
+		}
 		
 		if(close_object()){
 			ROS_INFO("OBJECT TOO CLOSE OMGWTFBBQ");
@@ -168,3 +181,4 @@ int main(int argc, char ** argv){
 	return 0;
 
 }
+

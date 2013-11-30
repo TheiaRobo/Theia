@@ -8,10 +8,10 @@ import vision_plane.msg
 import std_msgs.msg
 
 class Candidates(genpy.Message):
-  _md5sum = "3b27cd48f7bd3ba84a9ce1a4e4eeac13"
+  _md5sum = "651e31de3477d92fa06ea5b8254d4837"
   _type = "vision_plane/Candidates"
   _has_header = True #flag to mark the presence of a Header object
-  _full_text = """#List of object candidates
+  _full_text = """# List of object candidates
 Header header
 Candidate[] candidates
 ================================================================================
@@ -34,7 +34,8 @@ string frame_id
 
 ================================================================================
 MSG: vision_plane/Candidate
-#Candidate message
+# Object candidate message
+float32 dist
 float32 minLatitude
 float32 maxLatitude
 float32 minLongitude
@@ -92,7 +93,7 @@ float32 maxLongitude
       buff.write(_struct_I.pack(length))
       for val1 in self.candidates:
         _x = val1
-        buff.write(_struct_4f.pack(_x.minLatitude, _x.maxLatitude, _x.minLongitude, _x.maxLongitude))
+        buff.write(_struct_5f.pack(_x.dist, _x.minLatitude, _x.maxLatitude, _x.minLongitude, _x.maxLongitude))
     except struct.error as se: self._check_types(se)
     except TypeError as te: self._check_types(te)
 
@@ -128,8 +129,8 @@ float32 maxLongitude
         val1 = vision_plane.msg.Candidate()
         _x = val1
         start = end
-        end += 16
-        (_x.minLatitude, _x.maxLatitude, _x.minLongitude, _x.maxLongitude,) = _struct_4f.unpack(str[start:end])
+        end += 20
+        (_x.dist, _x.minLatitude, _x.maxLatitude, _x.minLongitude, _x.maxLongitude,) = _struct_5f.unpack(str[start:end])
         self.candidates.append(val1)
       return self
     except struct.error as e:
@@ -155,7 +156,7 @@ float32 maxLongitude
       buff.write(_struct_I.pack(length))
       for val1 in self.candidates:
         _x = val1
-        buff.write(_struct_4f.pack(_x.minLatitude, _x.maxLatitude, _x.minLongitude, _x.maxLongitude))
+        buff.write(_struct_5f.pack(_x.dist, _x.minLatitude, _x.maxLatitude, _x.minLongitude, _x.maxLongitude))
     except struct.error as se: self._check_types(se)
     except TypeError as te: self._check_types(te)
 
@@ -192,13 +193,13 @@ float32 maxLongitude
         val1 = vision_plane.msg.Candidate()
         _x = val1
         start = end
-        end += 16
-        (_x.minLatitude, _x.maxLatitude, _x.minLongitude, _x.maxLongitude,) = _struct_4f.unpack(str[start:end])
+        end += 20
+        (_x.dist, _x.minLatitude, _x.maxLatitude, _x.minLongitude, _x.maxLongitude,) = _struct_5f.unpack(str[start:end])
         self.candidates.append(val1)
       return self
     except struct.error as e:
       raise genpy.DeserializationError(e) #most likely buffer underfill
 
 _struct_I = genpy.struct_I
-_struct_4f = struct.Struct("<4f")
 _struct_3I = struct.Struct("<3I")
+_struct_5f = struct.Struct("<5f")
