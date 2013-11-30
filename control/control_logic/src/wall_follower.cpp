@@ -505,8 +505,8 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 	}
 
 	info_wall=0;
-	//ros::Duration refresh(0.1);
-	//refresh.sleep(); // wait a bit before sending new orders
+	ros::Duration refresh(0.1);
+	refresh.sleep(); // wait a bit before sending new orders
 
 	//Get empty space in history vector
 	shift_history();
@@ -971,7 +971,7 @@ int main(int argc, char ** argv){
 	ros::ServiceServer orders = n.advertiseService("/wall_follower/instructions", status);
 	ros::Subscriber ir_data = n.subscribe("/core_sensors_ir/ir", 1, readIrData);
 
-	info_pub = n.advertise<control_logic::info>("/control_logic/info",1);
+	info_pub = n.advertise<control_logic::info>("/logic/info",1);
 
 	initialize_history();
 	initialize_ir_raw();

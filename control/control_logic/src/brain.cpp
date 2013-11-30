@@ -15,7 +15,7 @@ double x=NO_VAL;
 double y=NO_VAL;
 double x_i=NO_VAL;
 double y_i=NO_VAL;
-double init_time = 15; //sec
+double init_time = 45; //sec
 double P=0.15; //meter
 char heading='E';
 
@@ -146,6 +146,8 @@ bool close_object(){
 
 bool closed_perimeter(ros::Time init){
 	
+
+	ROS_INFO("Distance from starting position: %.2f",sqrt((x-x_i)*(x-x_i)+(y-y_i)*(y-y_i)));
 	if(x_i!=NO_VAL){
 		
 		if((ros::Time::now().toSec()-init.toSec()) > init_time){
