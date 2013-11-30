@@ -38,6 +38,20 @@ node create_node(int coords[2], double t_f, double t_g, int came_from[2]){
 	return n;
 }
 
+double heur(int coords[2], int goal_coords[2]){
+	
+	double t_h=0;
+	
+	if(goal_coords[0]!=NO_VAL){
+		t_h = std::abs(coords[0]-goal_coords[0])+std::abs(coords[1]-goal_coords[1]);
+		return t_h;
+	}else{ // no goal, no heuristic
+		return 0;
+	}
+
+
+}
+
 int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int val_to_find){
 	int lateral_size=std::sqrt(matrix_array.size());
 	std::vector<std::vector<signed char> >matrix(lateral_size);
@@ -82,13 +96,7 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 	from[1]=NO_VAL;
 	
 	t_g=0;
-	
-	if(goal_coords[0]!=NO_VAL){
-		t_h = std::abs(init_coords[0]-goal_coords[0])+std::abs(init_coords[1]-goal_coords[1]);
-	}else{ // no goal, no heuristic
-		t_h = 0;
-	}
-	
+	t_h=heur(coords,goal_coords);
 	t_f = t_g + t_h;
 	
 	current=create_node(coords,t_f,t_g,from);
@@ -131,12 +139,7 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 			n.coords[0]=current.coords[0]-1;
 			n.coords[1]=current.coords[1];
 			
-			
-			if(goal_coords[0]!=NO_VAL){
-				t_h = std::abs(n.coords[0]-goal_coords[0])+std::abs(n.coords[1]-goal_coords[1]);
-			}else{ // no goal, no heuristic
-				t_h = 0;
-			}
+			t_h=heur(n.coords,goal_coords);
 			t_g = current.t_g + 1;
 			t_f = t_g + t_h;
 			
