@@ -14,7 +14,7 @@ typedef struct node_struct{
 
 class search_set{
 	private:
-	node * node_list;
+	std::vector<node> node_list;
 	void add_node(node new_node);
 	void remove_node(int coords[2]);
 	public:
@@ -33,7 +33,7 @@ class search_set{
 
 search_set::search_set(){
 	
-	node_list=0;
+	return ;
 
 }
 
@@ -45,43 +45,15 @@ search_set::search_set(node start_node){
 
 void search_set::add_node(node new_node){
 
-	node * n;
-	node * ptr=0;
-	
-
-	n = new node;
-	*n=new_node;
-	
-	
-	if(node_list==0){
-		node_list=n;
-	}else{
-		ptr=node_list;
-		node_list=n;
-		n->prev=ptr;	
-	}
+	node_list.push(new_node);
 
 }
 
 void search_set::remove_node(int coords[2]){
 	
-	node * ptr = node_list;
-	node * ptr2 = 0;
-	
-	while(ptr!=0){
-		if(ptr->coords[0]==coords[0] && ptr->coords[1]==coords[1]){
-			
-			if(ptr2==0){
-				node_list=ptr->prev;
-			}else{
-				ptr2->prev=ptr->prev;
-			}
-			
-			delete ptr;
-			return;
-		}
-		ptr2=ptr;
-		ptr=ptr->prev;
+	for(int i=0; i < node_list.size(); i++){
+		if(node_list[i].coords[0] == coords[0] && node_list[i].coords[1] == coords[1])
+			node_list.remove(i);
 	}
 	
 	return;
@@ -96,34 +68,24 @@ void search_set::push_node(node new_node){
 
 node search_set::pop_best(){
 
-	node * ptr = node_list->prev;
-	node * best = node_list;
-	node ret;
-	
-	while(ptr!=0){
-		
-		if(ptr->t_f < best->t_f)
-			best=ptr;
-		
-		ptr=ptr->prev;
+	node best = node_list[0];
+
+	for(int i=0; i<node_list.size(); i++){
+		if(node_list[i].t_f < best.t_f)
+			best=node_list[i];
 	}
 	
-	ret=(*best);
-	remove_node(best->coords);
-	
-	return ret;
+	return best;
 
 }
 
 node search_set::pop_requested(int coords[2]){
 	
-	node * ptr = node_list->prev;
 	node ret;
-
-	while(ptr!=0){
-
-		if(ptr->coords[0] == coords[0] && ptr->coords[1] == coords[1])
-			return (*ptr);
+	
+	for(int i=0; i < node_list.size(); i++){
+		if(node_list[i].coords[0] == coords[0] && node_list[i].coords[1] == coords[1])
+			ret=node_list[i];
 	}
 
 	return ret;	
@@ -131,14 +93,9 @@ node search_set::pop_requested(int coords[2]){
 
 bool search_set::check_if_in_set(int coords[2]){
 	
-	node * ptr = node_list;
-	
-	while(ptr!=0){
-	
-		if(ptr->coords[0]==coords[0] && ptr->coords[1]==coords[1])
+	for(int i=0; i<node_list.size(); i++){
+		if(node_list[i].coords[0] == coords[0] && node_list[i].coords[1] == coords[1])
 			return true;
-		
-		ptr=ptr->prev;
 	}
 	
 	return false;
@@ -147,7 +104,7 @@ bool search_set::check_if_in_set(int coords[2]){
 
 bool search_set::isempty(){
 	
-	if(node_list==0)
+	if(node_list.size()==0)
 		return true;
 	
 	return false;
