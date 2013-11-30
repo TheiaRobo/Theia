@@ -28,14 +28,14 @@ void trap(int signal){
 }
 
 // fills in the commands and params vectors based on the path to the solution
-void recover_path(node goal, search_set node_set, int[2] init){
+void recover_path(node goal, search_set node_set, int init[2]){
 	node current = goal;
 	std::vector<node> path_list;
 	
 	while(current.coords[0]!=init[0] || current.coords[1]!=init[1]){
 		
-		path_list.add(current);
-		current=node_set.pop_requested(current.from);
+		path_list.push_back(current);
+		current=node_set.pop_requested(current.came_from);
 	
 	}
 	
@@ -47,8 +47,8 @@ void recover_path(node goal, search_set node_set, int[2] init){
 node create_node(int coords[2], double t_f, double t_g, int came_from[2]){
 
 	node n;
-	n.coords[0]=init_coords[0];
-	n.coords[1]=init_coords[1];
+	n.coords[0]=coords[0];
+	n.coords[1]=coords[1];
 	n.t_f=t_f;
 	n.t_g=t_g;
 	n.came_from[0]=NO_VAL;
