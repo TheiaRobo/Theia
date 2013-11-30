@@ -25,11 +25,23 @@ void trap(int signal){
 	execute = 0; 
 }
 
+node create_node(int coords[2], double t_f, double t_g, int came_from[2]){
+
+	node n;
+	n.coords[0]=init_coords[0];
+	n.coords[1]=init_coords[1];
+	n.t_f=t_f;
+	n.t_g=t_g;
+	n.came_from[0]=NO_VAL;
+	n.came_from[1]=NO_VAL;
+	
+	return n;
+}
 
 int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int val_to_find){
 	int lateral_size=std::sqrt(matrix_array.size());
 	std::vector<std::vector<signed char> >matrix(lateral_size);
-	int goal_coords[2]={NO_VAL,NO_VAL},init_coords[2],cost=0;
+	int goal_coords[2]={NO_VAL,NO_VAL},coords[2],from[2],cost=0;
 	double t_f=0, t_g=0, t_h=0;
 	
 	
@@ -64,8 +76,10 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 	
 	node current,n;
 	
-	init_coords[0]=x_i;
-	init_coords[1]=y_i;
+	coords[0]=x_i;
+	coords[1]=y_i;
+	from[0]=NO_VAL;
+	from[1]=NO_VAL;
 	
 	t_g=0;
 	
@@ -77,15 +91,8 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 	
 	t_f = t_g + t_h;
 	
-	// Node creation
-	current.coords[0]=init_coords[0];
-	current.coords[1]=init_coords[1];
-	current.t_f=t_f;
-	current.t_g=t_g;
-	current.came_from[0]=NO_VAL;
-	current.came_from[1]=NO_VAL;
-	current.prev=0;
-	// end of node creation
+	current=create_node(coords,t_f,t_g,from);
+	
 	
 	search_set closedset;
 	search_set openset(current);

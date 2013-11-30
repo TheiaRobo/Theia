@@ -1,19 +1,20 @@
 #ifndef _SETS_
 #define _SETS_
 
+#include <vector>
+
 const int NO_VAL=-123456789;
 typedef struct node_struct{
 	int coords[2];
 	int came_from[2];
 	int t_f;
 	int t_g;
-	struct node_struct *prev;
 }node;
 
 
 class search_set{
 	private:
-	node * node_list;
+	std::vector<node> node_list;
 	void add_node(node new_node);
 	void remove_node(int coords[2]);
 	public:
