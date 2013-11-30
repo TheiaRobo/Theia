@@ -1,5 +1,7 @@
 #include"sets.h"
 
+
+
 /*
 typedef struct node_struct{
 	int coords[2];
@@ -37,7 +39,7 @@ search_set::search_set(){
 search_set::search_set(int coords[2],int cost){
 
 	node * new_node;
-	int from[2]={-1,-1};
+	int from[2]={NO_VAL,NO_VAL};
 	
 	node_list=0;
 	add_node(coords,from,cost);

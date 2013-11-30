@@ -29,7 +29,7 @@ void trap(int signal){
 int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int val_to_find){
 	int lateral_size=std::sqrt(matrix_array.size());
 	std::vector<std::vector<signed char> >matrix(lateral_size);
-	int goal_coords[2]={-1,-1},init_coords[2],cost=0;
+	int goal_coords[2]={NO_VAL,NO_VAL},init_coords[2],cost=0;
 	
 	
 	// Conversion to matrix
@@ -58,13 +58,13 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 	}
 	
 	
-	// A*?
+	// A*
 	
 	init_coords[0]=x_i;
 	init_coords[1]=y_i;
 	
-	if(goal_coords[0]!=-1)
-		cost=std::abs(goal_coords[0]-init_coords[0])+std::abs(goal_coords[1]-init_coords[1]);
+	if(goal_coords[0]!=NO_VAL)
+		cost=std::abs(goal_coords[0]-init_coords[0])+std::abs(goal_coords[1]-init_coords[1]); // Manhattan distance
 	
 	search_set closedset;
 	search_set openset(init_coords,cost);
@@ -91,12 +91,16 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 		}
 		
 		closedset.push_node(current.coords,current.came_from,current.cost);
+		
+		
+		// FOR EACH NEIGHBOUR
+		
 		if(current.coords[0]-1>=0){
 			n.coords[0]=current.coords[0]-1;
 			n.coords[1]=current.coords[1];
 			n.came_from[0]=current.coords[0];
 			n.came_from[1]=current.coords[1];
-			if(goal_coords[0]!=-1)
+			if(goal_coords[0]!=NO_VAL)
 				n.cost=current.cost+1;
 			else
 				n.cost=current.cost+1+std::abs(goal_coords[0]-init_coords[0])+std::abs(goal_coords[1]-init_coords[1]);
@@ -109,7 +113,7 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 			n.coords[1]=current.coords[1]-1;
 			n.came_from[0]=current.coords[0];
 			n.came_from[1]=current.coords[1];
-			if(goal_coords[0]!=-1)
+			if(goal_coords[0]!=NO_VAL)
 				n.cost=current.cost+1;
 			else
 				n.cost=current.cost+1+std::abs(goal_coords[0]-init_coords[0])+std::abs(goal_coords[1]-init_coords[1]);
@@ -166,8 +170,7 @@ int main(int argc, char **argv)
 
 	ros::Rate loop_rate(1);
 	
-	Occupancy_Grid[9+9*20]=2;
-	Occupancy_Grid[20+0*20]=2;
+	Occupancy_Grid[19+19*20]=2;
 	
 	//while(ros::ok()){
 
