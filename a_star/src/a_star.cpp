@@ -19,10 +19,29 @@ int execute=1;
 
 
 std::vector<signed char>  Occupancy_Grid(20*20,white);
+std::vector<int> commands;
+std::vector<double> params;
 
 
 void trap(int signal){ 
 	execute = 0; 
+}
+
+// fills in the commands and params vectors based on the path to the solution
+void recover_path(node goal, search_set node_set, int[2] init){
+	node current = goal;
+	std::vector<node> path_list;
+	
+	while(current.coords[0]!=init[0] || current.coords[1]!=init[1]){
+		
+		path_list.add(current);
+		current=node_set.pop_requested(current.from);
+	
+	}
+	
+	// from path, get commands
+
+
 }
 
 node create_node(int coords[2], double t_f, double t_g, int came_from[2]){
