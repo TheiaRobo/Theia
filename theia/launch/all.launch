@@ -2,4 +2,5 @@
 	<include file="$(find control)/launch/all.launch"/>
 	<include file="$(find core)/launch/all.launch"/>
 	<include file="$(find vision)/launch/all.launch"/>
+	<include file="$(find mapping)/launch/all.launch"/>
 </launch>

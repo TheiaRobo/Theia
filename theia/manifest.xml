@@ -13,6 +13,7 @@
   <depend package="libs"/>
   <depend package="tools"/>
   <depend package="vision"/>
+  <depend package="mapping"/>
 
 </package>
 

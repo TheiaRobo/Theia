@@ -1,0 +1,7 @@
+<launch>
+	<node
+		pkg="mapping"
+		type="mapping"
+		name="mapping"
+	/>
+</launch>
