@@ -6,28 +6,29 @@
 typedef struct node_struct{
 	int coords[2];
 	int came_from[2];
-	int cost;
-	
+	int t_f;
+	int t_g;
+	struct node_struct *prev;
 }node;
 
-typedef struct _node_list{
-	node current;
-	struct _node_list * prev;
-}node_list;
 
 class search_set{
 	private:
-	node_list * nodes;
-	void new_node(int coords[2],int cost);
-	void add_node(int coords[2],int cost);
+	node * node_list;
+	void add_node(node new_node);
 	void remove_node(int coords[2]);
 	public:
+	//This constructor initializes an empty set, always called at the beginning
 	search_set();
-	search_set(int coords[2]);
-	~search_set();
-	void push_node(int coords[2],int cost);
+	//This constructor initializes a set with a node in it, always called at the beginning
+	search_set(node start_node);
+	//~search_set();
+	void push_node(node new_node);
 	node pop_best();
-	bool check_if_node(int coords[2]);
+	node pop_requested(int coords[2]);
+	bool check_if_in_set(int coords[2]);
+	bool isempty();
+
 };*/
 
 search_set::search_set(){
@@ -36,29 +37,21 @@ search_set::search_set(){
 
 }
 
-search_set::search_set(int coords[2],int cost){
+search_set::search_set(node start_node){
 
-	node * new_node;
-	int from[2]={NO_VAL,NO_VAL};
-	
-	node_list=0;
-	add_node(coords,from,cost);
+	add_node(start_node);
 
 }
 
-void search_set::add_node(int coords[2],int from[2], int cost){
+void search_set::add_node(node new_node){
 
 	node * n;
 	node * ptr=0;
 	
 
 	n = new node;
-	n->coords[0]=coords[0];
-	n->coords[1]=coords[1];
-	n->came_from[0]=from[0];
-	n->came_from[1]=from[1];
-	n->cost=cost;
-	n->prev=0;
+	*n=new_node;
+	
 	
 	if(node_list==0){
 		node_list=n;
@@ -95,9 +88,9 @@ void search_set::remove_node(int coords[2]){
 
 }
 
-void search_set::push_node(int coords[2], int from[2],int cost){
+void search_set::push_node(node new_node){
 
-	add_node(coords,from,cost);
+	add_node(new_node);
 
 }
 
@@ -109,7 +102,7 @@ node search_set::pop_best(){
 	
 	while(ptr!=0){
 		
-		if(ptr->cost < best->cost)
+		if(ptr->t_f < best->t_f)
 			best=ptr;
 		
 		ptr=ptr->prev;
@@ -120,6 +113,20 @@ node search_set::pop_best(){
 	
 	return ret;
 
+}
+
+node search_set::pop_requested(int coords[2]){
+	
+	node * ptr = node_list->prev;
+	node ret;
+
+	while(ptr!=0){
+
+		if(ptr->coords[0] == coords[0] && ptr->coords[1] == coords[1])
+			return (*ptr);
+	}
+
+	return ret;	
 }
 
 bool search_set::check_if_in_set(int coords[2]){

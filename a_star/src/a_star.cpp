@@ -30,6 +30,7 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 	int lateral_size=std::sqrt(matrix_array.size());
 	std::vector<std::vector<signed char> >matrix(lateral_size);
 	int goal_coords[2]={NO_VAL,NO_VAL},init_coords[2],cost=0;
+	double t_f=0, t_g=0, t_h=0;
 	
 	
 	// Conversion to matrix
@@ -60,16 +61,37 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 	
 	// A*
 	
+	
+	node current,n;
+	
 	init_coords[0]=x_i;
 	init_coords[1]=y_i;
 	
-	if(goal_coords[0]!=NO_VAL)
-		cost=std::abs(goal_coords[0]-init_coords[0])+std::abs(goal_coords[1]-init_coords[1]); // Manhattan distance
+	t_g=0;
+	
+	if(goal_coords[0]!=NO_VAL){
+		t_h = std::abs(init_coords[0]-goal_coords[0])+std::abs(init_coords[1]-goal_coords[1]);
+	}else{ // no goal, no heuristic
+		t_h = 0;
+	}
+	
+	t_f = t_g + t_h;
+	
+	// Node creation
+	current.coords[0]=init_coords[0];
+	current.coords[1]=init_coords[1];
+	current.t_f=t_f;
+	current.t_g=t_g;
+	current.came_from[0]=NO_VAL;
+	current.came_from[1]=NO_VAL;
+	current.prev=0;
+	// end of node creation
 	
 	search_set closedset;
-	search_set openset(init_coords,cost);
+	search_set openset(current);
 	search_set came_from;
-	node current,n;
+	search_set nodes_set(current);
+	
 	int i=0;
 	
 	signal(SIGINT, &trap);
@@ -80,72 +102,69 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 		ROS_INFO("iter: %d",i);
 		
 		current=openset.pop_best();
+		
+		
 		if(goal_coords[0]==-1){
 			if(matrix[current.coords[0]][current.coords[1]]==val_to_find){
 				ROS_INFO("Found solution at %d %d!",current.coords[0],current.coords[1]);
-				return 0;
+				return 0; // later, the path
 			}
 		}else if(current.coords[0]==goal_coords[0] && current.coords[1]==goal_coords[1]){
 			ROS_INFO("Found solution at %d %d!",current.coords[0],current.coords[1]);
 			return 0;
 		}
 		
-		closedset.push_node(current.coords,current.came_from,current.cost);
+		closedset.push_node(current);
 		
 		
 		// FOR EACH NEIGHBOUR
 		
 		if(current.coords[0]-1>=0){
+			
 			n.coords[0]=current.coords[0]-1;
 			n.coords[1]=current.coords[1];
-			n.came_from[0]=current.coords[0];
-			n.came_from[1]=current.coords[1];
-			if(goal_coords[0]!=NO_VAL)
-				n.cost=current.cost+1;
-			else
-				n.cost=current.cost+1+std::abs(goal_coords[0]-init_coords[0])+std::abs(goal_coords[1]-init_coords[1]);
-			if(!closedset.check_if_in_set(n.coords)&& !openset.check_if_in_set(n.coords)) // checking the openset should NOT be done ...
-				openset.push_node(n.coords,n.came_from,n.cost);
+			
+			
+			if(goal_coords[0]!=NO_VAL){
+				t_h = std::abs(n.coords[0]-goal_coords[0])+std::abs(n.coords[1]-goal_coords[1]);
+			}else{ // no goal, no heuristic
+				t_h = 0;
+			}
+			t_g = current.t_g + 1;
+			t_f = t_g + t_h;
+			
+			if(nodes_set.check_if_in_set(n.coords)){
+				
+				n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
+				
+			}else{
+				
+				n.t_g=t_g;
+				n.t_f=t_f;				
+			}
+			
+			if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
+				
+				n.prev=&current;
+				n.t_g=t_g;
+				n.t_f=t_f;
+				
+				if(!openset.check_if_in_set(n.coords))
+					openset.push_node(n);
+				else{
+					openset.pop_requested(n.coords);
+					openset.push_node(n);
+				}
+				
+				nodes_set.push_node(n);
+				
+			}
+			
+			
+			
+			
 		}
 		
-		if(current.coords[1]-1>=0){
-			n.coords[0]=current.coords[0];
-			n.coords[1]=current.coords[1]-1;
-			n.came_from[0]=current.coords[0];
-			n.came_from[1]=current.coords[1];
-			if(goal_coords[0]!=NO_VAL)
-				n.cost=current.cost+1;
-			else
-				n.cost=current.cost+1+std::abs(goal_coords[0]-init_coords[0])+std::abs(goal_coords[1]-init_coords[1]);
-			if(!closedset.check_if_in_set(n.coords)&& !openset.check_if_in_set(n.coords))
-				openset.push_node(n.coords,n.came_from,n.cost);
-		}
-		
-		if(current.coords[0]+1<lateral_size){
-			n.coords[0]=current.coords[0]+1;
-			n.coords[1]=current.coords[1];
-			n.came_from[0]=current.coords[0];
-			n.came_from[1]=current.coords[1];
-			if(goal_coords[0]!=-1)
-				n.cost=current.cost+1;
-			else
-				n.cost=current.cost+1+std::abs(goal_coords[0]-init_coords[0])+std::abs(goal_coords[1]-init_coords[1]);
-			if(!closedset.check_if_in_set(n.coords)&& !openset.check_if_in_set(n.coords))
-				openset.push_node(n.coords,n.came_from,n.cost);
-		}
-		
-		if(current.coords[1]+1<lateral_size){
-			n.coords[0]=current.coords[0];
-			n.coords[1]=current.coords[1]+1;
-			n.came_from[0]=current.coords[0];
-			n.came_from[1]=current.coords[1];
-			if(goal_coords[0]!=-1)
-				n.cost=current.cost+1;
-			else
-				n.cost=current.cost+1+std::abs(goal_coords[0]-init_coords[0])+std::abs(goal_coords[1]-init_coords[1]);
-			if(!closedset.check_if_in_set(n.coords) && !openset.check_if_in_set(n.coords))
-				openset.push_node(n.coords,n.came_from,n.cost);
-		}
 		
 	}
 	
