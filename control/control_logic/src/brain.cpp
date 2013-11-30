@@ -137,6 +137,12 @@ bool close_object(){
 	return false;
 }
 
+bool closed_perimeter(double init){
+	
+	
+	
+}
+
 int main(int argc, char ** argv){
 
 	ros::init(argc, argv, "brain");
