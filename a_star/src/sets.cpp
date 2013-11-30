@@ -75,6 +75,8 @@ node search_set::pop_best(){
 			best=node_list[i];
 	}
 	
+	remove_node(best.coords);
+	
 	return best;
 
 }

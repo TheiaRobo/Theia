@@ -17,8 +17,7 @@ const int gray=50;
 const int white=0;
 int execute=1;
 
-
-std::vector<signed char>  Occupancy_Grid(20*20,white);
+std::vector<signed char>  Occupancy_Grid(200*200,white);
 std::vector<int> commands;
 std::vector<double> params;
 
@@ -53,6 +52,8 @@ node create_node(int coords[2], double t_f, double t_g, int came_from[2]){
 	n.t_g=t_g;
 	n.came_from[0]=NO_VAL;
 	n.came_from[1]=NO_VAL;
+	
+	//ROS_INFO("Created node with t_f=%.2f and t_g=%.2f",t_f,t_g);
 	
 	return n;
 }
@@ -106,7 +107,8 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 	
 	
 	// A*
-	
+	ROS_INFO("Will start A*. Goal found in pos (%d,%d). Press any key to continue...",goal_coords[0]+1,goal_coords[1]+1);
+	getchar();
 	
 	node current,n;
 	
@@ -134,10 +136,13 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 	while(!openset.isempty() && execute){
 		i++;
 		
-		ROS_INFO("iter: %d",i);
+		//ROS_INFO("iter: %d",i);
 		
 		current=openset.pop_best();
 		
+		/*ROS_INFO("Will evaluate node (%d,%d).",current.coords[0],current.coords[1]);
+		ROS_INFO(" t_f = %.2f, t_g = %.2f",current.t_f,current.t_g);
+		getchar();*/
 		
 		if(goal_coords[0]==-1){
 			if(matrix[current.coords[0]][current.coords[1]]==val_to_find){
@@ -158,6 +163,102 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 			
 			coords[0]=current.coords[0]-1;
 			coords[1]=current.coords[1];
+			
+			t_h=heur(n.coords,goal_coords);
+			t_g = current.t_g + 1;
+			t_f = t_g + t_h;
+			
+			if(nodes_set.check_if_in_set(coords)){
+				
+				n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
+				
+			}else{
+				n=create_node(coords,t_f,t_g,current.coords);
+				
+			}
+			
+			if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
+				
+				if(!openset.check_if_in_set(n.coords))
+					openset.push_node(n);
+				else{ // update the value of the node in openset
+					openset.pop_requested(n.coords);
+					openset.push_node(n);
+				}
+				
+				nodes_set.push_node(n);
+				
+			}
+			
+		}
+		if(current.coords[0]+1<lateral_size){
+			
+			coords[0]=current.coords[0]+1;
+			coords[1]=current.coords[1];
+			
+			t_h=heur(n.coords,goal_coords);
+			t_g = current.t_g + 1;
+			t_f = t_g + t_h;
+			
+			if(nodes_set.check_if_in_set(coords)){
+				
+				n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
+				
+			}else{
+				n=create_node(coords,t_f,t_g,current.coords);
+				
+			}
+			
+			if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
+				
+				if(!openset.check_if_in_set(n.coords))
+					openset.push_node(n);
+				else{ // update the value of the node in openset
+					openset.pop_requested(n.coords);
+					openset.push_node(n);
+				}
+				
+				nodes_set.push_node(n);
+				
+			}
+			
+		}
+		if(current.coords[1]-1>=0){
+			
+			coords[0]=current.coords[0];
+			coords[1]=current.coords[1]-1;
+			
+			t_h=heur(n.coords,goal_coords);
+			t_g = current.t_g + 1;
+			t_f = t_g + t_h;
+			
+			if(nodes_set.check_if_in_set(coords)){
+				
+				n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
+				
+			}else{
+				n=create_node(coords,t_f,t_g,current.coords);
+				
+			}
+			
+			if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
+				
+				if(!openset.check_if_in_set(n.coords))
+					openset.push_node(n);
+				else{ // update the value of the node in openset
+					openset.pop_requested(n.coords);
+					openset.push_node(n);
+				}
+				
+				nodes_set.push_node(n);
+				
+			}
+			
+		}
+		if(current.coords[1]+1<lateral_size){
+			
+			coords[0]=current.coords[0];
+			coords[1]=current.coords[1]+1;
 			
 			t_h=heur(n.coords,goal_coords);
 			t_g = current.t_g + 1;
@@ -211,7 +312,7 @@ int main(int argc, char **argv)
 
 	ros::Rate loop_rate(1);
 	
-	Occupancy_Grid[19+19*20]=2;
+	Occupancy_Grid[99+99*200]=2;
 	
 	//while(ros::ok()){
 
