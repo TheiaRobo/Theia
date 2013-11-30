@@ -15,6 +15,8 @@ double x=NO_VAL;
 double y=NO_VAL;
 double x_i=NO_VAL;
 double y_i=NO_VAL;
+double init_time = 15; //sec
+double P=0.15; //meter
 char heading='E';
 
 const int black=100;
@@ -40,6 +42,11 @@ double cell_round(double val){
 
 
 void get_odo(theia_services::corrected_odo::ConstPtr msg){
+	
+	if(x_i==NO_VAL){
+		x_i=msg->x;
+		y_i=msg->y;
+	}
 	
 	x=msg->x;
 	y=msg->y;
@@ -137,9 +144,20 @@ bool close_object(){
 	return false;
 }
 
-bool closed_perimeter(double init){
+bool closed_perimeter(ros::Time init){
 	
+	if(x_i!=NO_VAL){
+		
+		if((ros::Time::now().toSec()-init.toSec()) > init_time){
+			
+			if(sqrt((x-x_i)*(x-x_i)+(y-y_i)*(y-y_i) < P))
+					return true;
+			
+		}
+		
+	}
 	
+	return false;
 	
 }
 
@@ -156,6 +174,7 @@ int main(int argc, char ** argv){
 	theia_services::object object_msg;
 
 	int slave=1;
+	ros::Time init_time = ros::Time::now();
 
 	ros::ServiceClient request_map = n.serviceClient<theia_services::mapsrv>("/mapping/ProcessedMap");
 	ros::ServiceClient order_wall = n.serviceClient<theia_services::brain_wall>("/wall_follower/instructions");

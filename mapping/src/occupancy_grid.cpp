@@ -211,7 +211,7 @@ void fill_line(int startx, int starty, int axis,int n,int val){
 		if(val==black){ // line until infinity or we find a 0 or 100 value is 75
 			
 			for(int x=startx+1; x < x_matrix ;x++){// || Occupancy_Grid[x+starty*y_matrix]==0 || Occupancy_Grid[x+starty*y_matrix]==100;x++)
-				if(Occupancy_Grid[x+starty*y_matrix]==white || Occupancy_Grid[x+starty*y_matrix]==black || out)
+				if( ( Occupancy_Grid[x+starty*y_matrix]!=gray &&  Occupancy_Grid[x+starty*y_matrix]!=blue) ||out)
 					out=1;
 				else{
 					Occupancy_Grid[x+starty*y_matrix]=gray;
@@ -229,7 +229,7 @@ void fill_line(int startx, int starty, int axis,int n,int val){
 		if(val==black){ // line until infinity or we find a 0 or 100 value is 75
 
 			for(int y=starty+1; y < y_matrix;y++){// || Occupancy_Grid[startx+y*y_matrix]==0 || Occupancy_Grid[startx+y*y_matrix]==100;y++)
-				if(Occupancy_Grid[startx+y*y_matrix]==white || Occupancy_Grid[startx+y*y_matrix]==black || out)
+				if(( Occupancy_Grid[startx+y*y_matrix]!=gray &&  Occupancy_Grid[startx+y*y_matrix]!=blue) || out)
 					out=1;
 				else{
 					Occupancy_Grid[startx+y*y_matrix]=gray;
@@ -247,7 +247,7 @@ void fill_line(int startx, int starty, int axis,int n,int val){
 		if(val==black){ // line until infinity or we find a 0 or 100 value is 75
 
 			for(int x=startx-1; x > -1;x--){// || Occupancy_Grid[x+starty*y_matrix]==0 || Occupancy_Grid[x+starty*y_matrix]==100;x--)
-				if(Occupancy_Grid[x+starty*y_matrix]==white || Occupancy_Grid[x+starty*y_matrix]==black || out)
+				if( ( Occupancy_Grid[x+starty*y_matrix]!=gray &&  Occupancy_Grid[x+starty*y_matrix]!=blue) || out)
 					out=1;
 				else
 					Occupancy_Grid[x+starty*y_matrix]=gray;
@@ -266,7 +266,7 @@ void fill_line(int startx, int starty, int axis,int n,int val){
 
 			for(int y=starty-1; y > -1 ;y--){//|| Occupancy_Grid[startx+y*y_matrix]==0 || Occupancy_Grid[startx+y*y_matrix]==100;y--)
 				
-				if(Occupancy_Grid[startx+y*y_matrix]==white || Occupancy_Grid[startx+y*y_matrix]==black || out)
+				if(( Occupancy_Grid[startx+y*y_matrix]!=gray &&  Occupancy_Grid[startx+y*y_matrix]!=blue) || out)
 					out=1;
 				else
 					Occupancy_Grid[startx+y*y_matrix]=gray;
