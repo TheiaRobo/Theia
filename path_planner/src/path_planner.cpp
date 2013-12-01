@@ -7,6 +7,8 @@
 #include <nav_msgs/MapMetaData.h>
 #include <signal.h>
 #include <path_planner/path_srv.h>
+#include <visualization_msgs/Marker.h>
+#include <tf/transform_broadcaster.h>
 
 #include <vector>
 #include "sets.h"
@@ -23,6 +25,8 @@ int execute=1;
 std::vector<signed char>  Occupancy_Grid;
 std::vector<int> commands;
 std::vector<double> params;
+
+ros::Publisher path_pub;
 
 char heading_map = 'E';
 const float PI = 3.1415926f;
@@ -71,7 +75,7 @@ double heur(int coords[2], int goal_coords[2]){
 	
 	if(goal_coords[0]!=NO_VAL){
 		t_h = std::abs(coords[0]-goal_coords[0])+std::abs(coords[1]-goal_coords[1]);
-		return 1.05*t_h;
+		return 7*t_h;
 	}else{ // no goal, no heuristic
 		return 0;
 	}
@@ -135,7 +139,7 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 	
 	// A*
 	ROS_INFO("Will start A*. Goal found in pos (%d,%d). Press any key to continue...",goal_coords[0]+1,goal_coords[1]+1);
-	//getchar();
+	getchar();
 	
 	
 	node current,n;
@@ -370,7 +374,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 					(*vals).push_back(PI/2);
 
 					
-				}else if(current.coords[1]-prev.coords[1] < 0){
+				}else if(current.coords[1]-prev.coords[1] < 0){ // we rotated right
 					
 					(*commands).push_back(FORWARD);
 					(*vals).push_back(forward_counter*matrix_res); // Respective parameter
@@ -520,12 +524,74 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 
 bool planning_service(path_planner::path_srv::Request &req, path_planner::path_srv::Response &res){
 	
-	int size = req.map.info.width;
+	
+	int size = 50*50;
+	std::vector<node> solution;
+	std::vector<int> commands;
+	std::vector<double> vals;
+	std::vector<signed char> temp_grid(size,white);
+	visualization_msgs::Marker object_marker;
+	std::vector<geometry_msgs::Point> pos_list;
+	geometry_msgs::Point pos;
+
+	matrix_res=0.01;
+	heading_map = 'E';
+	
+	temp_grid[49+49*50]=1;
+	
+	solution = find_closest(0,0,temp_grid,1);
+	
+	
+
+	object_marker.header.frame_id = "/path";
+	object_marker.header.stamp = ros::Time::now();
+
+	// Set the namespace and id for this marker.  This serves to create a unique ID
+	// Any marker sent with the same namespace and id will overwrite the old one
+	object_marker.ns = "path";
+	object_marker.id = 0;
+
+	object_marker.type = visualization_msgs::Marker::CUBE_LIST;
+
+	// Set the marker action.  Options are ADD and DELETE
+	object_marker.action = visualization_msgs::Marker::ADD;
+
+	// Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
+
+
+	object_marker.scale.x = matrix_res;
+	object_marker.scale.y = matrix_res;
+	object_marker.scale.z = matrix_res;
+
+	// Set the color -- be sure to set alpha to something non-zero!
+	object_marker.color.r = 0.0f;
+	object_marker.color.g = 0.0f;
+	object_marker.color.b = 1.0f;
+	object_marker.color.a = 1.0;
+	object_marker.pose.orientation.w=1.0;
+
+	object_marker.lifetime = ros::Duration();
+
+	for(int i=0; i<solution.size(); i++){
+		pos.x=solution[i].coords[0]*0.01;
+		pos.y=solution[i].coords[1]*0.01;
+		pos.z=0;
+
+		pos_list.push_back(pos);
+	}
+
+
+	object_marker.points=pos_list;
+	path_pub.publish(object_marker);
+			
+	getchar();
+	
+	/*int size = req.map.info.width;
 	std::vector<node> solution;
 	std::vector<int> commands;
 	std::vector<double> vals;
 	
-	Occupancy_Grid.resize(size,blue);
+	Occupancy_Grid.resize(size*size,blue);
 	heading_map = req.heading;
 	matrix_res = req.map.info.resolution;
 	
@@ -539,7 +605,7 @@ bool planning_service(path_planner::path_srv::Request &req, path_planner::path_s
 	
 	res.commands=commands;
 	res.vals=vals;
-	res.size=vals.size();
+	res.size=vals.size();*/
 	
 	
 	return true;
@@ -559,7 +625,7 @@ int main(int argc, char **argv)
 	
 	/*ros::ServiceServer map_sender = n.advertiseService("/mapping/ProcessedMap", provide_map);*/
 	path_service = n.advertiseService("/path_planner/plan_trajectory",planning_service);
-	
+	path_pub = n.advertise<visualization_msgs::Marker>("/path_planner/trajectory",1);
 	
 	ROS_INFO("Started the Path Planner Node");
 

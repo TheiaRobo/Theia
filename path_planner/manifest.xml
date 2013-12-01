@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/a_star</url>
   <depend package="roscpp"/>
   <depend package="nav_msgs"/>
+  <depend package="tf"/>
 
 </package>
 
