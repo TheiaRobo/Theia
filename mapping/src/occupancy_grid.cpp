@@ -541,15 +541,16 @@ double * convert_object_distance(double Lat, double Long, double dist){
 	//x_i=(y_i-y_0)*tan(Lat?Lat_0)+x_0;
 	// x_i = 0.35 * tan(Lat + Lat_0) + x_0;
 	//x_i = dist * sin(Lat + Lat_0) + x_0;
-	// x_i=(z_i-(z_0))*tan(Lat-Lat_0)+x_0;
+	x_i=(z_i-(z_0))*tan(Lat+Lat_0)+x_0;
 	//z_i=(x_i-x_0)*tan(Long-Long_0)+z_0;
-	// y_i=-((x_i-x_0)*tan(Long-Long_0)+(-y_0));
+	y_i=((x_i-x_0)*tan(Long+Long_0)+(-y_0));
 	//y_i = -(x_i - x_0) * tan(Long+Long_0);
 	//y_i=y_0;
 	//z_i=z_0;
 	
+	/*//Testing coord
 	x_i = dist * sin(Lat_0) + x_0;
-	y_i = 0;
+	y_i = 0;*/
 		
 	ret_val=new double(2);
 	
