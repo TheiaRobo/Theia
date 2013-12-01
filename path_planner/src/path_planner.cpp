@@ -191,17 +191,7 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 				t_g = current.t_g + 1;
 				t_f = t_g + t_h;
 				
-				/*if(nodes_set.check_if_in_set(coords)){
-					
-					n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
-					
-				}else{
-					n=create_node(coords,t_f,t_g,current.coords);
-					
-				}*/
-				
 				if(openset.check_if_in_set(coords)){
-					// SHOULD BE READ NODE
 					n = openset.read_node(coords); // only doing this to get the f value, if present				
 				}else{
 					n = create_node(coords,t_f,t_g,current.coords);
@@ -219,9 +209,6 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 						openset.pop_requested(n.coords);
 						openset.push_node(n);
 					}
-					
-					//nodes_set.push_node(n);
-					
 				}
 			}
 			
@@ -236,18 +223,8 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 				t_g = current.t_g + 1;
 				t_f = t_g + t_h;
 				
-				/*if(nodes_set.check_if_in_set(coords)){
-					
-					n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
-					
-				}else{
-					n=create_node(coords,t_f,t_g,current.coords);
-					
-				}*/
-				
 				if(openset.check_if_in_set(coords)){
-					// SHOULD BE READ NODE
-					n = openset.read_node(coords); // only doing this to get the f value, if present
+					n = openset.read_node(coords); 
 	
 				}else{
 					n = create_node(coords,t_f,t_g,current.coords);
@@ -260,13 +237,11 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 					n.came_from[1]=current.coords[1];
 					if(!openset.check_if_in_set(n.coords))
 						openset.push_node(n);
-					else{ // update the value of the node in openset
+					else{ 
 						openset.pop_requested(n.coords);
 						openset.push_node(n);
 					}
-					
-					//nodes_set.push_node(n);
-					
+										
 				}
 			}
 			
@@ -281,18 +256,8 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 				t_g = current.t_g + 1;
 				t_f = t_g + t_h;
 				
-				/*if(nodes_set.check_if_in_set(coords)){
-					
-					n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
-					
-				}else{
-					n=create_node(coords,t_f,t_g,current.coords);
-					
-				}*/
-				
 				if(openset.check_if_in_set(coords)){
-					// SHOULD BE READ NODE
-					n = openset.read_node(coords); // only doing this to get the f value, if present
+					n = openset.read_node(coords); 
 				}else{
 					n = create_node(coords,t_f,t_g,current.coords);
 				}
@@ -305,12 +270,10 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 					n.came_from[1]=current.coords[1];
 					if(!openset.check_if_in_set(n.coords))
 						openset.push_node(n);
-					else{ // update the value of the node in openset
+					else{ 
 						openset.pop_requested(n.coords);
 						openset.push_node(n);
 					}
-					
-					//nodes_set.push_node(n);
 					
 				}
 			}
@@ -326,17 +289,8 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 				t_g = current.t_g + 1;
 				t_f = t_g + t_h;
 				
-				/*if(nodes_set.check_if_in_set(coords)){
-					
-					n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
-					
-				}else{
-					n=create_node(coords,t_f,t_g,current.coords);
-					
-				}*/
 				if(openset.check_if_in_set(coords)){
-					// SHOULD BE READ NODE
-					n = openset.read_node(coords); // only doing this to get the f value, if present
+					n = openset.read_node(coords); 
 				}else{
 					n = create_node(coords,t_f,t_g,current.coords);
 				}
@@ -349,13 +303,11 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 					n.came_from[1]=current.coords[1];
 					if(!openset.check_if_in_set(n.coords))
 						openset.push_node(n);
-					else{ // update the value of the node in openset
+					else{ 
 						openset.pop_requested(n.coords);
 						openset.push_node(n);
 					}
-					
-				//nodes_set.push_node(n);
-					
+										
 				}
 			}
 			
