@@ -18,7 +18,7 @@ const int gray=50;
 const int white=0;
 int execute=1;
 
-std::vector<signed char>  Occupancy_Grid(8*8,white);
+std::vector<signed char>  Occupancy_Grid;
 std::vector<int> commands;
 std::vector<double> params;
 
@@ -371,8 +371,34 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 	
 }
 
+void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std::vector<double> *vals){
+	
+	return;
+	
+}
+
 
 bool planning_service(path_planner::path_srv::Request &req, path_planner::path_srv::Response &res){
+	
+	int size = req.map.info.width;
+	std::vector<node> solution;
+	std::vector<int> commands;
+	std::vector<double> vals;
+	
+	Occupancy_Grid.resize(size,blue);
+	
+	for(int i=0; i < size; i++)
+		Occupancy_Grid[i]=req.map.data[i];
+	
+	
+	solution = find_closest(req.x,req.y,Occupancy_Grid,req.goal);
+	
+	convert_to_commands(solution,&commands,&vals);
+	
+	res.commands=commands;
+	res.vals=vals;
+	res.size=vals.size();
+	
 	
 	return true;
 	
@@ -397,34 +423,21 @@ int main(int argc, char **argv)
 
 	ros::Rate loop_rate(1);
 	
-	Occupancy_Grid[7+4*8]=2;
-	
-	// virtual walls
-	
-	Occupancy_Grid[7+3*8]=black;
-	Occupancy_Grid[6+3*8]=black;
-	Occupancy_Grid[5+3*8]=black;
-	Occupancy_Grid[5+4*8]=black;
-	Occupancy_Grid[4+4*8]=black;
-	Occupancy_Grid[3+4*8]=black;
-	Occupancy_Grid[2+4*8]=black;
-	Occupancy_Grid[2+3*8]=black;
-	
 	
 	while(ros::ok()){
 
-		path=find_closest(7,2,Occupancy_Grid,2);
-			//loop_rate.sleep();
-			//ros::spinOnce();
-		ROS_INFO("Time: %.2f",ros::Time::now().toSec()-init_time.toSec());
+		//path=find_closest(7,2,Occupancy_Grid,2);
+		loop_rate.sleep();
+		ros::spinOnce();
+		//ROS_INFO("Time: %.2f",ros::Time::now().toSec()-init_time.toSec());
 		
-		i=path.size()-1;
+		/*i=path.size()-1;
 		while(i>=0){
 			node_ptr = path[i];
 			i--;
 			ROS_INFO("(%d,%d)",node_ptr.coords[0],node_ptr.coords[1]);
 			
-		}
+		}*/
 	}
 	return 0;
 }
