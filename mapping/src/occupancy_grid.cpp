@@ -165,7 +165,9 @@ std::vector<signed char> place_map(std::vector<signed char> map,int x_position, 
 
 	for (int x=x_position-delta_x;x<=x_position+delta_x;x++){
 		for (int y=(y_position-delta_y)*y_matrix;y<=(y_position+delta_y)*y_matrix;y+=y_matrix){
-			map[x+y]=val;
+		
+			if(map[x+y]==white || map[x+y]==black || map[x+y]==gray || map[x+y] == blue)
+				map[x+y]=val;
 
 		}
 	}
@@ -205,19 +207,19 @@ void fill_line(int startx, int starty, int axis,int n,int val){
 	
 	case 1:
 		for(int x=startx; x<startx+n;x++){
-			Occupancy_Grid[x+starty*y_matrix]=val;
+			if(Occupancy_Grid[x+starty*y_matrix]==white || Occupancy_Grid[x+starty*y_matrix]==black || Occupancy_Grid[x+starty*y_matrix] == blue || Occupancy_Grid[x+starty*y_matrix] == gray)
+				Occupancy_Grid[x+starty*y_matrix]=val;
 		}
 		
-		if(val==black){ // line until infinity or we find a 0 or 100 value is 75
-			
-			for(int x=startx+1; x < x_matrix ;x++){// || Occupancy_Grid[x+starty*y_matrix]==0 || Occupancy_Grid[x+starty*y_matrix]==100;x++)
-				if( ( Occupancy_Grid[x+starty*y_matrix]!=gray &&  Occupancy_Grid[x+starty*y_matrix]!=blue) ||out)
-					out=1;
-				else{
-					Occupancy_Grid[x+starty*y_matrix]=gray;
-				}
+		if(val == white){
+		
+			for(int x = startx + n + 1; x < x_matrix && Occupancy_Grid[x+starty*y_matrix] == blue; x++){
+				
+				Occupancy_Grid[x+starty*y_matrix] = gray;
 			}
+		
 		}
+		
 		
 		
 		break;
@@ -226,16 +228,16 @@ void fill_line(int startx, int starty, int axis,int n,int val){
 			Occupancy_Grid[startx+y*y_matrix]=val;
 		}
 		
-		if(val==black){ // line until infinity or we find a 0 or 100 value is 75
-
-			for(int y=starty+1; y < y_matrix;y++){// || Occupancy_Grid[startx+y*y_matrix]==0 || Occupancy_Grid[startx+y*y_matrix]==100;y++)
-				if(( Occupancy_Grid[startx+y*y_matrix]!=gray &&  Occupancy_Grid[startx+y*y_matrix]!=blue) || out)
-					out=1;
-				else{
-					Occupancy_Grid[startx+y*y_matrix]=gray;
-				}
+		
+		if(val == white){
+		
+			for(int y = starty + n + 1; y < y_matrix && Occupancy_Grid[startx+y*y_matrix] == blue; y++){
+				
+				Occupancy_Grid[startx+y*y_matrix] = gray;
 			}
+		
 		}
+		
 		
 		
 		break;
@@ -244,14 +246,13 @@ void fill_line(int startx, int starty, int axis,int n,int val){
 			Occupancy_Grid[x+starty*y_matrix]=val;
 		}
 		
-		if(val==black){ // line until infinity or we find a 0 or 100 value is 75
-
-			for(int x=startx-1; x > -1;x--){// || Occupancy_Grid[x+starty*y_matrix]==0 || Occupancy_Grid[x+starty*y_matrix]==100;x--)
-				if( ( Occupancy_Grid[x+starty*y_matrix]!=gray &&  Occupancy_Grid[x+starty*y_matrix]!=blue) || out)
-					out=1;
-				else
-					Occupancy_Grid[x+starty*y_matrix]=gray;
+		if(val == white){
+		
+			for(int x = startx - n - 1; x >= 0 && Occupancy_Grid[x+starty*y_matrix] == blue; x--){
+				
+				Occupancy_Grid[x+starty*y_matrix] = gray;
 			}
+		
 		}
 		
 		
@@ -262,16 +263,15 @@ void fill_line(int startx, int starty, int axis,int n,int val){
 			Occupancy_Grid[startx+y*y_matrix]=val;
 		}
 		
-		if(val==black){ // line until infinity or we find a 0 or 100 value is 75
-
-			for(int y=starty-1; y > -1 ;y--){//|| Occupancy_Grid[startx+y*y_matrix]==0 || Occupancy_Grid[startx+y*y_matrix]==100;y--)
+		if(val == white){
+		
+			for(int y = starty - n - 1; y > 0 && Occupancy_Grid[startx+y*y_matrix] == blue; y--){
 				
-				if(( Occupancy_Grid[startx+y*y_matrix]!=gray &&  Occupancy_Grid[startx+y*y_matrix]!=blue) || out)
-					out=1;
-				else
-					Occupancy_Grid[startx+y*y_matrix]=gray;
+				Occupancy_Grid[startx+y*y_matrix] = gray;
 			}
+		
 		}
+		
 		break;
 	
 	}
