@@ -178,7 +178,8 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 			}
 			
 			if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
-				
+				n.t_g=t_g;
+				n.t_f=t_f;
 				if(!openset.check_if_in_set(n.coords))
 					openset.push_node(n);
 				else{ // update the value of the node in openset
@@ -210,7 +211,8 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 			}
 			
 			if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
-				
+				n.t_g=t_g;
+				n.t_f=t_f;
 				if(!openset.check_if_in_set(n.coords))
 					openset.push_node(n);
 				else{ // update the value of the node in openset
@@ -243,6 +245,8 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 			
 			if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
 				
+				n.t_g=t_g;
+				n.t_f=t_f;
 				if(!openset.check_if_in_set(n.coords))
 					openset.push_node(n);
 				else{ // update the value of the node in openset
@@ -275,6 +279,8 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 			
 			if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
 				
+				n.t_g=t_g;
+				n.t_f=t_f;
 				if(!openset.check_if_in_set(n.coords))
 					openset.push_node(n);
 				else{ // update the value of the node in openset
@@ -312,7 +318,7 @@ int main(int argc, char **argv)
 
 	ros::Rate loop_rate(1);
 	
-	Occupancy_Grid[99+99*200]=2;
+	Occupancy_Grid[199+199*200]=2;
 	
 	//while(ros::ok()){
 
