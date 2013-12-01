@@ -573,22 +573,16 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 			return;
 	}
 	
+	if(wall==-1)
+		return;
+	
 	
 	new_object.name=msg->objectName;
 	new_object.num=object_list.size()+1;	
 	object_list.push_back(new_object);
 	
 
-	distance=convert_object_distance(msg->posLatitude,msg->posLongitude,msg->posDistance);
-	//pos_x=corrected_odo_x[0]+distance[0];
-	//pos_y=corrected_odo_y[0]+distance[1];
-	
-	
-	//Occupancy_Grid=place_map(Occupancy_Grid,cell_round(pos_x*100),cell_round(pos_y*100),robot_delta_x,robot_delta_y,new_object.num);
-
-	//ROS_INFO("New object: %s Num: %d at (%d,%d)",new_object.name.c_str(),new_object.num,cell_round(pos_x*100),cell_round(pos_y*100));
-
-	
+	distance=convert_object_distance(msg->posLatitude,msg->posLongitude,msg->posDistance);	
 
 	switch(heading){
 		
