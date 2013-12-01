@@ -78,8 +78,8 @@ double forward_distance=20.0;
 double heading_thres=0.005;
 double align_thres=100;//0.003;
 double dist_thres=6.0;
-double cross_thres1=11;
-double cross_thres2=11;
+double cross_thres1=0.5;
+double cross_thres2=0.5;
 
 double dist_ref=2.0;
 double inf_thres=20.0;
@@ -674,6 +674,7 @@ int forward(ros::Rate loop_rate){
 
 		if(stop_flag){
 			stop();
+			stop_flag=0;
 			ROS_INFO("Object ahead!\n");
 			return 0;
 		}
@@ -683,9 +684,32 @@ int forward(ros::Rate loop_rate){
 		//Distance to wall < delay_thres ---> very close! STOP
 		if(wall_in_range(3,dist_thres,ir_readings) || wall_in_range(4,cross_thres1,ir_readings)){ //
 			stop();
+			loop_rate.sleep();
+			
+			if(wall_in_range(4,cross_thres1,ir_readings)){ // will go back
+			
+				std_velocity=-10.0;
+				forward_distance=5.0;
+				curr_dist = 0;
+				i_x=x;
+				i_y=y;
+				while(curr_dist < forward_distance){
+					
+					control_pub(std_velocity,u_theta);
+				
+					curr_dist=std::sqrt((x-i_x)*(x-i_x)+(y-i_y)*(y-i_y));
+					ros::spinOnce();
+					loop_rate.sleep();
+				}
+			
+			}
+			stop();
 			std_velocity=temp_s;
 			k_dist=temp_k;
 			loop_rate.sleep();
+			
+			
+			
 			return 0;
 		}
 
@@ -886,7 +910,7 @@ int forward_wall(ros::Rate loop_rate){
 
 	double ir_wall[2]={0.0,0.0}, close_ir=0.0;
 	double theta_ref=0.0, theta_meas=0.0, error_theta=0.0,u_theta=0.0,u_dist=0.0; 
-	double dist_meas=0.0, error_dist=0.0, avg_dist=0.0;
+	double dist_meas=0.0, error_dist=0.0, avg_dist=0.0, temp_s, curr_dist, forward_distance,i_x,i_y;
 	double I_sum_r=0.0, last_E_r=PID_INIT, I_sum_d=0.0, last_R_d=PID_INIT;
 	int wall=1; // 1 - left side; 2 - right side
 	double wall_dist=0.0;
@@ -901,6 +925,7 @@ int forward_wall(ros::Rate loop_rate){
 
 		if(stop_flag){
 			stop();
+			stop_flag=0;
 			ROS_INFO("Object ahead!\n");
 			return 0;
 		}
@@ -909,6 +934,31 @@ int forward_wall(ros::Rate loop_rate){
 			stop();
 			last_angle=0;
 			ROS_INFO("Stop! Obstacle ahead!\n");
+			
+			if(wall_in_range(4,cross_thres1,ir_readings)){ // will go back
+				
+				temp_s=std_velocity;
+				std_velocity=-10.0;
+				forward_distance=5.0;
+				curr_dist = 0;
+				i_x=x;
+				i_y=y;
+				while(curr_dist < forward_distance){
+					
+					control_pub(std_velocity,u_theta);
+				
+					curr_dist=std::sqrt((x-i_x)*(x-i_x)+(y-i_y)*(y-i_y));
+					//ROS_INFO("MOVED %.2f!",curr_dist);
+					ros::spinOnce();
+					loop_rate.sleep();
+				}
+				
+				std_velocity = temp_s;
+			
+			}
+			
+			
+			
 			return 0;
 		}
 

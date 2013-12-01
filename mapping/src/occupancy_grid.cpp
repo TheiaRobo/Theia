@@ -657,8 +657,6 @@ void Get_Ir(core_sensors::ir::ConstPtr ir_msg){
 	
 	for(int i=0; i<8; i++)
 		ir[i]=ir_msg->dist[i];
-		
-	ROS_INFO("ir[0]: %.2f",ir[0]);
 	
 }
 

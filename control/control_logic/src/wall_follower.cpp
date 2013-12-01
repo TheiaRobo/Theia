@@ -20,8 +20,8 @@ double front_min = 6.0;
 double side_max = 20.0;
 double side_min = 4.0;
 double side_ref = 4.0;
-double cross_thres1=10;
-double cross_thres2=10;
+double cross_thres1=0.5;
+double cross_thres2=0.5;
 
 int last_turn = 0;	//0 - null, 1 - left, 2 - right
 int last_direction = 0; //0 - null, 1 - left, 2 - right, 3 - forward
@@ -95,16 +95,16 @@ void readObjectData(theia_services::object::ConstPtr msg){
     
 	theia_services::stop stop_msg;
     
-	if(!flag_object){
+	if(!flag_object && history[0].driving_mode!=2){
 		stop_msg.stop=1;
         
 		stop_pub.publish(stop_msg);
         
 		object_in_front = msg -> object;
         
-		if (object_in_front){
-			flag_object = 1;
-		}
+		flag_object = 1;
+		ROS_INFO("Brain tells me there is an object right in front of me");
+		getchar();
 	}
     
     
@@ -307,8 +307,9 @@ void readIrData(core_sensors::ir::ConstPtr ir_msg){
 		ir[i]=median(ir_raw[i]);
 	}
     
-    if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2)) )
+    if ( (wall_in_range(4,cross_thres1) || wall_in_range(4,cross_thres2)) && history[0].driving_mode!=2)
     {
+
         flag_pointy=1;
     }
 
@@ -563,9 +564,9 @@ int give_info_wall(int resB, double resparameter)
 }
 
 int cross_detection(void){
-    if ( flag_pointy )
+    
+    if(flag_pointy)
     {
-        flag_pointy=0;
         return 1;
     }else
         return 0;
@@ -795,12 +796,14 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
             //We do not want to drive so long to avoid an object... maybe
             flag_turning = 1;
             flag_avoid = 0;
+	    ROS_INFO("I am avoiding  something");
         }else if ( !cross_detection()  &&  object_detection() && !flag_avoid){
             //We have detected an object, we need to avoid it
             history[0].driving_mode = 2;
             history[0].driving_parameters=rotate2_not_last_wall();
             flag_avoid = 1;
             flag_object = 0;
+	    ROS_INFO("I detected a new object");
         }else if ( !cross_detection()  &&  object_detection() && flag_avoid){
             //We see a new object while avoiding it. It should not happen, however we want to avoid it as well
             history[0].driving_mode = 2;
@@ -816,6 +819,8 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
             history[0].driving_mode = 2;
             history[0].driving_parameters=rotate2_not_last_wall();
             flag_avoid = 1;
+	    flag_pointy = 0;
+	    ROS_INFO("I detected a pointy wall");
         }
         
     }else{
@@ -946,7 +951,8 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
     
     ROS_INFO("Last wall: %d",last_wall_followed());
     ROS_INFO("Turn flag: %d",flag_turning);
-    
+    ROS_INFO("Object flag: %d",flag_object);
+    ROS_INFO("Pointy flag: %d",flag_pointy);
     printf("\n");
     
     switch(history[0].driving_mode){

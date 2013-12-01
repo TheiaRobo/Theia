@@ -149,7 +149,7 @@ bool close_object(){
 bool closed_perimeter(ros::Time init){
 	
 
-	ROS_INFO("Distance from starting position: %.2f",sqrt((x-x_i)*(x-x_i)+(y-y_i)*(y-y_i)));
+	//ROS_INFO("Distance from starting position: %.2f",sqrt((x-x_i)*(x-x_i)+(y-y_i)*(y-y_i)));
 	if(x_i!=NO_VAL){
 		
 		if((ros::Time::now().toSec()-init.toSec()) > init_time){
