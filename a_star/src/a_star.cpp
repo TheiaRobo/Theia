@@ -17,7 +17,7 @@ const int gray=50;
 const int white=0;
 int execute=1;
 
-std::vector<signed char>  Occupancy_Grid(1000*1000,white);
+std::vector<signed char>  Occupancy_Grid(8*8,white);
 std::vector<int> commands;
 std::vector<double> params;
 
@@ -388,11 +388,21 @@ int main(int argc, char **argv)
 
 	ros::Rate loop_rate(1);
 	
-	Occupancy_Grid[999+999*1000]=2;
+	Occupancy_Grid[7+4*8]=2;
 	
+	// virtual walls
+	
+	Occupancy_Grid[7+3*8]=black;
+	Occupancy_Grid[6+3*8]=black;
+	Occupancy_Grid[5+3*8]=black;
+	Occupancy_Grid[5+4*8]=black;
+	Occupancy_Grid[4+4*8]=black;
+	Occupancy_Grid[3+4*8]=black;
+	Occupancy_Grid[2+4*8]=black;
+	Occupancy_Grid[2+3*8]=black;
 	//while(ros::ok()){
 
-	path=find_closest(0,0,Occupancy_Grid,2);
+	path=find_closest(7,2,Occupancy_Grid,2);
 		//loop_rate.sleep();
 		//ros::spinOnce();
 	ROS_INFO("Time: %.2f",ros::Time::now().toSec()-init_time.toSec());
@@ -401,7 +411,7 @@ int main(int argc, char **argv)
 	while(i>=0){
 		node_ptr = path[i];
 		i--;
-		//ROS_INFO("(%d,%d)",node_ptr.coords[0],node_ptr.coords[1]);
+		ROS_INFO("(%d,%d)",node_ptr.coords[0],node_ptr.coords[1]);
 		
 	}
 
