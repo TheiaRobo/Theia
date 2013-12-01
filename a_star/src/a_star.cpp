@@ -185,41 +185,43 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 			coords[0]=current.coords[0]-1;
 			coords[1]=current.coords[1];
 			
-			t_h=heur(n.coords,goal_coords);
-			t_g = current.t_g + 1;
-			t_f = t_g + t_h;
-			
-			/*if(nodes_set.check_if_in_set(coords)){
+			if(matrix[coords[0]][coords[1]] != black){
+				t_h=heur(n.coords,goal_coords);
+				t_g = current.t_g + 1;
+				t_f = t_g + t_h;
 				
-				n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
-				
-			}else{
-				n=create_node(coords,t_f,t_g,current.coords);
-				
-			}*/
-			
-			if(openset.check_if_in_set(coords)){
-				// SHOULD BE READ NODE
-				n = openset.read_node(coords); // only doing this to get the f value, if present				
-			}else{
-				n = create_node(coords,t_f,t_g,current.coords);
-			}
-			
-			if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
-				n.t_g=t_g;
-				n.t_f=t_f;
-				n.came_from[0]=current.coords[0];
-				n.came_from[1]=current.coords[1];
-				if(!openset.check_if_in_set(n.coords))
-					openset.push_node(n);
-				else{ // update the value of the node in openset
+				/*if(nodes_set.check_if_in_set(coords)){
 					
-					openset.pop_requested(n.coords);
-					openset.push_node(n);
+					n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
+					
+				}else{
+					n=create_node(coords,t_f,t_g,current.coords);
+					
+				}*/
+				
+				if(openset.check_if_in_set(coords)){
+					// SHOULD BE READ NODE
+					n = openset.read_node(coords); // only doing this to get the f value, if present				
+				}else{
+					n = create_node(coords,t_f,t_g,current.coords);
 				}
 				
-				//nodes_set.push_node(n);
-				
+				if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
+					n.t_g=t_g;
+					n.t_f=t_f;
+					n.came_from[0]=current.coords[0];
+					n.came_from[1]=current.coords[1];
+					if(!openset.check_if_in_set(n.coords))
+						openset.push_node(n);
+					else{ // update the value of the node in openset
+						
+						openset.pop_requested(n.coords);
+						openset.push_node(n);
+					}
+					
+					//nodes_set.push_node(n);
+					
+				}
 			}
 			
 		}
@@ -228,41 +230,43 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 			coords[0]=current.coords[0]+1;
 			coords[1]=current.coords[1];
 			
-			t_h=heur(n.coords,goal_coords);
-			t_g = current.t_g + 1;
-			t_f = t_g + t_h;
-			
-			/*if(nodes_set.check_if_in_set(coords)){
+			if(matrix[coords[0]][coords[1]] != black){
+				t_h=heur(n.coords,goal_coords);
+				t_g = current.t_g + 1;
+				t_f = t_g + t_h;
 				
-				n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
+				/*if(nodes_set.check_if_in_set(coords)){
+					
+					n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
+					
+				}else{
+					n=create_node(coords,t_f,t_g,current.coords);
+					
+				}*/
 				
-			}else{
-				n=create_node(coords,t_f,t_g,current.coords);
-				
-			}*/
-			
-			if(openset.check_if_in_set(coords)){
-				// SHOULD BE READ NODE
-				n = openset.read_node(coords); // only doing this to get the f value, if present
-
-			}else{
-				n = create_node(coords,t_f,t_g,current.coords);
-			}
-			
-			if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
-				n.t_g=t_g;
-				n.t_f=t_f;
-				n.came_from[0]=current.coords[0];
-				n.came_from[1]=current.coords[1];
-				if(!openset.check_if_in_set(n.coords))
-					openset.push_node(n);
-				else{ // update the value of the node in openset
-					openset.pop_requested(n.coords);
-					openset.push_node(n);
+				if(openset.check_if_in_set(coords)){
+					// SHOULD BE READ NODE
+					n = openset.read_node(coords); // only doing this to get the f value, if present
+	
+				}else{
+					n = create_node(coords,t_f,t_g,current.coords);
 				}
 				
-				//nodes_set.push_node(n);
-				
+				if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
+					n.t_g=t_g;
+					n.t_f=t_f;
+					n.came_from[0]=current.coords[0];
+					n.came_from[1]=current.coords[1];
+					if(!openset.check_if_in_set(n.coords))
+						openset.push_node(n);
+					else{ // update the value of the node in openset
+						openset.pop_requested(n.coords);
+						openset.push_node(n);
+					}
+					
+					//nodes_set.push_node(n);
+					
+				}
 			}
 			
 		}
@@ -271,41 +275,43 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 			coords[0]=current.coords[0];
 			coords[1]=current.coords[1]-1;
 			
-			t_h=heur(n.coords,goal_coords);
-			t_g = current.t_g + 1;
-			t_f = t_g + t_h;
-			
-			/*if(nodes_set.check_if_in_set(coords)){
+			if(matrix[coords[0]][coords[1]] != black){
+				t_h=heur(n.coords,goal_coords);
+				t_g = current.t_g + 1;
+				t_f = t_g + t_h;
 				
-				n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
+				/*if(nodes_set.check_if_in_set(coords)){
+					
+					n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
+					
+				}else{
+					n=create_node(coords,t_f,t_g,current.coords);
+					
+				}*/
 				
-			}else{
-				n=create_node(coords,t_f,t_g,current.coords);
-				
-			}*/
-			
-			if(openset.check_if_in_set(coords)){
-				// SHOULD BE READ NODE
-				n = openset.read_node(coords); // only doing this to get the f value, if present
-			}else{
-				n = create_node(coords,t_f,t_g,current.coords);
-			}
-			
-			if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
-				
-				n.t_g=t_g;
-				n.t_f=t_f;
-				n.came_from[0]=current.coords[0];
-				n.came_from[1]=current.coords[1];
-				if(!openset.check_if_in_set(n.coords))
-					openset.push_node(n);
-				else{ // update the value of the node in openset
-					openset.pop_requested(n.coords);
-					openset.push_node(n);
+				if(openset.check_if_in_set(coords)){
+					// SHOULD BE READ NODE
+					n = openset.read_node(coords); // only doing this to get the f value, if present
+				}else{
+					n = create_node(coords,t_f,t_g,current.coords);
 				}
 				
-				//nodes_set.push_node(n);
-				
+				if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
+					
+					n.t_g=t_g;
+					n.t_f=t_f;
+					n.came_from[0]=current.coords[0];
+					n.came_from[1]=current.coords[1];
+					if(!openset.check_if_in_set(n.coords))
+						openset.push_node(n);
+					else{ // update the value of the node in openset
+						openset.pop_requested(n.coords);
+						openset.push_node(n);
+					}
+					
+					//nodes_set.push_node(n);
+					
+				}
 			}
 			
 		}
@@ -314,40 +320,42 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 			coords[0]=current.coords[0];
 			coords[1]=current.coords[1]+1;
 			
-			t_h=heur(n.coords,goal_coords);
-			t_g = current.t_g + 1;
-			t_f = t_g + t_h;
-			
-			/*if(nodes_set.check_if_in_set(coords)){
+			if(matrix[coords[0]][coords[1]] != black){
+				t_h=heur(n.coords,goal_coords);
+				t_g = current.t_g + 1;
+				t_f = t_g + t_h;
 				
-				n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
-				
-			}else{
-				n=create_node(coords,t_f,t_g,current.coords);
-				
-			}*/
-			if(openset.check_if_in_set(coords)){
-				// SHOULD BE READ NODE
-				n = openset.read_node(coords); // only doing this to get the f value, if present
-			}else{
-				n = create_node(coords,t_f,t_g,current.coords);
-			}
-
-			if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
-				
-				n.t_g=t_g;
-				n.t_f=t_f;
-				n.came_from[0]=current.coords[0];
-				n.came_from[1]=current.coords[1];
-				if(!openset.check_if_in_set(n.coords))
-					openset.push_node(n);
-				else{ // update the value of the node in openset
-					openset.pop_requested(n.coords);
-					openset.push_node(n);
+				/*if(nodes_set.check_if_in_set(coords)){
+					
+					n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
+					
+				}else{
+					n=create_node(coords,t_f,t_g,current.coords);
+					
+				}*/
+				if(openset.check_if_in_set(coords)){
+					// SHOULD BE READ NODE
+					n = openset.read_node(coords); // only doing this to get the f value, if present
+				}else{
+					n = create_node(coords,t_f,t_g,current.coords);
 				}
-				
-			//nodes_set.push_node(n);
-				
+	
+				if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
+					
+					n.t_g=t_g;
+					n.t_f=t_f;
+					n.came_from[0]=current.coords[0];
+					n.came_from[1]=current.coords[1];
+					if(!openset.check_if_in_set(n.coords))
+						openset.push_node(n);
+					else{ // update the value of the node in openset
+						openset.pop_requested(n.coords);
+						openset.push_node(n);
+					}
+					
+				//nodes_set.push_node(n);
+					
+				}
 			}
 			
 		}
