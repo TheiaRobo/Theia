@@ -6,6 +6,7 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/MapMetaData.h>
 #include <signal.h>
+#include <path_planner/path_srv.h>
 
 #include <vector>
 #include "sets.h"
@@ -371,20 +372,28 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 }
 
 
+bool planning_service(path_planner::path_srv::Request &req, path_planner::path_srv::Response &res){
+	
+	return true;
+	
+}
+
 int main(int argc, char **argv)
 {
-	ros::init(argc, argv, "a_star");
+	ros::init(argc, argv, "path_planner");
 	ros::NodeHandle n;
 	ros::Time init_time=ros::Time::now();
+	ros::ServiceServer path_service;
 	std::vector<node> path;
 	node node_ptr;
 	int i=0;
 
 	
 	/*ros::ServiceServer map_sender = n.advertiseService("/mapping/ProcessedMap", provide_map);*/
-
-
-	ROS_INFO("Started the a_star Node");
+	path_service = n.advertiseService("/path_planner/plan_trajectory",planning_service);
+	
+	
+	ROS_INFO("Started the Path Planner Node");
 
 	ros::Rate loop_rate(1);
 	
@@ -400,21 +409,22 @@ int main(int argc, char **argv)
 	Occupancy_Grid[3+4*8]=black;
 	Occupancy_Grid[2+4*8]=black;
 	Occupancy_Grid[2+3*8]=black;
-	//while(ros::ok()){
-
-	path=find_closest(7,2,Occupancy_Grid,2);
-		//loop_rate.sleep();
-		//ros::spinOnce();
-	ROS_INFO("Time: %.2f",ros::Time::now().toSec()-init_time.toSec());
 	
-	i=path.size()-1;
-	while(i>=0){
-		node_ptr = path[i];
-		i--;
-		ROS_INFO("(%d,%d)",node_ptr.coords[0],node_ptr.coords[1]);
-		
-	}
+	
+	while(ros::ok()){
 
-	//}
+		path=find_closest(7,2,Occupancy_Grid,2);
+			//loop_rate.sleep();
+			//ros::spinOnce();
+		ROS_INFO("Time: %.2f",ros::Time::now().toSec()-init_time.toSec());
+		
+		i=path.size()-1;
+		while(i>=0){
+			node_ptr = path[i];
+			i--;
+			ROS_INFO("(%d,%d)",node_ptr.coords[0],node_ptr.coords[1]);
+			
+		}
+	}
 	return 0;
 }

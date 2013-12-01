@@ -1,0 +1,8 @@
+nav_msgs/OccupancyGrid map
+int32 x
+int32 y
+int32 goal
+---
+int32 size
+int32[] commands
+float64[] vals
