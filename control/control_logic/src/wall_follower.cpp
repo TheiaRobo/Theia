@@ -56,6 +56,7 @@ int flag_turning = 0;
 int flag_avoid = 0;
 int flag_object = 0;
 int object_in_front = 0;
+int flag_pointy = 0;
 bool active=false;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -85,32 +86,7 @@ double median(double ir[median_size]){ // Simple median_size-value median filter
 	return ir_temp[(median_size-1)/2];
 }
 
-/*
- * readIrData: updates the IR values obtained from the core, then filtering.
- * */
-void readIrData(core_sensors::ir::ConstPtr ir_msg){
-    
-	//Shifting IR values to the immediate right cell
-	for(int i=0; i<ir_size; i++){
-		for(int j=0; j<2;j++){
-			ir_raw[i][j+1]=ir_raw[i][j];
-		}
-	}
-    
-	//Filter
-	for(int i=0; i<ir_size; i++){
-		ir_raw[i][0]=ir_msg->dist[i];
-		ir[i]=median(ir_raw[i]);
-	}
-    
-    if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2)) )
-    {
-        flag_pointy=1;
-    }
 
-    
-    
-}
 
 /*
  * readObjectData: updates the IR values obtained from the core, then filtering.
@@ -310,6 +286,33 @@ int wall_in_range(int side, double thres){
             return -1;
             
 	}
+    
+}
+
+/*
+ * readIrData: updates the IR values obtained from the core, then filtering.
+ * */
+void readIrData(core_sensors::ir::ConstPtr ir_msg){
+    
+	//Shifting IR values to the immediate right cell
+	for(int i=0; i<ir_size; i++){
+		for(int j=0; j<2;j++){
+			ir_raw[i][j+1]=ir_raw[i][j];
+		}
+	}
+    
+	//Filter
+	for(int i=0; i<ir_size; i++){
+		ir_raw[i][0]=ir_msg->dist[i];
+		ir[i]=median(ir_raw[i]);
+	}
+    
+    if ( (wall_in_range(4,cross_thres1)) || (wall_in_range(4,cross_thres2)) )
+    {
+        flag_pointy=1;
+    }
+
+    
     
 }
 

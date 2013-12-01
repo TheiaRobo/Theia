@@ -13,6 +13,7 @@
   <depend package="core_sensors"/>
   <depend package="nav_msgs"/>
   <depend package="theia_services"/>
+  <depend package="path_planner"/>
 
 </package>
 

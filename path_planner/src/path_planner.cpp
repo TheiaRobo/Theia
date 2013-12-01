@@ -563,7 +563,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 
 bool planning_service(path_planner::path_srv::Request &req, path_planner::path_srv::Response &res){
 
-
+ /*
 	int size = 10*10;
 	std::vector<node> solution;
 	std::vector<int> commands;
@@ -577,20 +577,7 @@ bool planning_service(path_planner::path_srv::Request &req, path_planner::path_s
 
 	matrix_res=0.01;
 	heading_map = 'E';
-	/*
-	temp_grid[4+4*5]=1;
-	temp_grid[2+2*5]=black;
-	pos.x=0.02;
-	pos.y=0.02;
-	black_list.push_back(pos);
-	temp_grid[3+2*5]=black;
-	pos.x=0.03;
-	black_list.push_back(pos);
-	temp_grid[4+2*5]=black;
-	pos.x=0.04;
-	black_list.push_back(pos);
-
-	 */	
+	
 	
 	temp_grid[1+1*10]=1;
 	temp_grid[1+2*10]=black;
@@ -714,12 +701,15 @@ bool planning_service(path_planner::path_srv::Request &req, path_planner::path_s
 
 		}
 
-	}
+	}*/
 
-	/*int size = req.map.info.width;
+	int size = req.map.info.width;
 	std::vector<node> solution;
 	std::vector<int> commands;
 	std::vector<double> vals;
+	visualization_msgs::Marker object_marker;
+	std::vector<geometry_msgs::Point> pos_list;
+	geometry_msgs::Point pos;
 
 	Occupancy_Grid.resize(size*size,blue);
 	heading_map = req.heading;
@@ -735,7 +725,49 @@ bool planning_service(path_planner::path_srv::Request &req, path_planner::path_s
 
 	res.commands=commands;
 	res.vals=vals;
-	res.size=vals.size();*/
+	res.size=vals.size();
+
+	object_marker.header.frame_id = "/path";
+	object_marker.header.stamp = ros::Time::now();
+
+	// Set the namespace and id for this marker.  This serves to create a unique ID
+	// Any marker sent with the same namespace and id will overwrite the old one
+	object_marker.ns = "path";
+	object_marker.id = 0;
+
+	object_marker.type = visualization_msgs::Marker::CUBE_LIST;
+
+	// Set the marker action.  Options are ADD and DELETE
+	object_marker.action = visualization_msgs::Marker::ADD;
+
+	// Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
+
+
+	object_marker.scale.x = matrix_res;
+	object_marker.scale.y = matrix_res;
+	object_marker.scale.z = matrix_res;
+
+	// Set the color -- be sure to set alpha to something non-zero!
+	object_marker.color.r = 0.0f;
+	object_marker.color.g = 0.0f;
+	object_marker.color.b = 1.0f;
+	object_marker.color.a = 1.0;
+	object_marker.pose.orientation.w=1.0;
+
+	object_marker.lifetime = ros::Duration();
+
+
+	for(int i=0; i<solution.size(); i++){
+		pos.x=solution[i].coords[0]*0.01;
+		pos.y=solution[i].coords[1]*0.01;
+		pos.z=0;
+
+		pos_list.push_back(pos);
+	}
+
+
+	object_marker.points=pos_list;
+	path_pub.publish(object_marker);
 
 
 	return true;
@@ -753,7 +785,6 @@ int main(int argc, char **argv)
 	int i=0;
 
 
-	/*ros::ServiceServer map_sender = n.advertiseService("/mapping/ProcessedMap", provide_map);*/
 	path_service = n.advertiseService("/path_planner/plan_trajectory",planning_service);
 	path_pub = n.advertise<visualization_msgs::Marker>("/path_planner/trajectory",1);
 	wall_pub = n.advertise<visualization_msgs::Marker>("/path_planner/walls",1);
@@ -764,19 +795,9 @@ int main(int argc, char **argv)
 
 
 	while(ros::ok()){
-
-		//path=find_closest(7,2,Occupancy_Grid,2);
 		loop_rate.sleep();
 		ros::spinOnce();
-		//ROS_INFO("Time: %.2f",ros::Time::now().toSec()-init_time.toSec());
 
-		/*i=path.size()-1;
-		while(i>=0){
-			node_ptr = path[i];
-			i--;
-			ROS_INFO("(%d,%d)",node_ptr.coords[0],node_ptr.coords[1]);
-
-		}*/
 	}
 	return 0;
 }

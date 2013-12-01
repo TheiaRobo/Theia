@@ -8,6 +8,7 @@
 #include <theia_services/brain_blind.h>
 #include <theia_services/corrected_odo.h>
 #include <theia_services/object.h>
+#include <path_planner/path_srv.h>
 
 const int freq=100;
 const double NO_VAL=-1234567890;
@@ -31,9 +32,10 @@ const int y_matrix=15/resolution_matrix;
 const int obj_thres=20/(resolution_matrix*100); // in meter to cells
 
 std::vector<signed char>  Raw_Map(x_matrix*y_matrix,white);
+std::vector<signed char>  Proc_Map(x_matrix*y_matrix,white);
 
 
-double cell_round(double val){
+int cell_round(double val){
 	double cm_res=resolution_matrix*100;
 	
 	return round(val/cm_res);
@@ -174,6 +176,7 @@ int main(int argc, char ** argv){
 	theia_services::brain_wall wall_req;
 	theia_services::brain_blind blind_req;
 	theia_services::object object_msg;
+	path_planner::path_srv path_req;
 
 	int slave=1;
 	ros::Time init_time = ros::Time::now();
@@ -181,6 +184,7 @@ int main(int argc, char ** argv){
 	ros::ServiceClient request_map = n.serviceClient<theia_services::mapsrv>("/mapping/ProcessedMap");
 	ros::ServiceClient order_wall = n.serviceClient<theia_services::brain_wall>("/wall_follower/instructions");
 	ros::ServiceClient order_blind = n.serviceClient<theia_services::brain_blind>("/blind/instructions");
+	ros::ServiceClient request_path = n.serviceClient<path_planner::path_srv>("/path_planner/plan_trajectory");
 	ros::Subscriber odo_sub = n.subscribe("/mapping/corrected_odo",1,get_odo);
 	ros::Subscriber info_sub = n.subscribe("/logic/info",1,get_info);
 	ros::Subscriber raw_sub = n.subscribe("/mapping/occ",1,get_map);
@@ -190,9 +194,45 @@ int main(int argc, char ** argv){
 		
 		// processing to decide what to do
 		
-		if(closed_perimeter(init_time)){
+		if(closed_perimeter(init_time)){ // For now, we assume we finished the exploration phase
 			ROS_INFO("Closed a perimeter");
-			slave=0;
+			slave=2;
+			
+			if(request_map.call(map_req)){
+				
+				path_req.request.map = map_req.response.map;
+				path_req.request.x = cell_round(x);
+				path_req.request.y = cell_round(y);
+				path_req.request.goal = 1; // for now we set the goal as the first object seen in the maze
+				path_req.request.heading = heading;
+				
+				if(request_path.call(path_req)){
+					
+					commands.resize(path_req.response.size);
+					vals.resize(commands.size());
+					for(int i=0; i < commands.size(); i++){
+						commands[i] = path_req.response.commands[i];
+						vals[i] = path_req.response.vals[i];
+					}
+					
+					
+				}else{
+					
+					ROS_ERROR("Could not get path from path_planner");
+					
+				}
+				
+			}else{
+				
+				ROS_ERROR("Could not get processed map from mapping");
+				
+			}
+			
+			
+
+			
+			
+			
 		}
 		
 		if(close_object()){
