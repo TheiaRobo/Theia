@@ -16,11 +16,17 @@ const int black=100;
 const int blue=75;
 const int gray=50;
 const int white=0;
+const int FORWARD=1;
+const int ROTATE=2;
 int execute=1;
 
 std::vector<signed char>  Occupancy_Grid;
 std::vector<int> commands;
 std::vector<double> params;
+
+char heading_map = 'E';
+const float PI = 3.1415926f;
+double matrix_res=0;
 
 
 void trap(int signal){ 
@@ -325,6 +331,188 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 
 void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std::vector<double> *vals){
 	
+	node current,prev;
+	int i=sol.size();
+	int forward_counter=0;
+	
+	
+	current=sol[i];
+	while(sol.size()>0){
+		
+		i--;
+		prev=current;
+		current=sol[i];
+		sol.pop_back();
+		
+		switch(heading_map){
+		case 'E':
+			if(current.coords[0]-prev.coords[0] > 0){ // We are still moving East
+				
+				forward_counter++;
+				
+			}else{ // We rotated
+				
+				if(current.coords[0]-prev.coords[0] < 0){ // we went backwards
+					
+					(*commands).push_back(FORWARD);
+					(*vals).push_back(forward_counter*matrix_res); // Respective parameter
+					
+					(*commands).push_back(ROTATE);
+					(*vals).push_back(PI);
+					
+					
+				}else if(current.coords[1]-prev.coords[1] > 0){ // we rotated left
+
+					(*commands).push_back(FORWARD);
+					(*vals).push_back(forward_counter*matrix_res); // Respective parameter
+
+					(*commands).push_back(ROTATE);
+					(*vals).push_back(PI/2);
+
+					
+				}else if(current.coords[1]-prev.coords[1] < 0){
+					
+					(*commands).push_back(FORWARD);
+					(*vals).push_back(forward_counter*matrix_res); // Respective parameter
+
+					(*commands).push_back(ROTATE);
+					(*vals).push_back(-PI/2);
+					
+					
+				}
+
+			}
+			break;
+		case 'W':
+			if(current.coords[0]-prev.coords[0] < 0){
+
+				forward_counter++;
+				
+			}else{ 
+
+				if(current.coords[0]-prev.coords[0] > 0){
+
+					(*commands).push_back(FORWARD);
+					(*vals).push_back(forward_counter*matrix_res); 
+
+					(*commands).push_back(ROTATE);
+					(*vals).push_back(PI);
+
+
+				}else if(current.coords[1]-prev.coords[1] > 0){ 
+
+					(*commands).push_back(FORWARD);
+					(*vals).push_back(forward_counter*matrix_res); 
+
+					(*commands).push_back(ROTATE);
+					(*vals).push_back(-PI/2);
+
+
+				}else if(current.coords[1]-prev.coords[1] < 0){
+
+					(*commands).push_back(FORWARD);
+					(*vals).push_back(forward_counter*matrix_res); 
+
+					(*commands).push_back(ROTATE);
+					(*vals).push_back(PI/2);
+
+
+				}
+
+			}
+			break;
+		case 'S':
+			if(current.coords[1]-prev.coords[1] < 0){
+
+				forward_counter++;
+
+			}else{ 
+
+				if(current.coords[1]-prev.coords[1] > 0){
+
+					(*commands).push_back(FORWARD);
+					(*vals).push_back(forward_counter*matrix_res); 
+
+					(*commands).push_back(ROTATE);
+					(*vals).push_back(PI);
+
+
+				}else if(current.coords[0]-prev.coords[0] > 0){ 
+
+					(*commands).push_back(FORWARD);
+					(*vals).push_back(forward_counter*matrix_res); 
+
+					(*commands).push_back(ROTATE);
+					(*vals).push_back(PI/2);
+
+
+				}else if(current.coords[0]-prev.coords[0] < 0){
+
+					(*commands).push_back(FORWARD);
+					(*vals).push_back(forward_counter*matrix_res); 
+
+					(*commands).push_back(ROTATE);
+					(*vals).push_back(-PI/2);
+
+
+				}
+
+			}
+			break;
+		case 'N':
+			if(current.coords[1]-prev.coords[1] > 0){
+
+				forward_counter++;
+
+			}else{ 
+
+				if(current.coords[1]-prev.coords[1] < 0){
+
+					(*commands).push_back(FORWARD);
+					(*vals).push_back(forward_counter*matrix_res); 
+
+					(*commands).push_back(ROTATE);
+					(*vals).push_back(PI);
+
+
+				}else if(current.coords[0]-prev.coords[0] > 0){ 
+
+					(*commands).push_back(FORWARD);
+					(*vals).push_back(forward_counter*matrix_res); 
+
+					(*commands).push_back(ROTATE);
+					(*vals).push_back(-PI/2);
+
+
+				}else if(current.coords[0]-prev.coords[0] < 0){
+
+					(*commands).push_back(FORWARD);
+					(*vals).push_back(forward_counter*matrix_res); 
+
+					(*commands).push_back(ROTATE);
+					(*vals).push_back(PI/2);
+
+
+				}
+
+			}
+			break;
+			
+		
+		
+		
+		
+		}
+		
+		forward_counter=0;
+		
+		
+		
+		
+	}
+	
+	
+	
 	return;
 	
 }
@@ -338,6 +526,8 @@ bool planning_service(path_planner::path_srv::Request &req, path_planner::path_s
 	std::vector<double> vals;
 	
 	Occupancy_Grid.resize(size,blue);
+	heading_map = req.heading;
+	matrix_res = req.map.info.resolution;
 	
 	for(int i=0; i < size; i++)
 		Occupancy_Grid[i]=req.map.data[i];

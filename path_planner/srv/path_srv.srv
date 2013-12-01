@@ -2,6 +2,7 @@ nav_msgs/OccupancyGrid map
 int32 x
 int32 y
 int32 goal
+uint8 heading
 ---
 int32 size
 int32[] commands
