@@ -26,6 +26,7 @@ class search_set{
 	void push_node(node new_node);
 	node pop_best();
 	node pop_requested(int coords[2]);
+	node read_node(int coords[2]);
 	bool check_if_in_set(int coords[2]);
 	bool isempty();
 };

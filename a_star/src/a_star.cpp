@@ -17,7 +17,7 @@ const int gray=50;
 const int white=0;
 int execute=1;
 
-std::vector<signed char>  Occupancy_Grid(200*200,white);
+std::vector<signed char>  Occupancy_Grid(1000*1000,white);
 std::vector<int> commands;
 std::vector<double> params;
 
@@ -64,7 +64,7 @@ double heur(int coords[2], int goal_coords[2]){
 	
 	if(goal_coords[0]!=NO_VAL){
 		t_h = std::abs(coords[0]-goal_coords[0])+std::abs(coords[1]-goal_coords[1]);
-		return t_h;
+		return 1.05*t_h;
 	}else{ // no goal, no heuristic
 		return 0;
 	}
@@ -72,11 +72,31 @@ double heur(int coords[2], int goal_coords[2]){
 
 }
 
+std::vector<node> retrieve_path(node goal, search_set * closed){
+	
+	node current=goal;
+	std::vector<node> return_list(1,goal);
+	
+	while(current.came_from[0]!=NO_VAL){
+		
+		current=(*closed).pop_requested(current.came_from);
+		return_list.push_back(current);
+		
+		
+	}
+	
+	
+	return return_list;
+	
+	
+}
 
-int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int val_to_find){
+
+std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int val_to_find){
 	int lateral_size=std::sqrt(matrix_array.size());
 	std::vector<std::vector<signed char> >matrix(lateral_size);
 	int goal_coords[2]={NO_VAL,NO_VAL},coords[2],from[2],cost=0;
+	std::vector<node> return_error;
 	double t_f=0, t_g=0, t_h=0;
 	
 	
@@ -108,7 +128,8 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 	
 	// A*
 	ROS_INFO("Will start A*. Goal found in pos (%d,%d). Press any key to continue...",goal_coords[0]+1,goal_coords[1]+1);
-	getchar();
+	//getchar();
+	
 	
 	node current,n;
 	
@@ -147,11 +168,11 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 		if(goal_coords[0]==-1){
 			if(matrix[current.coords[0]][current.coords[1]]==val_to_find){
 				ROS_INFO("Found solution at %d %d!",current.coords[0],current.coords[1]);
-				return 0; // later, the path
+				return retrieve_path(current, &closedset); // later, the path
 			}
 		}else if(current.coords[0]==goal_coords[0] && current.coords[1]==goal_coords[1]){
 			ROS_INFO("Found solution at %d %d!",current.coords[0],current.coords[1]);
-			return 0;
+			return retrieve_path(current, &closedset);
 		}
 		
 		closedset.push_node(current);
@@ -168,26 +189,36 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 			t_g = current.t_g + 1;
 			t_f = t_g + t_h;
 			
-			if(nodes_set.check_if_in_set(coords)){
+			/*if(nodes_set.check_if_in_set(coords)){
 				
 				n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
 				
 			}else{
 				n=create_node(coords,t_f,t_g,current.coords);
 				
+			}*/
+			
+			if(openset.check_if_in_set(coords)){
+				// SHOULD BE READ NODE
+				n = openset.read_node(coords); // only doing this to get the f value, if present				
+			}else{
+				n = create_node(coords,t_f,t_g,current.coords);
 			}
 			
 			if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
 				n.t_g=t_g;
 				n.t_f=t_f;
+				n.came_from[0]=current.coords[0];
+				n.came_from[1]=current.coords[1];
 				if(!openset.check_if_in_set(n.coords))
 					openset.push_node(n);
 				else{ // update the value of the node in openset
+					
 					openset.pop_requested(n.coords);
 					openset.push_node(n);
 				}
 				
-				nodes_set.push_node(n);
+				//nodes_set.push_node(n);
 				
 			}
 			
@@ -201,18 +232,28 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 			t_g = current.t_g + 1;
 			t_f = t_g + t_h;
 			
-			if(nodes_set.check_if_in_set(coords)){
+			/*if(nodes_set.check_if_in_set(coords)){
 				
 				n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
 				
 			}else{
 				n=create_node(coords,t_f,t_g,current.coords);
 				
+			}*/
+			
+			if(openset.check_if_in_set(coords)){
+				// SHOULD BE READ NODE
+				n = openset.read_node(coords); // only doing this to get the f value, if present
+
+			}else{
+				n = create_node(coords,t_f,t_g,current.coords);
 			}
 			
 			if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
 				n.t_g=t_g;
 				n.t_f=t_f;
+				n.came_from[0]=current.coords[0];
+				n.came_from[1]=current.coords[1];
 				if(!openset.check_if_in_set(n.coords))
 					openset.push_node(n);
 				else{ // update the value of the node in openset
@@ -220,7 +261,7 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 					openset.push_node(n);
 				}
 				
-				nodes_set.push_node(n);
+				//nodes_set.push_node(n);
 				
 			}
 			
@@ -234,19 +275,28 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 			t_g = current.t_g + 1;
 			t_f = t_g + t_h;
 			
-			if(nodes_set.check_if_in_set(coords)){
+			/*if(nodes_set.check_if_in_set(coords)){
 				
 				n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
 				
 			}else{
 				n=create_node(coords,t_f,t_g,current.coords);
 				
+			}*/
+			
+			if(openset.check_if_in_set(coords)){
+				// SHOULD BE READ NODE
+				n = openset.read_node(coords); // only doing this to get the f value, if present
+			}else{
+				n = create_node(coords,t_f,t_g,current.coords);
 			}
 			
 			if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
 				
 				n.t_g=t_g;
 				n.t_f=t_f;
+				n.came_from[0]=current.coords[0];
+				n.came_from[1]=current.coords[1];
 				if(!openset.check_if_in_set(n.coords))
 					openset.push_node(n);
 				else{ // update the value of the node in openset
@@ -254,7 +304,7 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 					openset.push_node(n);
 				}
 				
-				nodes_set.push_node(n);
+				//nodes_set.push_node(n);
 				
 			}
 			
@@ -268,19 +318,27 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 			t_g = current.t_g + 1;
 			t_f = t_g + t_h;
 			
-			if(nodes_set.check_if_in_set(coords)){
+			/*if(nodes_set.check_if_in_set(coords)){
 				
 				n = nodes_set.pop_requested(n.coords); // so I can keep track of the f cost
 				
 			}else{
 				n=create_node(coords,t_f,t_g,current.coords);
 				
+			}*/
+			if(openset.check_if_in_set(coords)){
+				// SHOULD BE READ NODE
+				n = openset.read_node(coords); // only doing this to get the f value, if present
+			}else{
+				n = create_node(coords,t_f,t_g,current.coords);
 			}
-			
+
 			if(!closedset.check_if_in_set(n.coords) || t_f < n.t_f ){
 				
 				n.t_g=t_g;
 				n.t_f=t_f;
+				n.came_from[0]=current.coords[0];
+				n.came_from[1]=current.coords[1];
 				if(!openset.check_if_in_set(n.coords))
 					openset.push_node(n);
 				else{ // update the value of the node in openset
@@ -288,7 +346,7 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 					openset.push_node(n);
 				}
 				
-				nodes_set.push_node(n);
+			//nodes_set.push_node(n);
 				
 			}
 			
@@ -298,7 +356,7 @@ int * find_closest(int x_i, int y_i, std::vector<signed char> matrix_array, int 
 	}
 	
 	ROS_INFO("Did not find anything :(");
-	return 0;
+	return return_error;
 	
 	
 	
@@ -309,6 +367,10 @@ int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "a_star");
 	ros::NodeHandle n;
+	ros::Time init_time=ros::Time::now();
+	std::vector<node> path;
+	node node_ptr;
+	int i=0;
 
 	
 	/*ros::ServiceServer map_sender = n.advertiseService("/mapping/ProcessedMap", provide_map);*/
@@ -318,14 +380,22 @@ int main(int argc, char **argv)
 
 	ros::Rate loop_rate(1);
 	
-	Occupancy_Grid[199+199*200]=2;
+	Occupancy_Grid[999+999*1000]=2;
 	
 	//while(ros::ok()){
 
-		find_closest(0,0,Occupancy_Grid,2);
+	path=find_closest(0,0,Occupancy_Grid,2);
 		//loop_rate.sleep();
 		//ros::spinOnce();
-
+	ROS_INFO("Time: %.2f",ros::Time::now().toSec()-init_time.toSec());
+	
+	i=path.size()-1;
+	while(i>=0){
+		node_ptr = path[i];
+		i--;
+		//ROS_INFO("(%d,%d)",node_ptr.coords[0],node_ptr.coords[1]);
+		
+	}
 
 	//}
 	return 0;

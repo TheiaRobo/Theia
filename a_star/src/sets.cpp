@@ -89,9 +89,25 @@ node search_set::pop_requested(int coords[2]){
 		if(node_list[i].coords[0] == coords[0] && node_list[i].coords[1] == coords[1])
 			ret=node_list[i];
 	}
-
+	
+	remove_node(ret.coords);
+	
 	return ret;	
 }
+
+node search_set::read_node(int coords[2]){
+	
+	node ret;
+	
+	for(int i=0; i < node_list.size(); i++){
+		if(node_list[i].coords[0] == coords[0] && node_list[i].coords[1] == coords[1])
+			ret=node_list[i];
+	}
+
+	return ret;
+	
+}
+
 
 bool search_set::check_if_in_set(int coords[2]){
 	
