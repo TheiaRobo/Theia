@@ -108,6 +108,7 @@ double W_MAX=8*PI;
 
 ros::Publisher vw_pub;
 ros::ServiceClient ask_logic;
+ros::ServiceClient ask_blind;
 
 core_control_motor::vw control_message;
 theia_services::MotionCommand srv;
@@ -137,7 +138,7 @@ double correct_theta(double t, double l_t){
 	}
 
 	processed_theta=theta+theta_correction;
-	
+
 	return processed_theta;
 }
 
@@ -451,7 +452,7 @@ double PID_control(double P,double I,double D,double * integrator_sum, double * 
 
 	//integrator_sum  +=(error*dt);	// I Part
 	(*integrator_sum)+=error/freq;
-	
+
 	if(*previous_error==PID_INIT){ // initialization
 		*previous_error=error;
 	}
@@ -471,15 +472,15 @@ double PID_control(double P,double I,double D,double * integrator_sum, double * 
 
 
 /* PARALEL CONTROLLER 
-* Controller that tries to keep a distance and an angle towards a wall
-*/		
+ * Controller that tries to keep a distance and an angle towards a wall
+ */		
 double paralel_controller(int wall,double ir_wall[2],double t_ref,double d_ref,double * last_E_r, double * I_sum_r, double * last_R_d, double * I_sum_d){
 
 	double error_theta=0.0, error_dist=0.0,u_theta=0.0,u_dist=0.0;
 	// get angle and distance to wall
 	error_theta=compute_ir_error(wall,ir_wall,t_ref);
 	error_dist=compute_ir_dist(wall,ir_wall,d_ref);
-	
+
 	//Control the angle to the wall
 	if(std::abs(error_theta) < epsilon_theta || error_dist > 0 ){ //Small epsilon OR wall too close
 
@@ -506,7 +507,7 @@ double paralel_controller(int wall,double ir_wall[2],double t_ref,double d_ref,d
 	if(error_dist > 0){ // too close to wall
 		u_dist=5*u_dist;
 	}
-	
+
 	return u_theta+u_dist;		
 }
 
@@ -582,8 +583,8 @@ int none(ros::Rate loop_rate){
 			u_theta=PID_control(k_align,i_align,d_align,&I_sum, &last_E,error_theta,0);
 			control_pub(0,u_theta);
 
-			
-			
+
+
 
 		}else{ 
 			// if (wall == 0) which is equivalent to if ((wall != 1 && wall != 2))
@@ -604,7 +605,7 @@ int none(ros::Rate loop_rate){
 		loop_rate.sleep();
 		ros::spinOnce();
 	}
-	
+
 	last_angle = 0;
 	//Out of the while. Finished align mode
 	//ROS_INFO("None: finished align mode");
@@ -615,15 +616,29 @@ int none(ros::Rate loop_rate){
 	srv.request.A=true;
 	if(ask_logic.call(srv)){
 
-		if(srv.response.B==2){
-			heading_ref=srv.response.parameter;
-		}else if(srv.response.B==3){
-			wall_to_follow=(int) srv.response.parameter;
-		}else{ // forward
-			forward_distance=srv.response.parameter;
-		}
+		if(srv.response.B!=0){
+			if(srv.response.B==2){
+				heading_ref=srv.response.parameter;
+			}else if(srv.response.B==3){
+				wall_to_follow=(int) srv.response.parameter;
+			}else{ // forward
+				forward_distance=srv.response.parameter;
+			}
 
-		return srv.response.B;
+			return srv.response.B;
+		}else if(ask_blind.call(srv)){
+
+			if(srv.response.B==2){
+				heading_ref=srv.response.parameter;
+			}else if(srv.response.B==3){
+				wall_to_follow=(int) srv.response.parameter;
+			}else{ // forward
+				forward_distance=srv.response.parameter;
+			}
+
+			return srv.response.B;
+
+		}
 
 	} else {
 		stop();
@@ -656,13 +671,13 @@ int forward(ros::Rate loop_rate){
 
 	k_dist=0.0;
 	while(curr_dist<forward_distance){ 
-	
+
 		if(stop_flag){
 			stop();
 			ROS_INFO("Object ahead!\n");
 			return 0;
 		}
-	
+
 		std_velocity=10.0; // sorry :(
 
 		//Distance to wall < delay_thres ---> very close! STOP
@@ -679,8 +694,8 @@ int forward(ros::Rate loop_rate){
 		// Some small threshold to take into account noise
 		if(std::abs(heading_error)<heading_thres)
 			heading_error=0.0;
-		
-		
+
+
 		if(dist_wall(1) != -1){
 			if(dist_wall(2) != -1){
 				if(dist_wall(1) < dist_wall(2)){
@@ -717,9 +732,9 @@ int forward(ros::Rate loop_rate){
 			wall=2;
 			for(int i=0; i<2; i++)
 				ir_wall[i]=ir_readings[i+4];
-			
+
 		}else if(dist_wall(1)==-1 && dist_wall(2)==-1){ // Not seeing a wall -> we are risking getting misaligned with the maze's grid structure. Better slow down.
-			
+
 			if(ir_readings[2] < dist_thres/2 && ir_readings[4] < dist_thres/2){
 				avoid_flag=1;
 				if(ir_readings[2] < ir_readings[4]){
@@ -750,7 +765,7 @@ int forward(ros::Rate loop_rate){
 				wall=0;
 			}
 		}
-		
+
 		if(wall){
 			if(avoid_flag){
 				if(ir_wall[0]<1.5){
@@ -775,7 +790,7 @@ int forward(ros::Rate loop_rate){
 			}
 		}else
 			u_theta=0;		
-		
+
 
 		//Distance to wall < inf_thres ---> close! Reduce velocity
 		if(wall_in_range(3,inf_thres,ir_readings)){
@@ -788,7 +803,7 @@ int forward(ros::Rate loop_rate){
 			if(flag_dist2break_1 == 1){
 				initial_flag_dist2break_1 = close_ir;
 				flag_dist2break_1 = 0;
-				
+
 				control_pub(std_velocity,u_theta);
 			}else{
 				//2 yields (1/2)*std_velocity... 1 gives 0 
@@ -883,7 +898,7 @@ int forward_wall(ros::Rate loop_rate){
 	}
 
 	while(ros::ok()){
-	
+
 		if(stop_flag){
 			stop();
 			ROS_INFO("Object ahead!\n");
@@ -927,11 +942,11 @@ int forward_wall(ros::Rate loop_rate){
 			ROS_INFO("Error wall_dist==-1!"); 
 			return 0;
 		}
-		
+
 		//double * last_E_r, double * I_sum_r, double * last_R_d, double * I_sum_d
-		
+
 		u_theta=paralel_controller(wall_to_follow,ir_wall,theta_ref,dist_ref,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
-		
+
 		//Control velocity of the robot
 		if(wall_in_range(3,inf_thres,ir_readings)){
 			//Distance to wall <= inf_thres ---> close! Reduce velocity
@@ -964,7 +979,7 @@ int forward_wall(ros::Rate loop_rate){
 }
 
 void object_stop(theia_services::stop::ConstPtr msg){
-	
+
 	stop_flag=msg->stop;
 
 }
@@ -982,6 +997,7 @@ int main(int argc, char ** argv){
 	ros::Rate loop_rate(freq);
 
 	ask_logic = n.serviceClient<theia_services::MotionCommand>("/wall_follower/motion_command");
+	ask_blind = n.serviceClient<theia_services::MotionCommand>("/blind_node/motion_command");
 
 	vw_pub = n.advertise<core_control_motor::vw>("/control_motion/vw",1);
 	odo_sub = n.subscribe("/core_sensors_odometry/odometry",1,odo_proc);

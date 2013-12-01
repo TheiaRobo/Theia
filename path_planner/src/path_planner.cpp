@@ -155,7 +155,8 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 	t_f = t_g + t_h;
 
 	current=create_node(coords,t_f,t_g,from);
-
+	
+	return_error.push_back(current);
 
 	search_set closedset;
 	search_set openset(current);

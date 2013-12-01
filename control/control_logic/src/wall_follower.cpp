@@ -1008,7 +1008,7 @@ int main(int argc, char ** argv){
     ros::Subscriber object_subs = n.subscribe<theia_services::object>("/control_logic/object",1,readObjectData);
     
     stop_pub = n.advertise<theia_services::stop>("/control_motion/stop",1);
-    info_pub = n.advertise<control_logic::info>("/logic/info",1);
+    info_pub = n.advertise<control_logic::info>("/control_logic/info",1);
     
     initialize_history();
     initialize_ir_raw();

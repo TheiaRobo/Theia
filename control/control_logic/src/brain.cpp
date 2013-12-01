@@ -186,7 +186,7 @@ int main(int argc, char ** argv){
 	ros::ServiceClient order_blind = n.serviceClient<theia_services::brain_blind>("/blind/instructions");
 	ros::ServiceClient request_path = n.serviceClient<path_planner::path_srv>("/path_planner/plan_trajectory");
 	ros::Subscriber odo_sub = n.subscribe("/mapping/corrected_odo",1,get_odo);
-	ros::Subscriber info_sub = n.subscribe("/logic/info",1,get_info);
+	ros::Subscriber info_sub = n.subscribe("/control_logic/info",1,get_info);
 	ros::Subscriber raw_sub = n.subscribe("/mapping/occ",1,get_map);
 	ros::Publisher object_pub = n.advertise<theia_services::object>("/control_logic/object",1);
 	
