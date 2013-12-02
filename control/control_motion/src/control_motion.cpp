@@ -80,7 +80,7 @@ double align_thres=100;//0.003;
 double dist_thres=6.0;
 double cross_thres1=0.5;
 double cross_thres2=0.5;
-double max_angle = PI/8;
+double max_angle = 0.723; // atan(max_ir/17);
 double ERROR_VAL = -123456789;
 
 double dist_ref=2.0;
@@ -1091,6 +1091,7 @@ int main(int argc, char ** argv){
 	ask_blind = n.serviceClient<theia_services::MotionCommand>("/blind_node/motion_command");
 
 	vw_pub = n.advertise<core_control_motor::vw>("/control_motion/vw",1);
+	
 	odo_sub = n.subscribe("/core_sensors_odometry/odometry",1,odo_proc);
 	ir_sub = n.subscribe("/core_sensors_ir/ir",1,ir_proc);
 	params_sub = n.subscribe("/control_motion/params",1,update_params);

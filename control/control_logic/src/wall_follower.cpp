@@ -606,6 +606,8 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 	if(!active){ // motion will have to ask somewhere else
 		res.B=0;
 		initialize_history();
+		theia_services::stop stop_msg; 
+		stop_pub.publish(stop_msg);
 		return true;
         
 	}

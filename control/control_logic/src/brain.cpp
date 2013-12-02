@@ -185,9 +185,11 @@ int main(int argc, char ** argv){
 	ros::ServiceClient order_wall = n.serviceClient<theia_services::brain_wall>("/wall_follower/instructions");
 	ros::ServiceClient order_blind = n.serviceClient<theia_services::brain_blind>("/blind/instructions");
 	ros::ServiceClient request_path = n.serviceClient<path_planner::path_srv>("/path_planner/plan_trajectory");
+	
 	ros::Subscriber odo_sub = n.subscribe("/mapping/corrected_odo",1,get_odo);
 	ros::Subscriber info_sub = n.subscribe("/control_logic/info",1,get_info);
 	ros::Subscriber raw_sub = n.subscribe("/mapping/occ",1,get_map);
+	
 	ros::Publisher object_pub = n.advertise<theia_services::object>("/control_logic/object",1);
 	
 	while(ros::ok()){
@@ -197,6 +199,7 @@ int main(int argc, char ** argv){
 		if(closed_perimeter(init_time)){ // For now, we assume we finished the exploration phase
 			ROS_INFO("Closed a perimeter");
 			slave=2;
+			//slave = 0 --> default;
 			order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals);
 			if(request_map.call(map_req)){
 				
