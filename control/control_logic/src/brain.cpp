@@ -197,7 +197,7 @@ int main(int argc, char ** argv){
 		if(closed_perimeter(init_time)){ // For now, we assume we finished the exploration phase
 			ROS_INFO("Closed a perimeter");
 			slave=2;
-			
+			order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals);
 			if(request_map.call(map_req)){
 				
 				path_req.request.map = map_req.response.map;

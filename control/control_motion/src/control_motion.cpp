@@ -80,6 +80,8 @@ double align_thres=100;//0.003;
 double dist_thres=6.0;
 double cross_thres1=0.5;
 double cross_thres2=0.5;
+double max_angle = PI/8;
+double ERROR_VAL = -123456789;
 
 double dist_ref=2.0;
 double inf_thres=20.0;
@@ -215,9 +217,10 @@ void update_params(const control_motion::params::ConstPtr msg){
 	//std_velocity=msg->std_velocity;
 	//heading_thres=msg->heading_thres;
 	//dist_thres=msg->dist_thres;
-	forward_distance=msg->forward_distance;
+	//forward_distance=msg->forward_distance;
 	heading_ref=msg->heading_ref;
 	wall_to_follow=msg->wall_to_follow;
+	max_angle=msg->max_angle;
 
 	////ROS_INFO("New params: k_forward: %.2f\nk_rotate: %.2f\nstd_velocity: %.2f\nheading_thres: %.2f\ndist_thres: %.2f\nforward_distance:%.2f\nheading_ref:%.2f",k_forward,k_rotate,std_velocity,heading_thres,dist_thres,forward_distance,heading_ref);
 
@@ -480,7 +483,14 @@ double paralel_controller(int wall,double ir_wall[2],double t_ref,double d_ref,d
 	// get angle and distance to wall
 	error_theta=compute_ir_error(wall,ir_wall,t_ref);
 	error_dist=compute_ir_dist(wall,ir_wall,d_ref);
-
+	
+	if(std::abs(error_theta)>max_angle){
+		
+		return ERROR_VAL;
+		
+	}
+	
+	
 	//Control the angle to the wall
 	if(std::abs(error_theta) < epsilon_theta || error_dist > 0 ){ //Small epsilon OR wall too close
 
@@ -797,6 +807,14 @@ int forward(ros::Rate loop_rate){
 					//k_dist=0.06; // OH THE SORROW
 					//std_velocity=5.0; // OH SO SORRY
 					u_theta=paralel_controller(wall,ir_wall,theta_ref,2.0,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
+					
+					if(u_theta==ERROR_VAL){
+					
+						u_theta=0;
+						
+					}
+					
+					
 					k_dist=0;
 				}else{
 					k_dist=0.0;
@@ -805,11 +823,25 @@ int forward(ros::Rate loop_rate){
 			}else{
 				if(!far_away_flag){
 					u_theta=paralel_controller(wall,ir_wall,theta_ref,dist_ref,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
+					
+					if(u_theta==ERROR_VAL){
+						
+						u_theta=0;
+						
+					}
+					
 				}else{
 					k_dist=0.0;
 					if(wall!=wall_to_follow && (ir_wall[0]+ir_wall[1])>dist_ref)
 						k_dist=0.0; // will not try to get close to the wall it's not following. But it is desirable to align with it
 					u_theta=paralel_controller(wall,ir_wall,theta_ref,dist_ref,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
+
+					if(u_theta==ERROR_VAL){
+
+						u_theta=0;
+
+					}
+					
 				}
 			}
 		}else
@@ -982,7 +1014,7 @@ int forward_wall(ros::Rate loop_rate){
 		//Lost wall
 		if(wall==0){
 			stop();
-			ROS_INFO("Lost wall!\nLast_angle: %.2f",last_angle); 
+			ROS_INFO("Lost wall!\n"); 
 			return 0;
 		}
 
@@ -996,6 +1028,15 @@ int forward_wall(ros::Rate loop_rate){
 		//double * last_E_r, double * I_sum_r, double * last_R_d, double * I_sum_d
 
 		u_theta=paralel_controller(wall_to_follow,ir_wall,theta_ref,dist_ref,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
+		
+		if(u_theta==ERROR_VAL){
+			
+			stop();
+			ROS_INFO("Lost wall!\n"); 
+			return 0;
+
+		}
+		
 
 		//Control velocity of the robot
 		if(wall_in_range(3,inf_thres,ir_readings)){

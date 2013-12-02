@@ -19,3 +19,4 @@ float64 forward_distance
 float64 heading_ref
 int32   behavior
 int32   wall_to_follow
+float64 max_angle
