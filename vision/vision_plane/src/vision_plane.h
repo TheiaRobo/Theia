@@ -4,6 +4,7 @@
 class Config {
 	public:
 		double leafSize;
+		int minClusterSize;
 		double minPercentage;
 		int numbIterations;
 		double objectSize;

@@ -19,6 +19,7 @@ vision_object:
 vision_plane:
     config:
         leafSize: 0.02
+        minClusterSize: 5
         minPercentage: 0.15
         numbIterations: 1000
         objectSize: 0.05
