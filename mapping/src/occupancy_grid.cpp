@@ -85,6 +85,7 @@ ros::Publisher arrow_pub;
 ros::Publisher object_pub;
 ros::Publisher odo_pub;
 ros::Publisher corrected_map_pub;
+ros::Publisher talk_pub;
 ros::Subscriber	odometry_sub;
 ros::Subscriber	camera_sub;
 ros::Subscriber	logic_sub;
@@ -165,6 +166,8 @@ std::vector<signed char> place_map(std::vector<signed char> map,int x_position, 
 	
 	if(val!=white && val!=black && val!=gray && val!=blue)
 		ROS_INFO("Will place object num %d",val);
+	
+	
 
 	for (int x=x_position-delta_x;x<=x_position+delta_x;x++){
 		for (int y=(y_position-delta_y)*y_matrix;y<=(y_position+delta_y)*y_matrix;y+=y_matrix){
@@ -574,6 +577,7 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 	double pos_x,pos_y,*distance=0;
 	geometry_msgs::Point pos;
 	std::string new_name=msg->objectName;
+	std_msgs::String talk_msg;
 	
 	for(int i=0; i<object_list.size();i++){ // IMPROVE LATER
 		if(object_list[i].name==new_name)
@@ -616,6 +620,10 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 	Occupancy_Grid=place_map(Occupancy_Grid,cell_round(pos_x*100),cell_round(pos_y*100),robot_delta_x,robot_delta_y,new_object.num);
 	
 	ROS_INFO("New object: %s Num: %d at (%d,%d)",new_object.name.c_str(),new_object.num,cell_round(pos_x*100),cell_round(pos_y*100));
+	
+	talk_msg.data = new_object.name;
+	talk_pub.publish(talk_msg);
+	//robot/talk
 	
 	object_marker.header.frame_id = "/mapping";
 	object_marker.header.stamp = ros::Time::now();
@@ -791,6 +799,7 @@ int main(int argc, char **argv)
 	object_pub = n.advertise<visualization_msgs::Marker>("/mapping/object",1);
 	corrected_map_pub = n.advertise<nav_msgs::OccupancyGrid>("/mapping/corrected_map",1);
 	odo_pub = n.advertise<theia_services::corrected_odo>("/mapping/corrected_odo",1);
+	talk_pub = n.advertise<std_msgs::String>("robot/talk",1);
 	
 	
 	ros::ServiceServer map_sender = n.advertiseService("/mapping/ProcessedMap", provide_map);
