@@ -28,6 +28,7 @@ std::vector<double> params;
 
 ros::Publisher path_pub;
 ros::Publisher wall_pub;
+ros::Publisher map_pub;
 
 char heading_map = 'E';
 const float PI = 3.1415926f;
@@ -76,7 +77,7 @@ double heur(int coords[2], int goal_coords[2]){
 
 	if(goal_coords[0]!=NO_VAL){
 		t_h = std::abs(coords[0]-goal_coords[0])+std::abs(coords[1]-goal_coords[1]);
-		return 1.05*t_h;
+		return 5*t_h;
 	}else{ // no goal, no heuristic
 		return 0;
 	}
@@ -136,10 +137,12 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 			}
 		}
 	}
+	
+	
 
 
 	// A*
-	ROS_INFO("Will start A*. Goal found in pos (%d,%d). Press any key to continue...",goal_coords[0]+1,goal_coords[1]+1);
+	ROS_INFO("Will start A*. Goal found in pos (%d,%d). Lateral size is %d. In pos (868,807) we have the value %d.Press any key to continue...",goal_coords[0],goal_coords[1],lateral_size,matrix[868][807]);
 	getchar();
 
 
@@ -157,6 +160,11 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 	current=create_node(coords,t_f,t_g,from);
 	
 	return_error.push_back(current);
+	
+	if(val_to_find!=gray && goal_coords[0]==NO_VAL){
+		ROS_INFO("No solution exists");
+		return return_error;
+	}
 
 	search_set closedset;
 	search_set openset(current);
@@ -711,15 +719,21 @@ bool planning_service(path_planner::path_srv::Request &req, path_planner::path_s
 	visualization_msgs::Marker object_marker;
 	std::vector<geometry_msgs::Point> pos_list;
 	geometry_msgs::Point pos;
+	nav_msgs::OccupancyGrid Correct_Map_Msg;
 
 	Occupancy_Grid.resize(size*size,blue);
 	heading_map = req.heading;
 	matrix_res = req.map.info.resolution;
 
-	for(int i=0; i < size; i++)
+	for(int i=0; i < size*size; i++)
 		Occupancy_Grid[i]=req.map.data[i];
-
-
+	
+	
+	Correct_Map_Msg.info=req.map.info;
+	Correct_Map_Msg.data=Occupancy_Grid;
+		
+	map_pub.publish(Correct_Map_Msg);
+	
 	solution = find_closest(req.x,req.y,Occupancy_Grid,req.goal);
 
 	convert_to_commands(solution,&commands,&vals);
@@ -728,7 +742,7 @@ bool planning_service(path_planner::path_srv::Request &req, path_planner::path_s
 	res.vals=vals;
 	res.size=vals.size();
 
-	object_marker.header.frame_id = "/path";
+	object_marker.header.frame_id = "/mapping";
 	object_marker.header.stamp = ros::Time::now();
 
 	// Set the namespace and id for this marker.  This serves to create a unique ID
@@ -789,6 +803,7 @@ int main(int argc, char **argv)
 	path_service = n.advertiseService("/path_planner/plan_trajectory",planning_service);
 	path_pub = n.advertise<visualization_msgs::Marker>("/path_planner/trajectory",1);
 	wall_pub = n.advertise<visualization_msgs::Marker>("/path_planner/walls",1);
+	map_pub = n.advertise<nav_msgs::OccupancyGrid>("/path_planner/map",1);
 
 	ROS_INFO("Started the Path Planner Node");
 

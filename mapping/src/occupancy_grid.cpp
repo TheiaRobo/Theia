@@ -162,6 +162,9 @@ void Get_Readings_Odometry(nav_msgs::Odometry::ConstPtr odometry_msg){
 
 
 std::vector<signed char> place_map(std::vector<signed char> map,int x_position, int y_position, int delta_x, int delta_y, int val) {
+	
+	if(val!=white && val!=black && val!=gray && val!=blue)
+		ROS_INFO("Will place object num %d",val);
 
 	for (int x=x_position-delta_x;x<=x_position+delta_x;x++){
 		for (int y=(y_position-delta_y)*y_matrix;y<=(y_position+delta_y)*y_matrix;y+=y_matrix){
@@ -225,7 +228,8 @@ void fill_line(int startx, int starty, int axis,int n,int val){
 		break;
 	case 2:
 		for(int y=starty; y<starty+n;y++){
-			Occupancy_Grid[startx+y*y_matrix]=val;
+			if(Occupancy_Grid[startx+y*y_matrix]==white || Occupancy_Grid[startx+y*y_matrix]==black || Occupancy_Grid[startx+y*y_matrix] == blue || Occupancy_Grid[startx+y*y_matrix] == gray)
+				Occupancy_Grid[startx+y*y_matrix]=val;
 		}
 		
 		
@@ -243,7 +247,8 @@ void fill_line(int startx, int starty, int axis,int n,int val){
 		break;
 	case -1:
 		for(int x=startx; x>startx-n;x--){
-			Occupancy_Grid[x+starty*y_matrix]=val;
+			if(Occupancy_Grid[x+starty*y_matrix]==white || Occupancy_Grid[x+starty*y_matrix]==black || Occupancy_Grid[x+starty*y_matrix] == blue || Occupancy_Grid[x+starty*y_matrix] == gray)
+				Occupancy_Grid[x+starty*y_matrix]=val;
 		}
 		
 		if(val == white){
@@ -260,7 +265,8 @@ void fill_line(int startx, int starty, int axis,int n,int val){
 		break;
 	case -2:
 		for(int y=starty; y>starty-n;y--){
-			Occupancy_Grid[startx+y*y_matrix]=val;
+			if(Occupancy_Grid[startx+y*y_matrix]==white || Occupancy_Grid[startx+y*y_matrix]==black || Occupancy_Grid[startx+y*y_matrix] == blue || Occupancy_Grid[startx+y*y_matrix] == gray)
+				Occupancy_Grid[startx+y*y_matrix]=val;
 		}
 		
 		if(val == white){
@@ -541,16 +547,16 @@ double * convert_object_distance(double Lat, double Long, double dist){
 	//x_i=(y_i-y_0)*tan(Lat?Lat_0)+x_0;
 	// x_i = 0.35 * tan(Lat + Lat_0) + x_0;
 	//x_i = dist * sin(Lat + Lat_0) + x_0;
-	x_i=(z_i-(z_0))*tan(Lat+Lat_0)+x_0;
+	//x_i=(z_i-(z_0))*tan(Lat+Lat_0)+x_0;
 	//z_i=(x_i-x_0)*tan(Long-Long_0)+z_0;
-	y_i=((x_i-x_0)*tan(Long+Long_0)+(-y_0));
+	//y_i=((x_i-x_0)*tan(Long+Long_0)+(-y_0));
 	//y_i = -(x_i - x_0) * tan(Long+Long_0);
 	//y_i=y_0;
 	//z_i=z_0;
 	
-	/*//Testing coord
+	//Testing coord
 	x_i = dist * sin(Lat_0) + x_0;
-	y_i = 0;*/
+	y_i = 0;
 		
 	ret_val=new double(2);
 	
@@ -607,7 +613,7 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 	
 	}
 	
-	Occupancy_Grid=place_map(Occupancy_Grid,cell_round(pos_x*100)+robot_delta_x,cell_round(pos_y*100)+robot_delta_y,robot_delta_x,robot_delta_y,new_object.num);
+	Occupancy_Grid=place_map(Occupancy_Grid,cell_round(pos_x*100),cell_round(pos_y*100),robot_delta_x,robot_delta_y,new_object.num);
 	
 	ROS_INFO("New object: %s Num: %d at (%d,%d)",new_object.name.c_str(),new_object.num,cell_round(pos_x*100),cell_round(pos_y*100));
 	
@@ -663,7 +669,7 @@ void Get_Motion_Info(control_logic::info::ConstPtr logic_msg) {
 	wall=logic_msg->info_wall;
 	heading=logic_msg->info_heading;
 	
-	ROS_INFO("Heading: %c Wall: %d",heading,wall);
+	//ROS_INFO("Heading: %c Wall: %d",heading,wall);
 	
 }
 
@@ -774,7 +780,7 @@ int main(int argc, char **argv)
 
     
 	odometry_sub = n.subscribe("/core_sensors_odometry/odometry",100000,Get_Readings_Odometry);
-	logic_sub = n.subscribe("/control_logic/info",100000,Get_Motion_Info);
+	logic_sub = n.subscribe("/logic/info",100000,Get_Motion_Info);
 	ir_sub = n.subscribe("/core_sensors_ir/ir",100000,Get_Ir);
 	camera_sub = n.subscribe("/vision/object",1,Place_Object);
 	
@@ -803,7 +809,7 @@ int main(int argc, char **argv)
 
 		Occupancy_Grid=place_map(Occupancy_Grid,x_Current_Pose,y_Current_Pose,robot_delta_x,robot_delta_y,0);
 		if(wall==-1){
-			//Correct_Map(robot_delta_x,robot_delta_y);
+			Correct_Map(robot_delta_x,robot_delta_y);
 		}
 		place_ir();
 		update_robot();

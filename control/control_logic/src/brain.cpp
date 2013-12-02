@@ -16,7 +16,7 @@ double x=NO_VAL;
 double y=NO_VAL;
 double x_i=NO_VAL;
 double y_i=NO_VAL;
-double init_time = 45; //sec
+double init_time = 5; //sec
 double P=0.15; //meter
 char heading='E';
 
@@ -186,7 +186,7 @@ int main(int argc, char ** argv){
 	ros::ServiceClient order_blind = n.serviceClient<theia_services::brain_blind>("/blind/instructions");
 	ros::ServiceClient request_path = n.serviceClient<path_planner::path_srv>("/path_planner/plan_trajectory");
 	ros::Subscriber odo_sub = n.subscribe("/mapping/corrected_odo",1,get_odo);
-	ros::Subscriber info_sub = n.subscribe("/control_logic/info",1,get_info);
+	ros::Subscriber info_sub = n.subscribe("/logic/info",1,get_info);
 	ros::Subscriber raw_sub = n.subscribe("/mapping/occ",1,get_map);
 	ros::Publisher object_pub = n.advertise<theia_services::object>("/control_logic/object",1);
 	
@@ -201,8 +201,8 @@ int main(int argc, char ** argv){
 			if(request_map.call(map_req)){
 				
 				path_req.request.map = map_req.response.map;
-				path_req.request.x = cell_round(x);
-				path_req.request.y = cell_round(y);
+				path_req.request.x = cell_round(x*100);
+				path_req.request.y = cell_round(y*100);
 				path_req.request.goal = 1; // for now we set the goal as the first object seen in the maze
 				path_req.request.heading = heading;
 				
