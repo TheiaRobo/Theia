@@ -142,8 +142,8 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 
 
 	// A*
-	ROS_INFO("Will start A*. Goal found in pos (%d,%d). Lateral size is %d. In pos (868,807) we have the value %d.Press any key to continue...",goal_coords[0],goal_coords[1],lateral_size,matrix[868][807]);
-	getchar();
+	//ROS_INFO("Will start A*. Goal found in pos (%d,%d). Lateral size is %d. In pos (868,807) we have the value %d.Press any key to continue...",goal_coords[0],goal_coords[1],lateral_size,matrix[868][807]);
+	//getchar();
 
 
 	node current,n;
@@ -369,7 +369,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				if(current.coords[0]-prev.coords[0] < 0){ // we went backwards
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter*matrix_res); // Respective parameter
+					(*vals).push_back(forward_counter/matrix_res); // Respective parameter
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -380,7 +380,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				}else if(current.coords[1]-prev.coords[1] > 0){ // we rotated left
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter*matrix_res); // Respective parameter
+					(*vals).push_back(forward_counter/matrix_res); // Respective parameter
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -392,7 +392,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				}else if(current.coords[1]-prev.coords[1] < 0){ // we rotated right
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter*matrix_res); // Respective parameter
+					(*vals).push_back(forward_counter/matrix_res); // Respective parameter
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -416,7 +416,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				if(current.coords[0]-prev.coords[0] > 0){
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter*matrix_res); 
+					(*vals).push_back(forward_counter/matrix_res); 
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -428,7 +428,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				}else if(current.coords[1]-prev.coords[1] > 0){ 
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter*matrix_res); 
+					(*vals).push_back(forward_counter/matrix_res); 
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -440,7 +440,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				}else if(current.coords[1]-prev.coords[1] < 0){
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter*matrix_res); 
+					(*vals).push_back(forward_counter/matrix_res); 
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -465,7 +465,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				if(current.coords[1]-prev.coords[1] > 0){
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter*matrix_res); 
+					(*vals).push_back(forward_counter/matrix_res); 
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -477,7 +477,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				}else if(current.coords[0]-prev.coords[0] > 0){ 
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter*matrix_res); 
+					(*vals).push_back(forward_counter/matrix_res); 
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -489,7 +489,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				}else if(current.coords[0]-prev.coords[0] < 0){
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter*matrix_res); 
+					(*vals).push_back(forward_counter/matrix_res); 
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -515,7 +515,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				if(current.coords[1]-prev.coords[1] < 0){
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter*matrix_res); 
+					(*vals).push_back(forward_counter/matrix_res); 
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -527,7 +527,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				}else if(current.coords[0]-prev.coords[0] > 0){ 
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter*matrix_res); 
+					(*vals).push_back(forward_counter/matrix_res); 
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -539,7 +539,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				}else if(current.coords[0]-prev.coords[0] < 0){
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter*matrix_res); 
+					(*vals).push_back(forward_counter/matrix_res); 
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);

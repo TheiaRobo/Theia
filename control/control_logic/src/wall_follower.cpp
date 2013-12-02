@@ -847,7 +847,7 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
                             change_heading('L');
                     }else{
                         history[0].driving_mode = 2;
-                        history[0].driving_parameters=rotate2_last_wall();
+                        history[0].driving_parameters=rotate2_not_last_wall();
                     }
                     
                 }else if(history[1].driving_mode == 2){
