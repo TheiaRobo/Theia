@@ -31,3 +31,4 @@ rosbuild_gensrv()
 
 rosbuild_add_executable(wall_follower src/wall_follower.cpp)
 rosbuild_add_executable(brain src/brain.cpp)
+rosbuild_add_executable(blind src/blind_node.cpp)

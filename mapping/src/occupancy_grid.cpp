@@ -780,7 +780,7 @@ int main(int argc, char **argv)
 
     
 	odometry_sub = n.subscribe("/core_sensors_odometry/odometry",100000,Get_Readings_Odometry);
-	logic_sub = n.subscribe("/logic/info",100000,Get_Motion_Info);
+	logic_sub = n.subscribe("/control_logic/info",100000,Get_Motion_Info);
 	ir_sub = n.subscribe("/core_sensors_ir/ir",100000,Get_Ir);
 	camera_sub = n.subscribe("/vision/object",1,Place_Object);
 	

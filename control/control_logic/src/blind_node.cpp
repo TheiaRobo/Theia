@@ -3,7 +3,7 @@
 #include "theia_services/MotionCommand.h"
 #include "control_logic/info.h"
 #include <core_sensors/ir.h>
-#include <theia_services/brain_wall.h>
+#include <theia_services/brain_blind.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
@@ -33,11 +33,12 @@ double forward_extended = 37.0;
 const int hist_size = 100;
 const int ir_size = 8;
 const int median_size = 3;
-int idx_current = 0;
+int current_idx = 0;
 
 // info stuff
 char info_heading='E';
 int info_wall=0;
+
 ros::Publisher info_pub;
 
 std::vector<int> b_commands;
@@ -119,14 +120,14 @@ bool execute(theia_services::MotionCommand::Request &req, theia_services::Motion
 
 	info_wall=0;
 
-	res.B = command[current_idx];
+	res.B = b_commands[current_idx];
 	switch (res.B){
 	case 1: 
-		res.parameters = b_parameters[current_idx];
+		res.parameter = b_parameters[current_idx];
 		info_wall = 3;
 		break;
 	case 2: 
-		res.parameters = b_parameters[current_idx];
+		res.parameter = b_parameters[current_idx];
 		info_wall = -1;
 		if (b_parameters[current_idx] == PI/2){
 			change_heading('L');
@@ -146,13 +147,13 @@ bool execute(theia_services::MotionCommand::Request &req, theia_services::Motion
 	printf("\n");
 	switch(res.B){
 	case 1:
-		ROS_INFO("GO FORWARD %.2f",res.parameters);
+		ROS_INFO("GO FORWARD %.2f",res.parameter);
 		break;
 	case 2:
-		ROS_INFO("TURN %.2f",res.parameters);
+		ROS_INFO("TURN %.2f",res.parameter);
 		break;
 	case 3:
-		ROS_INFO("FOLLOW WALL: %.2f",res.parameters);
+		ROS_INFO("FOLLOW WALL: %.2f",res.parameter);
 		break;
 	default:
 		ROS_INFO("ERROR");
@@ -185,7 +186,7 @@ bool status(theia_services::brain_blind::Request &req, theia_services::brain_bli
 		}
 	}
 
-	res.ok=true;
+	res.done=true;
 	return true;
 }
 
@@ -203,8 +204,8 @@ int main(int argc, char ** argv){
 	ros::NodeHandle n;
 	ros::Rate loop_rate(10);
 
-	blind_service = n.advertiseService<theia_services::MotionCommand>("/blind_node/motion_command", execute);	
-	ros::ServiceServer orders = n.advertiseService<theia_services::brain_blind>("/blind/instructions",status);
+	ros::ServiceServer blind_service = n.advertiseService("/blind_node/motion_command", execute);	
+	ros::ServiceServer orders = n.advertiseService("/blind/instructions",status);
 
 	info_pub = n.advertise<control_logic::info>("/control_logic/info",1);
 
