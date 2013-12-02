@@ -4,33 +4,29 @@
 #include <utility>
 #include <vector>
 #include <cv_bridge/cv_bridge.h>
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
-#include <std_msgs/Empty.h>
 #include <vision_object/Object.h>
 #include <vision_plane/Candidate.h>
 #include <vision_plane/Candidates.h>
 
 #include "candidate.h"
+#include "config.h"
+#include "context.h"
 #include "object.h"
 
 #define NODE_NAME "vision_object"
 #define TOPIC_IN_CAND "/vision/plane/cand"
 #define TOPIC_IN_COLOR "/camera/rgb/image_rect"
-#define TOPIC_IN_DEPTH "/camera/depth/image_rect"
 #define TOPIC_OUT_OBJECT "/vision/object"
 
 using namespace std;
-using namespace message_filters;
 using namespace vision_plane;
 using namespace sensor_msgs;
 
 Config config;
-CameraConfig cameraConfig;
 Context context(config);
 bool candValid;
 vector<Candidate> candVect;
@@ -38,60 +34,14 @@ vector<Object> objectVect;
 ObjectData sampleData;
 bool candVectReady;
 bool colorImageReady;
-bool depthImageReady;
 ros::Subscriber candSub;
 ros::Subscriber colorImageSub;
-ros::Subscriber depthImageSub;
 ros::Publisher objectPub;
 
 int init(){
 	int errorCode = 0;
 
 	config = Config();
-	ros::param::getCached(
-		"~config/camera/totalFOVLat",
-		config.camera.fovLat
-	);
-	ros::param::getCached(
-		"~config/camera/totalFOVLong",
-		config.camera.fovLong
-	);
-	ros::param::getCached(
-		"~config/camera/validFOVLat",
-		config.camera.validFovLat
-	);
-	ros::param::getCached(
-		"~config/camera/validFOVLong",
-		config.camera.validFovLong
-	);
-	ros::param::getCached(
-		"~config/path",
-		config.path
-	);
-	ros::param::getCached(
-		"~config/colorImage/minHessian",
-		config.colorImage.minHessian
-	);
-	ros::param::getCached(
-		"~config/colorImage/maxMeanSquareError",
-		config.colorImage.maxMeanSquareError
-	);
-	ros::param::getCached(
-		"~config/colorImage/numbMatchesHomography",
-		config.colorImage.numbMatchesHomography
-	);
-	ros::param::getCached(
-		"~config/depthImage/blurring",
-		config.depthImage.blurring
-	);
-	ros::param::getCached(
-		"~config/depthImage/cannyLevelOne",
-		config.depthImage.cannyLevelOne
-	);
-	ros::param::getCached(
-		"~config/depthImage/cannyLevelTwo",
-		config.depthImage.cannyLevelTwo
-	);
 	context = Context(config);
 
 	return errorCode;
@@ -203,9 +153,6 @@ int train(){
 		for(size_t j = 0; j < numbData; j++){
 			ObjectData & data = object.objectDataVect[j];
 			data.colorImage.showKeypoints();
-/*
-			data.depthImage.show();
-*/
 		}
 
 	}
@@ -218,15 +165,11 @@ int tryToMatch(){
 
 	if(!candVectReady) return 0;
 	if(!colorImageReady) return 0;
-/*
-	if(!depthImageReady) return 0;
-*/
 
 	errorCode = match();
 	if(errorCode) return errorCode;
 
 	candVectReady = false;
-	colorImageReady = false;
 	colorImageReady = false;
 
 	return errorCode;
@@ -301,72 +244,31 @@ void colorCallback(const ImageConstPtr & colorMsgPtr){
 	}
 }
 
-void depthCallback(const ImageConstPtr & depthMsgPtr){
-	int errorCode = 0;
-
-	cv_bridge::CvImagePtr imagePtr;
-	imagePtr = cv_bridge::toCvCopy(depthMsgPtr);
-
-	cv::Mat & floatImage = imagePtr->image; 
-	if(!floatImage.data){
-		cout << "Error in " << __FUNCTION__ << endl;
-		cout << "Could not convert image to OpenCV data" << endl;
-		return;
-	}
-
-	// convert to grayscale
-	cv::Mat image;
-	imagePtr->image.convertTo(image, CV_8UC1, 255);
-
-	DepthImageData & imageData = sampleData.depthImage;
-	DepthImageContext & imageContext = context.depthImage;
-	errorCode = imageData.train(image, imageContext);
-	if(errorCode){
-		cout << "Error in " << __FUNCTION__ << endl;
-		cout << "Could not train depth image" << endl;
-		return;
-	}
-
-	depthImageReady = true;
-
-	errorCode = tryToMatch();
-	if(errorCode){
-		cout << "Error in " << __FUNCTION__ << endl;
-		cout << "Matching failed" << endl;
-		return;
-	}
-}
-
 int main(int argc, char ** argv){
 	int errorCode = 0;
-
-	ros::init(argc, argv, NODE_NAME);
-	ros::NodeHandle node;
-
-	candSub = node.subscribe(TOPIC_IN_CAND, 5, candCallback);
-	colorImageSub = node.subscribe(TOPIC_IN_COLOR, 1, colorCallback);
-/*
-	depthImageSub = node.subscribe(TOPIC_IN_DEPTH, 1, depthCallback);
-*/
-	objectPub = node.advertise<vision_object::Object>(
-		TOPIC_OUT_OBJECT, 1
-	);
 
 	candValid = false;
 	candVectReady = false;
 	colorImageReady = false;
-	depthImageReady = false;
 
+	ros::init(argc, argv, NODE_NAME);
+	ros::NodeHandle node;
+
+	// subscribers
+	candSub = node.subscribe(TOPIC_IN_CAND, 5, candCallback);
+	colorImageSub = node.subscribe(TOPIC_IN_COLOR, 1, colorCallback);
+
+	// publisher
+	objectPub = node.advertise<vision_object::Object>(
+		TOPIC_OUT_OBJECT, 1
+	);
+	
+	// main
 	errorCode = init();
 	if(errorCode) return errorCode;
 
 	errorCode = train();
 	if(errorCode) return errorCode;
-
-/*
-	errorCode = match();
-	if(errorCode) return;
-*/
 
 	ros::spin();
 

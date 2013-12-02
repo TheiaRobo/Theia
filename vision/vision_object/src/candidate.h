@@ -5,7 +5,7 @@
 #include <opencv2/core/core.hpp>
 #include <vision_plane/Candidate.h>
 
-#include "camera.h"
+#include "cameracontext.h"
 
 bool candCheckIfValid(
 	const std::vector<vision_plane::Candidate> & inCandVect,
