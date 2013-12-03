@@ -123,14 +123,17 @@ bool execute(theia_services::MotionCommand::Request &req, theia_services::Motion
 	
 	ros::Duration refresh(0.1);
 	refresh.sleep(); // wait a bit before sending new orders
-
+	
+	
 	res.B = b_commands[current_idx];
-	switch (res.B){
+	switch (b_commands[current_idx]){
 	case 1: 
+		ROS_DEBUG("I'm going to send a forward instruction");
 		res.parameter = b_parameters[current_idx];
 		info_wall = 3;
 		break;
 	case 2: 
+		ROS_DEBUG("I'm going to send a rotation instruction");
 		res.parameter = b_parameters[current_idx];
 		info_wall = -1;
 		if (b_parameters[current_idx] == PI/2){
@@ -141,12 +144,14 @@ bool execute(theia_services::MotionCommand::Request &req, theia_services::Motion
 			change_heading('F');
 		}
 		break;
+	default:
+		ROS_ERROR("Wrong instruction in the list");
 	}
 	
 	current_idx++;
-	
+	getchar();
 	if(current_idx >= b_parameters.size()){
-		
+		ROS_WARN("Finished the instructions");
 		done = true;
 		
 	}
@@ -154,7 +159,7 @@ bool execute(theia_services::MotionCommand::Request &req, theia_services::Motion
 	///////////////////////////////////////////////////
 	//Finished cases. Debug
 	///////////////////////////////////////////////////
-	printf("\n");
+	
 	switch(res.B){
 	case 1:
 		ROS_INFO("GO FORWARD %.2f",res.parameter);
@@ -166,7 +171,7 @@ bool execute(theia_services::MotionCommand::Request &req, theia_services::Motion
 		ROS_INFO("FOLLOW WALL: %.2f",res.parameter);
 		break;
 	default:
-		ROS_INFO("ERROR");
+		ROS_ERROR("WRONG INSTRUCTION");
 		break;
 	}
 
@@ -175,7 +180,7 @@ bool execute(theia_services::MotionCommand::Request &req, theia_services::Motion
 	publish_info();
 
 	//loop_rate.sleep();
-	//ros::spinOnce();
+	ros::spinOnce();
 
 	//Update in history vector
 	return true;
@@ -218,7 +223,7 @@ int main(int argc, char ** argv){
 
 	ros::init(argc, argv, "blind_node");
 	ros::NodeHandle n;
-	ros::Rate loop_rate(10);
+	ros::Rate loop_rate(100);
 
 	ros::ServiceServer blind_service = n.advertiseService("/blind_node/motion_command", execute);	
 	ros::ServiceServer orders = n.advertiseService("/blind/instructions",status);

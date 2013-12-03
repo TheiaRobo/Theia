@@ -86,6 +86,8 @@ void order_slaves(int slave,theia_services::brain_wall wall_req, theia_services:
 		order_wall.call(wall_req);
 		order_blind.call(blind_req);
 		blind_done = blind_req.response.done;
+		if(blind_done)
+			ROS_WARN("Blind is done");
 		break;
 	default:
 		wall_req.request.active=false;
@@ -203,7 +205,8 @@ int main(int argc, char ** argv){
 		
 		if(closed_perimeter(init_time) && blind_done){ // For now, we assume we finished the exploration phase
 			ROS_INFO("Closed a perimeter");
-			
+			ROS_WARN("I'll call the blind");
+			order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals);
 			if(request_map.call(map_req)){
 				
 				path_req.request.map = map_req.response.map;

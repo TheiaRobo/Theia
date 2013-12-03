@@ -103,8 +103,8 @@ void readObjectData(theia_services::object::ConstPtr msg){
 		object_in_front = msg -> object;
         
 		flag_object = 1;
-		ROS_INFO("Brain tells me there is an object right in front of me");
-		getchar();
+		ROS_WARN("Brain tells me there is an object right in front of me");
+		
 	}
     
     
@@ -607,7 +607,6 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 		res.B=0;
 		initialize_history();
 		theia_services::stop stop_msg; 
-		stop_pub.publish(stop_msg);
 		return true;
         
 	}
@@ -989,8 +988,17 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
 }
 
 bool status(theia_services::brain_wall::Request &req, theia_services::brain_wall::Response &res){
-    
+ 
+    theia_services::stop stop_msg;
+
+    if(!req.active && active){
+	stop_msg.stop=1;	
+	stop_pub.publish(stop_msg);
+    }
+   
     active=req.active;
+
+
     info_heading=req.heading;
     res.ok=true;
     

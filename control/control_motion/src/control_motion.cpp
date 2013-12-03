@@ -625,8 +625,8 @@ int none(ros::Rate loop_rate){
 	 */
 	srv.request.A=true;
 	if(ask_logic.call(srv)){
-
 		if(srv.response.B!=0){
+			ROS_WARN("WALL FOLLOWER ACTIVE");
 			if(srv.response.B==2){
 				heading_ref=srv.response.parameter;
 			}else if(srv.response.B==3){
@@ -637,16 +637,20 @@ int none(ros::Rate loop_rate){
 
 			return srv.response.B;
 		}else if(ask_blind.call(srv)){
+			if(srv.response.B!=0){
+				ROS_WARN("BLIND ACTIVE");
+				if(srv.response.B==2){
+					ROS_WARN("WILL ROTATE");
+					heading_ref=srv.response.parameter;
+				}else if(srv.response.B==3){
+					wall_to_follow=(int) srv.response.parameter;
+				}else{ // forward
+					forward_distance=srv.response.parameter;
+					ROS_WARN("WILL MOVE FORWARD %.2f",forward_distance);
+				}
 
-			if(srv.response.B==2){
-				heading_ref=srv.response.parameter;
-			}else if(srv.response.B==3){
-				wall_to_follow=(int) srv.response.parameter;
-			}else{ // forward
-				forward_distance=srv.response.parameter;
+				return srv.response.B;
 			}
-
-			return srv.response.B;
 
 		}
 

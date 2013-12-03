@@ -77,7 +77,7 @@ double heur(int coords[2], int goal_coords[2]){
 
 	if(goal_coords[0]!=NO_VAL){
 		t_h = std::abs(coords[0]-goal_coords[0])+std::abs(coords[1]-goal_coords[1]);
-		return 5*t_h;
+		return 1.05*t_h;
 	}else{ // no goal, no heuristic
 		return 0;
 	}
@@ -369,7 +369,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				if(current.coords[0]-prev.coords[0] < 0){ // we went backwards
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter/matrix_res); // Respective parameter
+					(*vals).push_back(forward_counter); // Respective parameter
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -380,7 +380,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				}else if(current.coords[1]-prev.coords[1] > 0){ // we rotated left
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter/matrix_res); // Respective parameter
+					(*vals).push_back(forward_counter); // Respective parameter
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -392,7 +392,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				}else if(current.coords[1]-prev.coords[1] < 0){ // we rotated right
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter/matrix_res); // Respective parameter
+					(*vals).push_back(forward_counter); // Respective parameter
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -416,7 +416,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				if(current.coords[0]-prev.coords[0] > 0){
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter/matrix_res); 
+					(*vals).push_back(forward_counter); 
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -428,7 +428,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				}else if(current.coords[1]-prev.coords[1] > 0){ 
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter/matrix_res); 
+					(*vals).push_back(forward_counter); 
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -440,7 +440,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				}else if(current.coords[1]-prev.coords[1] < 0){
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter/matrix_res); 
+					(*vals).push_back(forward_counter); 
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -465,7 +465,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				if(current.coords[1]-prev.coords[1] > 0){
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter/matrix_res); 
+					(*vals).push_back(forward_counter); 
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -477,7 +477,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				}else if(current.coords[0]-prev.coords[0] > 0){ 
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter/matrix_res); 
+					(*vals).push_back(forward_counter); 
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -489,7 +489,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				}else if(current.coords[0]-prev.coords[0] < 0){
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter/matrix_res); 
+					(*vals).push_back(forward_counter); 
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -515,7 +515,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				if(current.coords[1]-prev.coords[1] < 0){
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter/matrix_res); 
+					(*vals).push_back(forward_counter); 
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -527,7 +527,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				}else if(current.coords[0]-prev.coords[0] > 0){ 
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter/matrix_res); 
+					(*vals).push_back(forward_counter); 
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -539,7 +539,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 				}else if(current.coords[0]-prev.coords[0] < 0){
 
 					(*commands).push_back(FORWARD);
-					(*vals).push_back(forward_counter/matrix_res); 
+					(*vals).push_back(forward_counter); 
 					forward_counter=0;
 
 					(*commands).push_back(ROTATE);
@@ -572,145 +572,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 
 bool planning_service(path_planner::path_srv::Request &req, path_planner::path_srv::Response &res){
 
- /*
-	int size = 10*10;
-	std::vector<node> solution;
-	std::vector<int> commands;
-	std::vector<double> vals;
-	std::vector<signed char> temp_grid(size,white);
-	visualization_msgs::Marker object_marker;
-	visualization_msgs::Marker wall_marker;
-	std::vector<geometry_msgs::Point> pos_list;
-	std::vector<geometry_msgs::Point> black_list;
-	geometry_msgs::Point pos;
-
-	matrix_res=0.01;
-	heading_map = 'E';
-	
-	
-	temp_grid[1+1*10]=1;
-	temp_grid[1+2*10]=black;
-	pos.x=0.01;
-	pos.y=0.02;
-	black_list.push_back(pos);
-	temp_grid[2+2*10]=black;
-	pos.x=0.02;
-	pos.y=0.02;
-	black_list.push_back(pos);
-	temp_grid[3+2*10]=black;
-	pos.x=0.03;
-	pos.y=0.02;
-	black_list.push_back(pos);
-	temp_grid[4+2*10]=black;
-	pos.x=0.04;
-	pos.y=0.02;
-	black_list.push_back(pos);
-	temp_grid[5+2*10]=black;
-	pos.x=0.05;
-	pos.y=0.02;
-	black_list.push_back(pos);
-	temp_grid[6+2*10]=black;
-	pos.x=0.06;
-	pos.y=0.02;
-	black_list.push_back(pos);
-	temp_grid[6+1*10]=black;
-	pos.x=0.06;
-	pos.y=0.01;
-	black_list.push_back(pos);
-	temp_grid[3+3*10]=black;
-	pos.x=0.03;
-	pos.y=0.03;
-	black_list.push_back(pos);
-	temp_grid[3+4*10]=black;
-	pos.x=0.03;
-	pos.y=0.04;
-	black_list.push_back(pos);
-	temp_grid[3+5*10]=black;
-	pos.x=0.03;
-	pos.y=0.05;
-	black_list.push_back(pos);
-	temp_grid[3+6*10]=black;
-	pos.x=0.03;
-	pos.y=0.06;
-	black_list.push_back(pos);
-	temp_grid[3+7*10]=black;
-	pos.x=0.03;
-	pos.y=0.07;
-	black_list.push_back(pos);
-
-	
-
-
-
-	solution = find_closest(4,3,temp_grid,1);
-
-
-
-	object_marker.header.frame_id = "/path";
-	object_marker.header.stamp = ros::Time::now();
-
-	// Set the namespace and id for this marker.  This serves to create a unique ID
-	// Any marker sent with the same namespace and id will overwrite the old one
-	object_marker.ns = "path";
-	object_marker.id = 0;
-
-	object_marker.type = visualization_msgs::Marker::CUBE_LIST;
-
-	// Set the marker action.  Options are ADD and DELETE
-	object_marker.action = visualization_msgs::Marker::ADD;
-
-	// Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
-
-
-	object_marker.scale.x = matrix_res;
-	object_marker.scale.y = matrix_res;
-	object_marker.scale.z = matrix_res;
-
-	// Set the color -- be sure to set alpha to something non-zero!
-	object_marker.color.r = 0.0f;
-	object_marker.color.g = 0.0f;
-	object_marker.color.b = 1.0f;
-	object_marker.color.a = 1.0;
-	object_marker.pose.orientation.w=1.0;
-
-	object_marker.lifetime = ros::Duration();
-
-	wall_marker=object_marker;
-	wall_marker.ns = "wall";
-	wall_marker.color.r=0.0f;
-	wall_marker.color.g=0.0f;
-	wall_marker.color.b=0.0f;
-	wall_marker.color.a = 1.0;
-
-	for(int i=0; i<solution.size(); i++){
-		pos.x=solution[i].coords[0]*0.01;
-		pos.y=solution[i].coords[1]*0.01;
-		pos.z=0;
-
-		pos_list.push_back(pos);
-	}
-
-
-	object_marker.points=pos_list;
-	wall_marker.points=black_list;
-	path_pub.publish(object_marker);
-	wall_pub.publish(wall_marker);
-
-	convert_to_commands(solution,&commands,&vals);
-
-	for(int i=0; i < commands.size(); i++){
-
-		if(commands[i]==FORWARD){
-
-			ROS_INFO("GO FORWARD %.2f METERS!",vals[i]);
-
-		}else{
-
-			ROS_INFO("ROTATE %.2f RADIANS!!",vals[i]);
-
-		}
-
-	}*/
+ 
 
 	int size = req.map.info.width;
 	std::vector<node> solution;
