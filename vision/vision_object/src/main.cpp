@@ -4,11 +4,6 @@
 #include <utility>
 #include <vector>
 #include <cv_bridge/cv_bridge.h>
-<<<<<<< HEAD
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
-=======
->>>>>>> vision-devel
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <ros/ros.h>
