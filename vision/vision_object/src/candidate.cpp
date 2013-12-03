@@ -6,36 +6,22 @@ using namespace std;
 using namespace vision_plane;
 
 bool candCheckIfValid(
-	const vector<Candidate> & inCandVect,
+	const Candidate & inCand,
 	const CameraContext & inContext
 ){
-	size_t numbCands = inCandVect.size();
-	if(!numbCands) return false;
-
-	double validLatDeg = inContext.validFovLat;
-	double validLongDeg = inContext.validFovLong;
-
-	double validLatMin = -0.5 * M_PI / 180 * validLatDeg;
-	double validLatMax = +0.5 * M_PI / 180 * validLatDeg;
-	double validLongMin = -0.5 * M_PI / 180 * validLongDeg;
-	double validLongMax = +0.5 * M_PI / 180 * validLongDeg;
-
-	for(size_t i = 0; i < numbCands; i++){
-		const Candidate & cand = inCandVect[i];
-
-		if(cand.minLatitude > validLatMax) continue;
-		if(cand.minLatitude < validLatMin) continue;
-		if(cand.maxLatitude > validLatMax) continue;
-		if(cand.maxLatitude < validLatMin) continue;
-		if(cand.minLongitude > validLongMax) continue;
-		if(cand.minLongitude < validLongMin) continue;
-		if(cand.maxLongitude > validLongMax) continue;
-		if(cand.maxLongitude < validLongMin) continue;
-		
-		return true;
-	}
-
-	return false;
+	double box[3][2];
+	candToBox(inCand, inContext, box);
+	
+	// left end
+	if(box[1][0] < -0.15) return false;
+	// right end
+	if(box[1][1] > +0.15) return false;
+	// bottom end
+	if(box[2][0] < -0.05) return false;
+	// top end
+	if(box[2][1] > +0.15) return false;
+	
+	return true;
 }
 
 int candShow(
@@ -60,6 +46,36 @@ int candShow(
 		
 		cv::rectangle(outImage, rect, color);
 	}
+
+	return errorCode;
+}
+
+int candToBox(
+	const Candidate & inCand,
+	const CameraContext & inContext,
+	double outBox[3][2]
+){
+	int errorCode = 0;
+
+	double minCorrLat = inCand.minLatitude + inContext.initLat;
+	double maxCorrLat = inCand.maxLatitude + inContext.initLat;
+	double minLong = inCand.minLongitude;
+	double maxLong = inCand.maxLongitude;
+	double dist = inCand.dist;
+
+	double minX = dist * sin(minCorrLat * M_PI / 180);
+	double maxX = dist * sin(maxCorrLat * M_PI / 180);
+	double minY = (minX + maxX) / 2 * sin(minLong * M_PI / 180);
+	double maxY = (minX + maxX) / 2 * sin(maxLong * M_PI / 180);
+	double minZ = dist * cos(minCorrLat * M_PI / 180);
+	double maxZ = dist * cos(minCorrLat * M_PI / 180);
+
+	outBox[0][0] = minX;
+	outBox[0][1] = maxX;
+	outBox[1][0] = minY;
+	outBox[1][1] = maxY;
+	outBox[2][0] = minZ;
+	outBox[2][1] = maxZ;
 
 	return errorCode;
 }

@@ -5,6 +5,7 @@ vision_object:
         camera:
             totalFOVLat: 45
             totalFOVLong: 57.5
+            initLat: 22.5
             validFOVLat: 45
             validFOVLong: 25
         path: /home/amotta/Documents/Theia/vision/vision_object/train

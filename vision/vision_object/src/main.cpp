@@ -61,6 +61,25 @@ int publishResults(
 
 	if(inResults.empty()) return errorCode;
 
+	/**
+	* TODO
+	* Clean up
+	*/
+	size_t numbCands = candVect.size();
+	if(!numbCands) return errorCode;
+
+	Candidate * candPtr = NULL;
+	for(size_t i = 0; i < numbCands; i++){
+		if(candCheckIfValid(candVect[i], context.camera)){
+			candPtr = &candVect[i];
+		}
+	}
+
+	if(!candPtr) return errorCode;
+
+	double box[3][2];
+	candToBox(*candPtr, context.camera, box);
+
 	// sort results
 	vector< pair<Object, ObjectDataResult> > workingVect(inResults);
 	sort(workingVect.begin(), workingVect.end(), compareResultPairs);
@@ -73,6 +92,8 @@ int publishResults(
 	vision_object::Object msg;
 	msg.objectName = object.name;
 	msg.objectAngle = result.angle;
+	msg.distX = (box[0][0] + box[0][1]) / 2;
+	msg.distY = (box[1][0] + box[1][1]) / 2;
 
 	objectPub.publish(msg);
 
@@ -81,24 +102,6 @@ int publishResults(
 
 int match(){
 	int errorCode = 0;
-
-	candValid = candCheckIfValid(candVect, context.camera);
-
-	if(candValid){
-		cout << "Valid object found" << endl;
-	}else{
-		cout << "No valid object found" << endl;
-		return errorCode;
-	}
-
-/*
-	errorCode = candDebug();
-	if(errorCode){
-		cout << "Error in " << __FUNCTION__ << endl;
-		cout << "Could not show candidates" << endl;
-		return errorCode;
-	}
-*/
 
 	size_t numbObjects = objectVect.size();
 	pair<Object, ObjectDataResult> bestResult;

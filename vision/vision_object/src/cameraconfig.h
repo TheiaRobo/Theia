@@ -5,6 +5,7 @@ class CameraConfig {
 	public:
 		double fovLat;
 		double fovLong;
+		double initLat;
 		double validFovLat;
 		double validFovLong;
 };

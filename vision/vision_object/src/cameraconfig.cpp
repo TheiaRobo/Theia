@@ -11,6 +11,7 @@ int cameraConfigBuild(CameraConfig & outConfig){
 	string prefix = "~config/camera";
 	ros::param::getCached(prefix + "totalFOVLat", outConfig.fovLat);
 	ros::param::getCached(prefix + "totalFOVLong", outConfig.fovLong);
+	ros::param::getCached(prefix + "initLat", outConfig.initLat);
 	ros::param::getCached(prefix + "validFOVLat", outConfig.validFovLat);
 	ros::param::getCached(prefix + "validFOVLong", outConfig.validFovLong);
 	

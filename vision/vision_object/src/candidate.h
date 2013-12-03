@@ -8,7 +8,7 @@
 #include "cameracontext.h"
 
 bool candCheckIfValid(
-	const std::vector<vision_plane::Candidate> & inCandVect,
+	const vision_plane::Candidate & inCand,
 	const CameraContext & inContext
 );
 
@@ -23,6 +23,12 @@ int candShow(
 	const std::vector<vision_plane::Candidate> & inCandVect,
 	const cv::Mat & inImage,
 	cv::Mat & outImage
+);
+
+int candToBox(
+	const vision_plane::Candidate & inCand,
+	const CameraContext & inContext,
+	double outBox[3][2]
 );
 
 int candToRect(
