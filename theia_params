@@ -5,16 +5,10 @@ vision_object:
         camera:
             totalFOVLat: 45
             totalFOVLong: 57.5
-<<<<<<< HEAD
-            validFOVLat: 45
-            validFOVLong: 25
-        path: /home/robo/DD2425_2013/Project/vision/vision_object/train
-=======
             initLat: 22.5
             validFOVLat: 45
             validFOVLong: 25
-        path: /home/amotta/Documents/Theia/vision/vision_object/train
->>>>>>> vision-devel
+        path: /home/robo/DD2425_2013/Project/vision/vision_object/train2
         colorImage:
             minHessian: 400
             maxMeanSquareError: 0.35
@@ -26,16 +20,9 @@ vision_object:
 vision_plane:
     config:
         leafSize: 0.02
-<<<<<<< HEAD
-=======
         minClusterSize: 5
->>>>>>> vision-devel
         minPercentage: 0.15
         numbIterations: 1000
         objectSize: 0.05
         planeDistThresh: 0.02
-<<<<<<< HEAD
         planeOptimize: 1
-=======
-        planeOptimize: 1
->>>>>>> vision-devel
