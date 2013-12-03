@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "context.h"
 #include "objectdata.h"
 
 class Object {

@@ -8,12 +8,6 @@
 
 using namespace cv;
 
-ColorImageContext::ColorImageContext(const ColorImageConfig & config) :
-detector(config.minHessian), extractor(), matcher(NORM_L2) {
-	maxMeanSquareError = config.maxMeanSquareError;
-	numbMatchesHomography = config.numbMatchesHomography;
-}
-
 ColorImageResult::ColorImageResult(){
 	meanError = std::numeric_limits<double>::infinity();
 	meanSquareError = std::numeric_limits<double>::infinity();

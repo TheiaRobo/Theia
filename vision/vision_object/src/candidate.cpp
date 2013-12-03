@@ -1,6 +1,4 @@
 #include <cmath>
-#include <opencv2/highgui/highgui.hpp>
-
 #include "candidate.h"
 
 using namespace std;
@@ -10,50 +8,73 @@ bool candCheckIfValid(
 	const Candidate & inCand,
 	const CameraContext & inContext
 ){
-	double validLatDeg = inContext.validFovLat;
-	double validLongDeg = inContext.validFovLong;
 
-	double validLatMin = -0.5 * M_PI / 180 * validLatDeg;
-	double validLatMax = +0.5 * M_PI / 180 * validLatDeg;
-	double validLongMin = -0.5 * M_PI / 180 * validLongDeg;
-	double validLongMax = +0.5 * M_PI / 180 * validLongDeg;
-
-	if(inCand.minLatitude > validLatMax) return false;
-	if(inCand.minLatitude < validLatMin) return false;
-	if(inCand.maxLatitude > validLatMax) return false;
-	if(inCand.maxLatitude < validLatMin) return false;
-	if(inCand.minLongitude > validLongMax) return false;
-	if(inCand.minLongitude < validLongMin) return false;
-	if(inCand.maxLongitude > validLongMax) return false;
-	if(inCand.maxLongitude < validLongMin) return false;
+	double box[3][2];
+	candToBox(inCand, inContext, box);
+	
+	// left end
+	if(box[1][0] < -0.15) return false;
+	// right end
+	if(box[1][1] > +0.15) return false;
+	// bottom end
+	if(box[2][0] < -0.05) return false;
+	// top end
+	if(box[2][1] > +0.15) return false;
 	
 	return true;
 }
 
 int candShow(
 	const vector<Candidate> & inCandVect,
-	const cv::Mat & inImage
+	const cv::Mat & inImage,
+	cv::Mat & outImage
 ){
 	int errorCode = 0;
 
 	size_t numbCands = inCandVect.size();
 	if(!numbCands) return errorCode;
-
-	cv::Mat image = inImage.clone();
+	outImage = inImage.clone();
 	const cv::Scalar color(0, 255, 255);
 
 	for(size_t i = 0; i < numbCands; i++){
 		const Candidate & cand = inCandVect[i];
 
 		cv::Rect rect;
-		errorCode = candToRect(cand, image, rect);
+		errorCode = candToRect(cand, outImage, rect);
 		if(errorCode) return errorCode;
 		
-		cv::rectangle(image, rect, color);
+		cv::rectangle(outImage, rect, color);
 	}
-	
-	cv::imshow("Candidates", image);
-	cv::waitKey(0);
+
+	return errorCode;
+}
+
+int candToBox(
+	const Candidate & inCand,
+	const CameraContext & inContext,
+	double outBox[3][2]
+){
+	int errorCode = 0;
+
+	double minCorrLat = inCand.minLatitude + inContext.initLat;
+	double maxCorrLat = inCand.maxLatitude + inContext.initLat;
+	double minLong = inCand.minLongitude;
+	double maxLong = inCand.maxLongitude;
+	double dist = inCand.dist;
+
+	double minX = dist * sin(minCorrLat * M_PI / 180);
+	double maxX = dist * sin(maxCorrLat * M_PI / 180);
+	double minY = (minX + maxX) / 2 * sin(minLong * M_PI / 180);
+	double maxY = (minX + maxX) / 2 * sin(maxLong * M_PI / 180);
+	double minZ = dist * cos(minCorrLat * M_PI / 180);
+	double maxZ = dist * cos(minCorrLat * M_PI / 180);
+
+	outBox[0][0] = minX;
+	outBox[0][1] = maxX;
+	outBox[1][0] = minY;
+	outBox[1][1] = maxY;
+	outBox[2][0] = minZ;
+	outBox[2][1] = maxZ;
 
 	return errorCode;
 }

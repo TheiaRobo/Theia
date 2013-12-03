@@ -177,12 +177,7 @@ int findObjects(
 
 	EuclideanClusterExtraction<TheiaPoint> extractor;
 	extractor.setClusterTolerance(config.objectSize);
-	/**
-	* TODO
-	* Add new parameter to config file
-	*/
-	//extractor.setMinClusterSize(0.2 * numbPoints);
-	extractor.setMinClusterSize(5);
+	extractor.setMinClusterSize(config.minClusterSize);
 	extractor.setInputCloud(inCloud);
 
 	std::vector<PointIndices> clusterVect;
@@ -204,6 +199,7 @@ int findObjects(
 
 void initConfig(){
 	ros::param::getCached("~config/leafSize", config.leafSize);
+	ros::param::getCached("~config/minClusterSize", config.minClusterSize);
 	ros::param::getCached("~config/minPercentage", config.minPercentage);
 	ros::param::getCached("~config/objectSize", config.objectSize);
 	ros::param::getCached("~config/numbIterations", config.numbIterations);

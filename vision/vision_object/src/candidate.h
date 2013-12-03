@@ -4,8 +4,7 @@
 #include <vector>
 #include <opencv2/core/core.hpp>
 #include <vision_plane/Candidate.h>
-
-#include "camera.h"
+#include "cameracontext.h"
 
 bool candCheckIfValid(
 	const vision_plane::Candidate & inCand,
@@ -21,7 +20,14 @@ int candFilterValid(
 
 int candShow(
 	const std::vector<vision_plane::Candidate> & inCandVect,
-	const cv::Mat & inImage
+	const cv::Mat & inImage,
+	cv::Mat & outImage
+);
+
+int candToBox(
+	const vision_plane::Candidate & inCand,
+	const CameraContext & inContext,
+	double outBox[3][2]
 );
 
 int candToRect(
@@ -31,3 +37,4 @@ int candToRect(
 );
 
 #endif
+
