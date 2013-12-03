@@ -34,6 +34,8 @@ const int obj_thres=20/(resolution_matrix*100); // in meter to cells
 std::vector<signed char>  Raw_Map(x_matrix*y_matrix,white);
 std::vector<signed char>  Proc_Map(x_matrix*y_matrix,white);
 
+bool blind_done = true;
+
 
 int cell_round(double val){
 	double cm_res=resolution_matrix*100;
@@ -72,6 +74,7 @@ void order_slaves(int slave,theia_services::brain_wall wall_req, theia_services:
 		wall_req.request.heading=heading;
 		order_wall.call(wall_req);
 		order_blind.call(blind_req);
+		blind_done = true;
 		break;
 	case 2:
 		wall_req.request.active=false;
@@ -82,6 +85,7 @@ void order_slaves(int slave,theia_services::brain_wall wall_req, theia_services:
 		blind_req.request.heading=heading;
 		order_wall.call(wall_req);
 		order_blind.call(blind_req);
+		blind_done = blind_req.response.done;
 		break;
 	default:
 		wall_req.request.active=false;
@@ -89,6 +93,7 @@ void order_slaves(int slave,theia_services::brain_wall wall_req, theia_services:
 		wall_req.request.heading=heading;
 		order_wall.call(wall_req);
 		order_blind.call(blind_req);
+		// blind_done = blind_done --> no change in status is intended
 		break;
 	}
 
@@ -196,11 +201,9 @@ int main(int argc, char ** argv){
 		
 		// processing to decide what to do
 		
-		if(closed_perimeter(init_time)){ // For now, we assume we finished the exploration phase
+		if(closed_perimeter(init_time) && blind_done){ // For now, we assume we finished the exploration phase
 			ROS_INFO("Closed a perimeter");
-			slave=2;
-			//slave = 0 --> default;
-			order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals);
+			
 			if(request_map.call(map_req)){
 				
 				path_req.request.map = map_req.response.map;
@@ -218,7 +221,7 @@ int main(int argc, char ** argv){
 						vals[i] = path_req.response.vals[i];
 					}
 					
-					
+					slave = 2;
 				}else{
 					
 					ROS_ERROR("Could not get path from path_planner");
@@ -231,18 +234,14 @@ int main(int argc, char ** argv){
 				
 			}
 			
-			
-
-			
-			
-			
 		}
 		
 		if(close_object()){
-			ROS_INFO("OBJECT TOO CLOSE OMGWTFBBQ");
+			ROS_INFO("OBJECT TOO CLOSE");
 			object_msg.object=1;
 			object_pub.publish(object_msg);
 		}
+		
 		order_slaves(slave,wall_req,blind_req,order_wall,order_blind,commands,vals);
 		loop_rate.sleep();
 		ros::spinOnce();

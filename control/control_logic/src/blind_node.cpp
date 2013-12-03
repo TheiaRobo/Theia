@@ -44,6 +44,7 @@ ros::Publisher info_pub;
 std::vector<int> b_commands;
 std::vector<double> b_parameters;
 
+bool done=false;
 bool active=false;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -119,6 +120,9 @@ bool execute(theia_services::MotionCommand::Request &req, theia_services::Motion
 	}
 
 	info_wall=0;
+	
+	ros::Duration refresh(0.1);
+	refresh.sleep(); // wait a bit before sending new orders
 
 	res.B = b_commands[current_idx];
 	switch (res.B){
@@ -140,6 +144,12 @@ bool execute(theia_services::MotionCommand::Request &req, theia_services::Motion
 	}
 	
 	current_idx++;
+	
+	if(current_idx >= b_parameters.size()){
+		
+		done = true;
+		
+	}
 
 	///////////////////////////////////////////////////
 	//Finished cases. Debug
@@ -185,8 +195,14 @@ bool status(theia_services::brain_blind::Request &req, theia_services::brain_bli
 			b_commands[i]=req.commands[i];
 		}
 	}
-
-	res.done=true;
+	
+	res.done=done;
+	
+	if(done == true){
+		done=false;
+		active=false;
+	}
+	
 	return true;
 }
 
