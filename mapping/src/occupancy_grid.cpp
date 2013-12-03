@@ -817,9 +817,9 @@ int main(int argc, char **argv)
 	while(ros::ok()){
 
 		Occupancy_Grid=place_map(Occupancy_Grid,x_Current_Pose,y_Current_Pose,robot_delta_x,robot_delta_y,0);
-		if(wall==-1){
+		/*if(wall==-1){
 			Correct_Map(robot_delta_x,robot_delta_y);
-		}
+		}*/
 		place_ir();
 		update_robot();
 		Send_Message();

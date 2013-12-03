@@ -16,7 +16,7 @@ double x=NO_VAL;
 double y=NO_VAL;
 double x_i=NO_VAL;
 double y_i=NO_VAL;
-double init_time = 45; //sec
+double init_time = 5; //sec
 double P=0.15; //meter
 char heading='E';
 

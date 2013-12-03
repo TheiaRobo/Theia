@@ -77,7 +77,7 @@ double heur(int coords[2], int goal_coords[2]){
 
 	if(goal_coords[0]!=NO_VAL){
 		t_h = std::abs(coords[0]-goal_coords[0])+std::abs(coords[1]-goal_coords[1]);
-		return 1.05*t_h;
+		return 1.0*t_h;
 	}else{ // no goal, no heuristic
 		return 0;
 	}

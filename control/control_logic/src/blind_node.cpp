@@ -149,7 +149,7 @@ bool execute(theia_services::MotionCommand::Request &req, theia_services::Motion
 	}
 	
 	current_idx++;
-	getchar();
+
 	if(current_idx >= b_parameters.size()){
 		ROS_WARN("Finished the instructions");
 		done = true;
