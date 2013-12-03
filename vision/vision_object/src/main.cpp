@@ -27,7 +27,6 @@ using namespace vision_plane;
 using namespace sensor_msgs;
 
 Config config;
-CameraConfig cameraConfig;
 Context context(config);
 bool candValid;
 vector<Candidate> candVect;
@@ -59,13 +58,7 @@ int publishResults(
 	const vector< pair<Object, ObjectDataResult> > & inResults
 ){
 	int errorCode = 0;
-	
-	if(inResults.empty()) return errorCode;
-	if(validCandVect.empty()) return errorCode;
-	
-	// sort results
-	vector< pair<Object, ObjectDataResult> > workingVect(inResults);
-	sort(workingVect.begin(), workingVect.end(), compareResultPairs);
+
 	if(inResults.empty()) return errorCode;
 
 	/**
@@ -103,27 +96,12 @@ int publishResults(
 	msg.distY = (box[1][0] + box[1][1]) / 2;
 
 	objectPub.publish(msg);
+
 	return errorCode;
 }
 
 int match(){
 	int errorCode = 0;
-	
-	if(!candValid){
-		cout << "No valid object found" << endl;
-		return errorCode;
-	}
-	
-	cout << "Valid object found" << endl;
-
-/*
-	errorCode = candDebug();
-	if(errorCode){
-		cout << "Error in " << __FUNCTION__ << endl;
-		cout << "Could not show candidates" << endl;
-		return errorCode;
-	}
-*/
 
 	size_t numbObjects = objectVect.size();
 	pair<Object, ObjectDataResult> bestResult;
@@ -177,6 +155,7 @@ int train(){
 		cout << " Show results .." << endl;
 		for(size_t j = 0; j < numbData; j++){
 			ObjectData & data = object.objectDataVect[j];
+			data.colorImage.showKeypoints();
 		}
 
 	}
@@ -288,7 +267,6 @@ int main(int argc, char ** argv){
 	);
 	
 	// main
-
 	errorCode = init();
 	if(errorCode) return errorCode;
 

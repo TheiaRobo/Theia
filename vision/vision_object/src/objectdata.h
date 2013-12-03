@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 
-#include "camera.h"
 #include "colorimagedata.h"
 #include "context.h"
 

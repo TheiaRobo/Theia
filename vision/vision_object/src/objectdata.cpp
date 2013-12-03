@@ -5,7 +5,6 @@
 
 using namespace std;
 
-
 ObjectDataResult::ObjectDataResult(){
 	colorImage = ColorImageResult();
 }
