@@ -739,7 +739,6 @@ void update_robot(){
 	odo=marker;
 	
 	odo.type = visualization_msgs::Marker::ARROW;
-	odo.pose.position.z=0.2;
 	odo.id = 1;
 
 	// Publish the marker
