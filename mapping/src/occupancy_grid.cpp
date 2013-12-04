@@ -535,16 +535,16 @@ void Send_Message(){
 /*
 EVERZTHING IN METERZ
 */
-double * convert_object_distance(double Lat, double Long, double dist){
-	ROS_INFO("Lat %.5f", Lat);
-	ROS_INFO("Long %.5f", Long);
-	ROS_INFO("Dist: %.5f", dist);
+double * convert_object_distance(double distX, double distY){
+	//ROS_INFO("Lat %.5f", Lat);
+	//ROS_INFO("Long %.5f", Long);
+	//ROS_INFO("Dist: %.5f", dist);
 	
 	double * ret_val;
-	double x_0=0.0;
-	double y_0=0.0;
-	double z_0=camera_initial_z; //cms already
-	double x_i=0.0, y_i=0.0, z_i=0.35;
+	//double x_0=0.0;
+	//double y_0=0.0;
+	//double z_0=camera_initial_z; //cms already
+	//double x_i=0.0, y_i=0.0, z_i=0.35;
 	
 	// insert code to convert to (dx,dy)	
 	//x_i=(y_i-y_0)*tan(Lat?Lat_0)+x_0;
@@ -558,13 +558,13 @@ double * convert_object_distance(double Lat, double Long, double dist){
 	//z_i=z_0;
 	
 	//Testing coord
-	x_i = dist * sin(Lat_0) + x_0;
-	y_i = 0;
+	//x_i = dist * sin(Lat_0) + x_0;
+	//y_i = 0;
 		
 	ret_val=new double(2);
 	
-	ret_val[0]= x_i;
-	ret_val[1]= y_i;
+	ret_val[0]= distX;
+	ret_val[1]= distY;
 	
 	return ret_val;
 	
@@ -593,7 +593,7 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 	object_list.push_back(new_object);
 	
 
-	distance=convert_object_distance(msg->posLatitude,msg->posLongitude,msg->posDistance);	
+	distance=convert_object_distance(msg->distX,msg->distY);	
 
 	switch(heading){
 		
@@ -662,7 +662,9 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 	object_marker.lifetime = ros::Duration();
 	
 	object_pub.publish(object_marker);
-
+	
+	if(distance!=0)
+		delete distance;
 }
 
 void Get_Ir(core_sensors::ir::ConstPtr ir_msg){

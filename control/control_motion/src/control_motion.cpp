@@ -78,10 +78,13 @@ double forward_distance=20.0;
 double heading_thres=0.005;
 double align_thres=100;//0.003;
 double dist_thres=6.0;
-double cross_thres1=0.5;
-double cross_thres2=0.5;
 double max_angle = 0.723; // atan(max_ir/17);
 double ERROR_VAL = -123456789;
+const int OUTLIERS_MIN = 3;
+
+int cross_outliers = 0;
+double cross_thres1=0.0;
+double cross_thres2=0.0;
 
 double dist_ref=2.0;
 double inf_thres=20.0;
@@ -312,11 +315,18 @@ int wall_in_range(int side, double thres, double ir[8]){
 		break;
 	case 4:
 		if((ir[6] < cross_thres1 || ir[7] < cross_thres2) && ir[0] > inf_thres && ir[1] > inf_thres){
-			ROS_INFO("Crossed!");
-			return 1;
+			cross_outliers++;
+			if(cross_outliers>OUTLIERS_MIN){
+				ROS_INFO("Crossed!");
+				cross_outliers=0;
+				return 1;
+			}else
+				return 0;
 		}else{
+			cross_outliers=0;
 			return 0;
 		}
+		break;
 	default:
 		return 1;
 	}
@@ -483,14 +493,14 @@ double paralel_controller(int wall,double ir_wall[2],double t_ref,double d_ref,d
 	// get angle and distance to wall
 	error_theta=compute_ir_error(wall,ir_wall,t_ref);
 	error_dist=compute_ir_dist(wall,ir_wall,d_ref);
-	
+
 	if(std::abs(error_theta)>max_angle){
-		
+
 		return ERROR_VAL;
-		
+
 	}
-	
-	
+
+
 	//Control the angle to the wall
 	if(std::abs(error_theta) < epsilon_theta || error_dist > 0 ){ //Small epsilon OR wall too close
 
@@ -699,31 +709,31 @@ int forward(ros::Rate loop_rate){
 		if(wall_in_range(3,dist_thres,ir_readings) || wall_in_range(4,cross_thres1,ir_readings)){ //
 			stop();
 			loop_rate.sleep();
-			
+
 			if(wall_in_range(4,cross_thres1,ir_readings)){ // will go back
-			
+
 				std_velocity=-10.0;
 				forward_distance=5.0;
 				curr_dist = 0;
 				i_x=x;
 				i_y=y;
 				while(curr_dist < forward_distance){
-					
+
 					control_pub(std_velocity,u_theta);
-				
+
 					curr_dist=std::sqrt((x-i_x)*(x-i_x)+(y-i_y)*(y-i_y));
 					ros::spinOnce();
 					loop_rate.sleep();
 				}
-			
+
 			}
 			stop();
 			std_velocity=temp_s;
 			k_dist=temp_k;
 			loop_rate.sleep();
-			
-			
-			
+
+
+
 			return 0;
 		}
 
@@ -811,14 +821,14 @@ int forward(ros::Rate loop_rate){
 					//k_dist=0.06; // OH THE SORROW
 					//std_velocity=5.0; // OH SO SORRY
 					u_theta=paralel_controller(wall,ir_wall,theta_ref,2.0,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
-					
+
 					if(u_theta==ERROR_VAL){
-					
+
 						u_theta=0;
-						
+
 					}
-					
-					
+
+
 					k_dist=0;
 				}else{
 					k_dist=0.0;
@@ -827,13 +837,13 @@ int forward(ros::Rate loop_rate){
 			}else{
 				if(!far_away_flag){
 					u_theta=paralel_controller(wall,ir_wall,theta_ref,dist_ref,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
-					
+
 					if(u_theta==ERROR_VAL){
-						
+
 						u_theta=0;
-						
+
 					}
-					
+
 				}else{
 					k_dist=0.0;
 					if(wall!=wall_to_follow && (ir_wall[0]+ir_wall[1])>dist_ref)
@@ -845,7 +855,7 @@ int forward(ros::Rate loop_rate){
 						u_theta=0;
 
 					}
-					
+
 				}
 			}
 		}else
@@ -970,9 +980,9 @@ int forward_wall(ros::Rate loop_rate){
 			stop();
 			last_angle=0;
 			ROS_INFO("Stop! Obstacle ahead!\n");
-			
+
 			if(wall_in_range(4,cross_thres1,ir_readings)){ // will go back
-				
+
 				temp_s=std_velocity;
 				std_velocity=-10.0;
 				forward_distance=5.0;
@@ -980,21 +990,21 @@ int forward_wall(ros::Rate loop_rate){
 				i_x=x;
 				i_y=y;
 				while(curr_dist < forward_distance){
-					
+
 					control_pub(std_velocity,u_theta);
-				
+
 					curr_dist=std::sqrt((x-i_x)*(x-i_x)+(y-i_y)*(y-i_y));
 					//ROS_INFO("MOVED %.2f!",curr_dist);
 					ros::spinOnce();
 					loop_rate.sleep();
 				}
-				
+
 				std_velocity = temp_s;
-			
+
 			}
-			
-			
-			
+
+
+
 			return 0;
 		}
 
@@ -1032,15 +1042,15 @@ int forward_wall(ros::Rate loop_rate){
 		//double * last_E_r, double * I_sum_r, double * last_R_d, double * I_sum_d
 
 		u_theta=paralel_controller(wall_to_follow,ir_wall,theta_ref,dist_ref,&last_E_r,&I_sum_r,&last_R_d,&I_sum_d);
-		
+
 		if(u_theta==ERROR_VAL){
-			
+
 			stop();
 			ROS_INFO("Lost wall!\n"); 
 			return 0;
 
 		}
-		
+
 
 		//Control velocity of the robot
 		if(wall_in_range(3,inf_thres,ir_readings)){
@@ -1095,7 +1105,7 @@ int main(int argc, char ** argv){
 	ask_blind = n.serviceClient<theia_services::MotionCommand>("/blind_node/motion_command");
 
 	vw_pub = n.advertise<core_control_motor::vw>("/control_motion/vw",1);
-	
+
 	odo_sub = n.subscribe("/core_sensors_odometry/odometry",1,odo_proc);
 	ir_sub = n.subscribe("/core_sensors_ir/ir",1,ir_proc);
 	params_sub = n.subscribe("/control_motion/params",1,update_params);

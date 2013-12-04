@@ -85,6 +85,32 @@ double heur(int coords[2], int goal_coords[2]){
 
 }
 
+double g_cost(int coords[2], int prev_coords[2], int prev_from_coords[2]){
+	
+	if(prev_coords[0]-prev_from_coords[0]!=0){ // movement along x
+		
+		if(coords[0]-prev_coords[0]!=0){ // keep the same direction of movement
+			
+			return 1;
+		
+		}else{ // implies rotation
+		
+			return 100;
+		}
+	
+	}else{ // movement along y
+	
+		if(coords[1]-prev_coords[1]!=0){
+			
+			return 1;
+		}else{
+			return 100;
+		}
+	}
+	
+	return 1; // just in case
+}
+
 std::vector<node> retrieve_path(node goal, search_set * closed){
 
 	node current=goal;
@@ -208,7 +234,7 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 
 			if(matrix[coords[0]][coords[1]] != black){
 				t_h=heur(n.coords,goal_coords);
-				t_g = current.t_g + 1;
+				t_g = current.t_g + g_cost(coords,current.coords,current.came_from);
 				t_f = t_g + t_h;
 
 				if(openset.check_if_in_set(coords)){
@@ -240,7 +266,7 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 
 			if(matrix[coords[0]][coords[1]] != black){
 				t_h=heur(n.coords,goal_coords);
-				t_g = current.t_g + 1;
+				t_g = current.t_g + g_cost(coords,current.coords,current.came_from);
 				t_f = t_g + t_h;
 
 				if(openset.check_if_in_set(coords)){
@@ -273,7 +299,7 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 
 			if(matrix[coords[0]][coords[1]] != black){
 				t_h=heur(n.coords,goal_coords);
-				t_g = current.t_g + 1;
+				t_g = current.t_g + g_cost(coords,current.coords,current.came_from);
 				t_f = t_g + t_h;
 
 				if(openset.check_if_in_set(coords)){
@@ -306,7 +332,7 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 
 			if(matrix[coords[0]][coords[1]] != black){
 				t_h=heur(n.coords,goal_coords);
-				t_g = current.t_g + 1;
+				t_g = current.t_g + g_cost(coords,current.coords,current.came_from);
 				t_f = t_g + t_h;
 
 				if(openset.check_if_in_set(coords)){

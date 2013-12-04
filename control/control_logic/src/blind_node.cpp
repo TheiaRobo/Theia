@@ -19,8 +19,8 @@ double front_min = 6.0;
 double side_max = 20.0;
 double side_min = 4.0;
 double side_ref = 4.0;
-double cross_thres1=10;
-double cross_thres2=10;
+double cross_thres1=0;
+double cross_thres2=0;
 
 int last_turn = 0;	//0 - null, 1 - left, 2 - right
 int last_direction = 0; //0 - null, 1 - left, 2 - right, 3 - forward
@@ -198,6 +198,12 @@ bool status(theia_services::brain_blind::Request &req, theia_services::brain_bli
 		for (int i=0; i< req.size; i++){
 			b_parameters[i]=req.vals[i];
 			b_commands[i]=req.commands[i];
+		}
+		
+		if(req.size<=1){
+			ROS_WARN("There is no path");
+			done=true;
+			active=false;
 		}
 	}
 	
