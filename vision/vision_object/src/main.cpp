@@ -28,8 +28,8 @@ using namespace sensor_msgs;
 
 Config config;
 Context context(config);
-bool candValid;
 vector<Candidate> candVect;
+vector<Candidate> validCandVect;
 vector<Object> objectVect;
 ObjectData sampleData;
 bool candVectReady;
@@ -67,6 +67,7 @@ int publishResults(
 	int errorCode = 0;
 
 	if(inResults.empty()) return errorCode;
+	if(validCandVect.empty()) return errorCode;
 
 	// sort results
 	vector< pair<Object, ObjectDataResult> > workingVect(inResults);
@@ -75,15 +76,18 @@ int publishResults(
 	const Object & object = inResults[0].first;
 	const ObjectDataResult & result = inResults[0].second;
 
+	// TODO
+	// improve
+	const Candidate & cand = validCandVect[0];
+
 	cout << "Best Object: " << object.name;
 	
 	vision_object::Object msg;
 	msg.objectName = object.name;
 	msg.objectAngle = result.angle;
-/*
-	msg.distX = (box[0][0] + box[0][1]) / 2;
-	msg.distY = (box[1][0] + box[1][1]) / 2;
-*/
+	msg.distX = (cand.robXMin + cand.robXMax) / 2;
+	msg.distY = (cand.robYMin + cand.robYMax) / 2;
+
 	objectPub.publish(msg);
 
 	return errorCode;
@@ -98,23 +102,18 @@ int match(){
 	size_t numbCands = candVect.size();
 	if(!numbCands) return errorCode;
 
-	vector<Candidate> validCands;
-	errorCode = candFilterValid(candVect, validCands);
+	validCandVect.clear();
+	errorCode = candFilterValid(candVect, validCandVect);
 	if(errorCode){
 		cout << "Error in " << __FUNCTION__ << endl;
 		cout << "Could not filter valid candidates" << endl;
 		return errorCode;
 	}
 
-	size_t numbValidCands = validCands.size();
+	size_t numbValidCands = validCandVect.size();
 	if(!numbValidCands){
 		cout << "No valid object candidates" << endl;
 		return errorCode;
-	}
-
-	cout << "Valid candidates" << endl;
-	for(size_t i = 0; i < numbValidCands; i++){
-		candPrint(validCands[i]);
 	}
 
 	/**
@@ -253,7 +252,6 @@ void colorCallback(const ImageConstPtr & colorMsgPtr){
 int main(int argc, char ** argv){
 	int errorCode = 0;
 
-	candValid = false;
 	candVectReady = false;
 	colorImageReady = false;
 
