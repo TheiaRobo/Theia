@@ -25,10 +25,10 @@ int candFilterValid(
 	return errorCode;
 }
 
-int candFromBox(
-	const Box & inBox,
+int candRobCoordsFromBox(
+	const Box  & inBox,
 	const CameraContext & inContext,
-	Candidate & outCand
+	Candidate & cand
 ){
 	int errorCode = 0;
 
@@ -43,26 +43,36 @@ int candFromBox(
 	double lengthBoxZ = (inBox.maxX - inBox.minX);
 	double centerBoxZ = - (inBox.minX + inBox.maxX) / 2;
 
-	Candidate cand;
-
 	// world coordinates
-	double robXCenter = offsetX + centerBoxX * cos(offsetAngle) + centerBoxZ * sin(offsetAngle);
+	double robXCenter = offsetX;
+	robXCenter += centerBoxX * cos(offsetAngle);
+	robXCenter += centerBoxZ * sin(offsetAngle);
 	cand.robXMin = robXCenter - lengthBoxX / 2;
 	cand.robXMax = robXCenter + lengthBoxX / 2;
 
 	cand.robYMin = offsetY - inBox.maxX;
 	cand.robYMax = offsetY - inBox.minX;
 
-	double robZCenter = offsetZ - centerBoxX * sin(offsetAngle) + centerBoxZ * cos(offsetAngle);
+	double robZCenter = offsetZ;
+	robZCenter += - centerBoxX * sin(offsetAngle);
+	robZCenter += centerBoxZ * cos(offsetAngle);
 	cand.robZMin = robZCenter - lengthBoxZ / 2;
 	cand.robZMax = robZCenter + lengthBoxZ / 2;
 
-	// camera polar coordinates
-	cand.camLatMin = 0;
-	cand.camLatMax = 0;
-	cand.camLongMin = 0;
-	cand.camLongMax = 0;
+	return errorCode;
+}
 
+int candFromBox(
+	const Box & inBox,
+	const CameraContext & inContext,
+	Candidate & outCand
+){
+	int errorCode = 0;
+
+	Candidate cand;
+	errorCode = candRobCoordsFromBox(inBox, inContext, cand);	
+	// errorCode = candCamCoordsFromBox();
+	
 	outCand = cand;
 	
 	return errorCode;
