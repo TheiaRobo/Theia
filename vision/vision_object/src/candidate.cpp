@@ -32,13 +32,10 @@ int candFromBox(
 ){
 	int errorCode = 0;
 
-	double camPosX = -0.10;
-	double camPosY = +0.00;
-	double camPosZ = +0.35;
-
-	// TODO
-	// Take value from context
-	double camTheta = -0.1;
+	double offsetX = -inContext.posX;
+	double offsetY = -inContext.posY;
+	double offsetZ = -inContext.posZ;
+	double offsetAngle = inContext.angle * M_PI / 180;
 	
 	double lengthBoxX = (inBox.maxZ - inBox.minZ);
 	double centerBoxX = (inBox.minZ + inBox.maxZ) / 2;
@@ -49,14 +46,14 @@ int candFromBox(
 	Candidate cand;
 
 	// world coordinates
-	double robXCenter = camPosX + centerBoxX * cos(camTheta) + centerBoxZ * sin(camTheta);
+	double robXCenter = offsetX + centerBoxX * cos(offsetAngle) + centerBoxZ * sin(offsetAngle);
 	cand.robXMin = robXCenter - lengthBoxX / 2;
 	cand.robXMax = robXCenter + lengthBoxX / 2;
 
-	cand.robYMin = camPosY - inBox.maxX;
-	cand.robYMax = camPosY - inBox.minX;
+	cand.robYMin = offsetY - inBox.maxX;
+	cand.robYMax = offsetY - inBox.minX;
 
-	double robZCenter = camPosZ - centerBoxX * sin(camTheta) + centerBoxZ * cos(camTheta);
+	double robZCenter = offsetZ - centerBoxX * sin(offsetAngle) + centerBoxZ * cos(offsetAngle);
 	cand.robZMin = robZCenter - lengthBoxZ / 2;
 	cand.robZMax = robZCenter + lengthBoxZ / 2;
 
@@ -72,13 +69,9 @@ int candFromBox(
 }
 
 bool candIsValid(const Candidate & inCand){	
-	// left end
-	if(inCand.robXMin < -0.15) return false;
-	// right end
-	if(inCand.robXMax > +0.15) return false;
-	// bottom end
-	if(inCand.robYMin < -0.05) return false;
-	// top end
+	// right
+	if(inCand.robYMin < -0.15) return false;
+	// left
 	if(inCand.robYMax > +0.15) return false;
 	
 	return true;

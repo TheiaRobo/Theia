@@ -112,6 +112,11 @@ int match(){
 		return errorCode;
 	}
 
+	cout << "Valid candidates" << endl;
+	for(size_t i = 0; i < numbValidCands; i++){
+		candPrint(validCands[i]);
+	}
+
 	/**
 	* CLEAN UP NEEDED
 	*/
@@ -199,7 +204,6 @@ void boxCallback(const BoxesConstPtr & boxesMsgPtr){
 			return;	
 		}
 
-		candPrint(cand);
 		candVect.push_back(cand);
 	}
 
