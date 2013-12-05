@@ -116,18 +116,21 @@ int match(){
 		return errorCode;
 	}
 
-	/**
-	* CLEAN UP NEEDED
-	*/
 	pair<Object, ObjectDataResult> bestResult;
 	vector< pair<Object, ObjectDataResult> > resultVect;
 
 	for(size_t i = 0; i < numbObjects; i++){
-		ObjectDataResult result;
-
+		// Better:
+		// const Object & object = objectVect[i];
 		Object & object = objectVect[i];
+
+		ObjectDataResult result;
 		errorCode = object.match(sampleData, context, result);
-		if(errorCode) return errorCode;
+		if(errorCode){
+			cout << "Error in " << __FUNCTION__ << endl;
+			cout << "Object matching failed" << endl;
+			return errorCode;
+		}
 
 		cout << "Object: " << object.name << endl;
 		cout << "Score: " << result.colorImage.meanSquareError << endl;
