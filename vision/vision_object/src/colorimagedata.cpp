@@ -139,12 +139,11 @@ int ColorImageData::match(
 	errorCode = matchKeypoints(inSample, inContext, outResult);
 	if(errorCode) return errorCode;
 
+/*
 	errorCode = findHomography(inSample, inContext, outResult);
 	if(errorCode) return errorCode;
-
-	showMatches(inSample, outResult);
-	showHomography(inSample, outResult);
-
+*/
+	
 	return errorCode;
 }
 

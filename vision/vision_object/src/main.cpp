@@ -106,6 +106,12 @@ int match(){
 		return errorCode;
 	}
 
+	size_t numbValidCands = validCands.size();
+	if(!numbValidCands){
+		cout << "No valid object candidates" << endl;
+		return errorCode;
+	}
+
 	/**
 	* CLEAN UP NEEDED
 	*/
@@ -170,15 +176,6 @@ int tryToMatch(){
 	candVectReady = false;
 	colorImageReady = false;
 
-	return errorCode;
-}
-
-int candDebug(){
-	int errorCode = 0;
-
-	if(!candVectReady) return errorCode;
-	if(!colorImageReady) return errorCode;
-	
 	return errorCode;
 }
 
