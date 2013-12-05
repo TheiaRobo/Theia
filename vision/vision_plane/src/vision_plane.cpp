@@ -1,32 +1,32 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
-#include <pcl/common/centroid.h>
-#include <pcl/ModelCoefficients.h>
-#include <pcl/filters/extract_indices.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/segmentation/extract_clusters.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/ros/conversions.h>
+#include <pcl16/common/centroid.h>
+#include <pcl16/ModelCoefficients.h>
+#include <pcl16/filters/extract_indices.h>
+#include <pcl16/filters/voxel_grid.h>
+#include <pcl16/sample_consensus/method_types.h>
+#include <pcl16/sample_consensus/model_types.h>
+#include <pcl16/segmentation/extract_clusters.h>
+#include <pcl16/segmentation/sac_segmentation.h>
+#include <pcl16/ros/conversions.h>
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <vision/cloud.h>
-#include <vision_plane/Candidate.h>
-#include <vision_plane/Candidates.h>
+#include <vision_plane/Box.h>
+#include <vision_plane/Boxes.h>
 
 #include "vision_plane.h"
 
 #define NODE_NAME "vision_plane"
 #define TOPIC_IN "/camera/depth_registered/points"
-#define TOPIC_OUT_CAND "/vision/plane/cand"
+#define TOPIC_OUT_BOX "/vision/plane/box"
 #define TOPIC_DEBUG_CROPPED_OUT "/vision/plane/debug/cropped"
 #define TOPIC_DEBUG_NON_PLANE_OUT "/vision/plane/debug/nonPlane"
 #define TOPIC_DEBUG_PLANE_OUT "/vision/plane/debug/plane"
 
-using namespace pcl;
+using namespace pcl16;
 using namespace vision_plane;
 
 /**
@@ -34,29 +34,33 @@ using namespace vision_plane;
 */
 Config config;
 ros::Subscriber cloudSub;
-ros::Publisher candPub;
+ros::Publisher boxPub;
 ros::Publisher debugCroppedPub;
 ros::Publisher debugNonPlanePub;
 ros::Publisher debugPlanePub;
 
-int clusterToCandidate(
+int clusterToBox(
 	TheiaCloudPtr inCloud,
 	PointIndices & inIndices,
-	Candidate & outCand
+	Box & outBox
 ){
 	int errorCode = 0;
 
+	// find box
 	Eigen::Vector4f minPoint;
 	Eigen::Vector4f maxPoint;
 	getMinMax3D(*inCloud, inIndices, minPoint, maxPoint);
 
-	Candidate cand;
-	cand.minLatitude = -1 * asin(minPoint[1] / minPoint[2]);
-	cand.maxLatitude = -1 * asin(maxPoint[1] / minPoint[2]);
-	cand.minLongitude = -1 * asin(minPoint[0] / minPoint[2]);
-	cand.maxLongitude = -1 * asin(maxPoint[0] / minPoint[2]);
+	// build message
+	Box box;
+	box.minX = minPoint[0];
+	box.maxX = maxPoint[0];
+	box.minY = minPoint[1];
+	box.maxY = maxPoint[1];
+	box.minZ = minPoint[2];
+	box.maxZ = maxPoint[2];
 
-	outCand = cand;
+	outBox = box;
 
 	return errorCode;
 }
@@ -70,7 +74,7 @@ void scaleCloud(
 	double inLeafSize,
 	TheiaCloudPtr out
 ){
-	pcl::VoxelGrid<TheiaPoint> grid;
+	VoxelGrid<TheiaPoint> grid;
 	grid.setLeafSize(inLeafSize, inLeafSize, inLeafSize);
 
 	grid.setInputCloud(in);
@@ -101,8 +105,8 @@ void filterPlanes(
 
 
 	TheiaCloudPtr allPlanesCloudPtr(new TheiaCloud());
-	PointIndices::Ptr inliers(new pcl::PointIndices());
-	ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
+	PointIndices::Ptr inliers(new PointIndices());
+	ModelCoefficients::Ptr coefficients(new ModelCoefficients());
 
 	// prepare plane segmentation
 	SACSegmentation<TheiaPoint> seg;
@@ -154,9 +158,9 @@ void filterPlanes(
 	*outObjects = TheiaCloud(*workingCloudPtr);
 }
 
-int findObjects(
+int findBoxes(
 	TheiaCloudPtr inCloud,
-	std::vector<Candidate> & outCandVect
+	std::vector<Box> & outBoxVect
 ){
 	int errorCode = 0;
 
@@ -169,7 +173,7 @@ int findObjects(
 
 	EuclideanClusterExtraction<TheiaPoint> extractor;
 	extractor.setClusterTolerance(config.objectSize);
-	extractor.setMinClusterSize(0.2 * numbPoints);
+	extractor.setMinClusterSize(config.minClusterSize);
 	extractor.setInputCloud(inCloud);
 
 	std::vector<PointIndices> clusterVect;
@@ -179,11 +183,11 @@ int findObjects(
 	for(size_t i = 0; i < numbClusters; i++){
 		PointIndices & cluster = clusterVect[i];
 		
-		Candidate cand;
-		errorCode = clusterToCandidate(inCloud, cluster, cand);
+		Box box;
+		errorCode = clusterToBox(inCloud, cluster, box);
 		if(errorCode) return errorCode;
 	
-		outCandVect.push_back(cand);
+		outBoxVect.push_back(box);
 	}
 
 	return errorCode;
@@ -191,6 +195,7 @@ int findObjects(
 
 void initConfig(){
 	ros::param::getCached("~config/leafSize", config.leafSize);
+	ros::param::getCached("~config/minClusterSize", config.minClusterSize);
 	ros::param::getCached("~config/minPercentage", config.minPercentage);
 	ros::param::getCached("~config/objectSize", config.objectSize);
 	ros::param::getCached("~config/numbIterations", config.numbIterations);
@@ -198,17 +203,17 @@ void initConfig(){
 	ros::param::getCached("~config/planeOptimize", config.planeOptimize);
 }
 
-void publishCandidates(std::vector<Candidate> & inCandVect){
-	Candidates candVectMsg;
-	candVectMsg.candidates = inCandVect;
-	candPub.publish(candVectMsg);
+void publishBoxes(std::vector<Box> & inBoxVect){
+	Boxes boxesMsg;
+	boxesMsg.boxes = inBoxVect;
+	boxPub.publish(boxesMsg);
 }
 
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
 	initConfig();
 
 	TheiaCloudPtr cloudPtr(new TheiaCloud());
-	pcl::fromROSMsg(*rosMsgPtr, *cloudPtr);
+	fromROSMsg(*rosMsgPtr, *cloudPtr);
 
 	TheiaCloudPtr scaledCloudPtr(new TheiaCloud());
 	scaleCloud(cloudPtr, config.leafSize, scaledCloudPtr);
@@ -218,9 +223,9 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
 	TheiaCloudPtr objectCloudPtr(new TheiaCloud());
 	filterPlanes(scaledCloudPtr, planeCloudPtr, objectCloudPtr);
 
-	std::vector<Candidate> candVect;
-	findObjects(objectCloudPtr, candVect);
-	publishCandidates(candVect);
+	std::vector<Box> boxVect;
+	findBoxes(objectCloudPtr, boxVect);
+	publishBoxes(boxVect);
 
 	// debug
 	visionCloudDebug(planeCloudPtr, debugPlanePub);
@@ -235,7 +240,7 @@ int main (int argc, char ** argv){
 	ros::NodeHandle node;
 
 	cloudSub = node.subscribe(TOPIC_IN, 1, cloudCallback);
-	candPub = node.advertise<Candidates>(TOPIC_OUT_CAND, 1);
+	boxPub = node.advertise<Boxes>(TOPIC_OUT_BOX, 1);
 	debugCroppedPub = node.advertise<sensor_msgs::PointCloud2>(
 		TOPIC_DEBUG_CROPPED_OUT, 1
 	);

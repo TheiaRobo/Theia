@@ -5,11 +5,11 @@
 #include <ros/ros.h>
 
 // PCL includes
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
+#include <pcl16/point_cloud.h>
+#include <pcl16/point_types.h>
 
-typedef pcl::PointXYZ TheiaPoint;
-typedef pcl::PointCloud<TheiaPoint> TheiaCloud;
+typedef pcl16::PointXYZ TheiaPoint;
+typedef pcl16::PointCloud<TheiaPoint> TheiaCloud;
 typedef TheiaCloud::Ptr TheiaCloudPtr;
 
 /**

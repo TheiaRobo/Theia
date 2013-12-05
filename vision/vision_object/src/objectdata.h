@@ -5,29 +5,12 @@
 #include <vector>
 
 #include "colorimagedata.h"
-#include "depthimagedata.h"
-
-class Config {
-	public:
-		std::string path;
-		ColorImageConfig colorImage;
-		DepthImageConfig depthImage;
-};
-
-class Context {
-	public:
-		std::string path;
-		ColorImageContext colorImage;
-		DepthImageContext depthImage;
-
-		Context(const Config & config);
-};
+#include "context.h"
 
 class ObjectDataResult {
 	public:
 		int angle;
 		ColorImageResult colorImage;
-		DepthImageResult depthImage;
 
 		ObjectDataResult();
 		bool isBetterThan(const ObjectDataResult & result) const;
@@ -44,7 +27,6 @@ class ObjectData {
 		int angle;
 		std::string path;
 		ColorImageData colorImage;
-		DepthImageData depthImage;
 
 		int match(
 			const ObjectData & inSample,

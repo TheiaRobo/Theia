@@ -5,14 +5,8 @@
 
 using namespace std;
 
-Context::Context(const Config & config)
-: colorImage(config.colorImage), depthImage(config.depthImage) {
-	path = config.path;
-}
-
 ObjectDataResult::ObjectDataResult(){
 	colorImage = ColorImageResult();
-	// depthImage = DepthImageResult();
 }
 
 bool ObjectDataResult::isBetterThan(const ObjectDataResult & result) const {
@@ -58,18 +52,12 @@ int ObjectData::find(
 		objectData.path = inPath + VISION_DIR_SEP + dirName;
 
 		string colorImagePath = objectData.path + VISION_DIR_SEP + "color.png";
-		string depthImagePath = objectData.path + VISION_DIR_SEP + "depth.png";
 
-		if(
-			!visionFileExists(colorImagePath)
-			|| !visionFileExists(depthImagePath)
-		){
+		if(!visionFileExists(colorImagePath)){
 			continue;
 		}
 
 		objectData.colorImage.path = colorImagePath;
-		objectData.depthImage.path = depthImagePath;
-
 		outObjectDataVect.push_back(objectData);
 	}
 
@@ -81,10 +69,7 @@ int ObjectData::train(const Context & context){
 
 	errorCode = colorImage.train(context.colorImage);
 	if(errorCode) return errorCode;
-/*
-	errorCode = depthImage.train(context.depthImage);
-	if(errorCode) return errorCode;
-*/	
+
 	return errorCode;
 }
 
@@ -99,13 +84,6 @@ int ObjectData::match(
 		inSample.colorImage,
 		inContext.colorImage,
 		outResult.colorImage
-	);
-	if(errorCode) return errorCode;
-
-	errorCode = depthImage.match(
-		inSample.depthImage,
-		inContext.depthImage,
-		outResult.depthImage
 	);
 	if(errorCode) return errorCode;
 

@@ -11,8 +11,8 @@
   <depend package="vision_common"/>
   <depend package="roscpp"/>
   <depend package="sensor_msgs"/>
-  <depend package="pcl"/>
-  <depend package="pcl_ros"/>
+  <depend package="pcl16"/>
+  <depend package="pcl16_ros"/>
 
 </package>
 

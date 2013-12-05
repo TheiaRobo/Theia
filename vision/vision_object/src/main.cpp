@@ -1,81 +1,64 @@
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <utility>
 #include <vector>
 #include <cv_bridge/cv_bridge.h>
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
-#include <std_msgs/Empty.h>
 #include <vision_object/Object.h>
-#include <vision_plane/Candidate.h>
-#include <vision_plane/Candidates.h>
+#include <vision_plane/Box.h>
+#include <vision_plane/Boxes.h>
 
+#include "candidate.h"
+#include "config.h"
+#include "context.h"
 #include "object.h"
 
 #define NODE_NAME "vision_object"
-#define TOPIC_IN_CAND "/vision/plane/cand"
+#define TOPIC_IN_BOX "/vision/plane/box"
 #define TOPIC_IN_COLOR "/camera/rgb/image_rect"
-#define TOPIC_IN_DEPTH "/camera/depth/image_rect"
 #define TOPIC_OUT_OBJECT "/vision/object"
 
 using namespace std;
-using namespace message_filters;
 using namespace vision_plane;
 using namespace sensor_msgs;
 
 Config config;
 Context context(config);
 vector<Candidate> candVect;
+vector<Candidate> validCandVect;
 vector<Object> objectVect;
 ObjectData sampleData;
 bool candVectReady;
 bool colorImageReady;
-bool depthImageReady;
-ros::Subscriber candSub;
+ros::Subscriber boxSub;
 ros::Subscriber colorImageSub;
-ros::Subscriber depthImageSub;
 ros::Publisher objectPub;
 
 int init(){
 	int errorCode = 0;
 
 	config = Config();
-	ros::param::getCached(
-		"~config/path",
-		config.path
-	);
-	ros::param::getCached(
-		"~config/colorImage/minHessian",
-		config.colorImage.minHessian
-	);
-	ros::param::getCached(
-		"~config/colorImage/maxMeanSquareError",
-		config.colorImage.maxMeanSquareError
-	);
-	ros::param::getCached(
-		"~config/colorImage/numbMatchesHomography",
-		config.colorImage.numbMatchesHomography
-	);
-	ros::param::getCached(
-		"~config/depthImage/blurring",
-		config.depthImage.blurring
-	);
-	ros::param::getCached(
-		"~config/depthImage/cannyLevelOne",
-		config.depthImage.cannyLevelOne
-	);
-	ros::param::getCached(
-		"~config/depthImage/cannyLevelTwo",
-		config.depthImage.cannyLevelTwo
-	);
+	errorCode = configBuild(config);
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not load configuration" << endl;
+		return errorCode;
+	}
 
 	context = Context(config);
 
 	return errorCode;
+}
+
+bool compareResultPairs(
+	const pair<Object, ObjectDataResult> & inOne,
+	const pair<Object, ObjectDataResult> & inTwo
+){
+	return inOne.second.isBetterThan(inTwo.second);
 }
 
 int publishResults(
@@ -83,18 +66,30 @@ int publishResults(
 ){
 	int errorCode = 0;
 
-	size_t numbResults = inResults.size();
-	for(size_t i = 0; i < numbResults; i++){
-		const Object & object = inResults[i].first;
-		const ObjectDataResult & result = inResults[i].second;
+	if(inResults.empty()) return errorCode;
+	if(validCandVect.empty()) return errorCode;
 
-		vision_object::Object msg;
-		msg.objectName = object.name;
-		msg.objectAngle = result.angle;
+	// sort results
+	vector< pair<Object, ObjectDataResult> > workingVect(inResults);
+	sort(workingVect.begin(), workingVect.end(), compareResultPairs);
 
-		objectPub.publish(msg);
-	}
+	const Object & object = inResults[0].first;
+	const ObjectDataResult & result = inResults[0].second;
+
+	// TODO
+	// improve
+	const Candidate & cand = validCandVect[0];
+
+	cout << "Best Object: " << object.name;
 	
+	vision_object::Object msg;
+	msg.objectName = object.name;
+	msg.objectAngle = result.angle;
+	msg.distX = (cand.robXMin + cand.robXMax) / 2;
+	msg.distY = (cand.robYMin + cand.robYMax) / 2;
+
+	objectPub.publish(msg);
+
 	return errorCode;
 }
 
@@ -102,14 +97,40 @@ int match(){
 	int errorCode = 0;
 
 	size_t numbObjects = objectVect.size();
+	if(!numbObjects) return errorCode;
+
+	size_t numbCands = candVect.size();
+	if(!numbCands) return errorCode;
+
+	validCandVect.clear();
+	errorCode = candFilterValid(candVect, validCandVect);
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not filter valid candidates" << endl;
+		return errorCode;
+	}
+
+	size_t numbValidCands = validCandVect.size();
+	if(!numbValidCands){
+		cout << "No valid object candidates" << endl;
+		return errorCode;
+	}
+
+	pair<Object, ObjectDataResult> bestResult;
 	vector< pair<Object, ObjectDataResult> > resultVect;
 
 	for(size_t i = 0; i < numbObjects; i++){
-		ObjectDataResult result;
-
+		// Better:
+		// const Object & object = objectVect[i];
 		Object & object = objectVect[i];
+
+		ObjectDataResult result;
 		errorCode = object.match(sampleData, context, result);
-		if(errorCode) return errorCode;
+		if(errorCode){
+			cout << "Error in " << __FUNCTION__ << endl;
+			cout << "Object matching failed" << endl;
+			return errorCode;
+		}
 
 		cout << "Object: " << object.name << endl;
 		cout << "Score: " << result.colorImage.meanSquareError << endl;
@@ -138,26 +159,13 @@ int train(){
 	size_t numbObjects = objectVect.size();
 	for(size_t i = 0; i < numbObjects; i++){
 		Object & object = objectVect[i];
-		size_t numbData = object.objectDataVect.size();
-
-		cout << "Object " << i << endl;
-		cout << " Name: " << object.name << endl;
-		cout << " # Data: " << numbData << endl;
-		
-		cout << " Train .." << endl;
 
 		errorCode = object.train(context);
-		if(errorCode) return errorCode;
-
-		cout << " Show results .." << endl;
-		for(size_t j = 0; j < numbData; j++){
-			ObjectData & data = object.objectDataVect[j];
-			data.colorImage.showKeypoints();
-/*
-			data.depthImage.show();
-*/
+		if(errorCode){
+			cout << "Error in " << __FUNCTION__ << endl;
+			cout << "Could not train " << object.name << endl;
+			return errorCode;
 		}
-
 	}
 
 	return errorCode;
@@ -168,82 +176,41 @@ int tryToMatch(){
 
 	if(!candVectReady) return 0;
 	if(!colorImageReady) return 0;
-	if(!depthImageReady) return 0;
 
 	errorCode = match();
 	if(errorCode) return errorCode;
 
 	candVectReady = false;
 	colorImageReady = false;
-	colorImageReady = false;
 
 	return errorCode;
 }
 
-int showCandidates(){
-	/**
-	* TODO
-	* Put this in parameter server
-	*/
-	static double camFOVLat = 45 * M_PI / 180;
-	static double camFOVLong = 57.5 * M_PI / 180;
-
+void boxCallback(const BoxesConstPtr & boxesMsgPtr){
 	int errorCode = 0;
 
-	if(!candVectReady) return errorCode;
-	if(!colorImageReady) return errorCode;
+	const vector<Box> & boxVect = boxesMsgPtr->boxes;
 
-	cv::Mat image = sampleData.colorImage.image.clone();
-	
-	size_t numbCands = candVect.size();
-	if(!numbCands) return errorCode;
+	size_t numbBoxes = boxVect.size();
+	if(!numbBoxes) return;
 
-	double pxPerLat = image.rows / camFOVLat;
-	double pxPerLong = image.cols / camFOVLong;
+	candVect.clear();
+	for(size_t i = 0; i < numbBoxes; i++){
+		const Box & box = boxVect[i];
 
-	for(size_t i = 0; i < numbCands; i++){
-		Candidate & cand = candVect[i];
-
-		double minRow = image.rows / 2 - cand.minLatitude * pxPerLat;
-		double maxRow = image.rows / 2 - cand.maxLatitude * pxPerLat;
-		double minCol = image.cols / 2 - cand.minLongitude * pxPerLong;
-		double maxCol = image.cols / 2 - cand.maxLongitude * pxPerLong;
-
-		cv::Point pointArr[4];
-		pointArr[0] = cv::Point(minCol, minRow);
-		pointArr[1] = cv::Point(minCol, maxRow);
-		pointArr[2] = cv::Point(maxCol, maxRow);
-		pointArr[3] = cv::Point(maxCol, minRow);
-
-		for(size_t j = 0; j < 4; j++){
-			cv::line(
-				image,
-				pointArr[j],
-				pointArr[(j + 1) % 4],
-				cv::Scalar( 0, 255, 255 )
-			);
+		Candidate cand;
+		errorCode = candFromBox(box, context.camera, cand);
+		if(errorCode){
+			cout << "Error in " << __FUNCTION__ << endl;
+			cout << "Conversion from box to candidate failed" << endl;
+			return;	
 		}
+
+		candVect.push_back(cand);
 	}
 
-	cv::imshow("Candidates", image);
-	cv::waitKey(0);
-
-	return errorCode;
-}
-
-void candCallback(const CandidatesConstPtr & candsMsgPtr){
-	int errorCode = 0;
-
-	// copy candidates
-	candVect = vector<Candidate>(candsMsgPtr->candidates);
-	candVectReady = true;
-
-	errorCode = showCandidates();
-	if(errorCode){
-		cout << "Error in " << __FUNCTION__ << endl;
-		cout << "Could not show candidates" << endl;
-		return;
-	}
+	size_t numbCands = candVect.size();
+	candVectReady = (numbCands > 0);
 
 	errorCode = tryToMatch();
 	if(errorCode){
@@ -285,71 +252,30 @@ void colorCallback(const ImageConstPtr & colorMsgPtr){
 	}
 }
 
-void depthCallback(const ImageConstPtr & depthMsgPtr){
-	int errorCode = 0;
-
-	cv_bridge::CvImagePtr imagePtr;
-	imagePtr = cv_bridge::toCvCopy(depthMsgPtr);
-
-	cv::Mat & floatImage = imagePtr->image; 
-	if(!floatImage.data){
-		cout << "Error in " << __FUNCTION__ << endl;
-		cout << "Could not convert image to OpenCV data" << endl;
-		return;
-	}
-
-	// convert to grayscale
-	cv::Mat image;
-	imagePtr->image.convertTo(image, CV_8UC1, 255);
-
-	DepthImageData & imageData = sampleData.depthImage;
-	DepthImageContext & imageContext = context.depthImage;
-	errorCode = imageData.train(image, imageContext);
-	if(errorCode){
-		cout << "Error in " << __FUNCTION__ << endl;
-		cout << "Could not train depth image" << endl;
-		return;
-	}
-
-	depthImageReady = true;
-
-	errorCode = tryToMatch();
-	if(errorCode){
-		cout << "Error in " << __FUNCTION__ << endl;
-		cout << "Matching failed" << endl;
-		return;
-	}
-}
-
 int main(int argc, char ** argv){
 	int errorCode = 0;
+
+	candVectReady = false;
+	colorImageReady = false;
 
 	ros::init(argc, argv, NODE_NAME);
 	ros::NodeHandle node;
 
-	candSub = node.subscribe(TOPIC_IN_CAND, 5, candCallback);
+	// subscribers
+	boxSub = node.subscribe(TOPIC_IN_BOX, 5, boxCallback);
 	colorImageSub = node.subscribe(TOPIC_IN_COLOR, 1, colorCallback);
-/*
-	depthImageSub = node.subscribe(TOPIC_IN_DEPTH, 1, depthCallback);
-*/
+
+	// publisher
 	objectPub = node.advertise<vision_object::Object>(
 		TOPIC_OUT_OBJECT, 1
 	);
-
-	candVectReady = false;
-	colorImageReady = false;
-	depthImageReady = false;
-
+	
+	// main
 	errorCode = init();
 	if(errorCode) return errorCode;
 
 	errorCode = train();
 	if(errorCode) return errorCode;
-
-/*
-	errorCode = match();
-	if(errorCode) return;
-*/
 
 	ros::spin();
 
