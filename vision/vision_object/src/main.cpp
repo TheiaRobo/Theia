@@ -42,6 +42,13 @@ int init(){
 	int errorCode = 0;
 
 	config = Config();
+	errorCode = configBuild(config);
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not load configuration" << endl;
+		return errorCode;
+	}
+
 	context = Context(config);
 
 	return errorCode;
