@@ -9,8 +9,8 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <vision_object/Object.h>
-#include <vision_plane/Candidate.h>
-#include <vision_plane/Candidates.h>
+#include <vision_plane/Box.h>
+#include <vision_plane/Boxes.h>
 
 #include "candidate.h"
 #include "config.h"
@@ -18,7 +18,7 @@
 #include "object.h"
 
 #define NODE_NAME "vision_object"
-#define TOPIC_IN_CAND "/vision/plane/cand"
+#define TOPIC_IN_BOX "/vision/plane/box"
 #define TOPIC_IN_COLOR "/camera/rgb/image_rect"
 #define TOPIC_OUT_OBJECT "/vision/object"
 
@@ -28,13 +28,13 @@ using namespace sensor_msgs;
 
 Config config;
 Context context(config);
-bool candValid;
 vector<Candidate> candVect;
+vector<Candidate> validCandVect;
 vector<Object> objectVect;
 ObjectData sampleData;
 bool candVectReady;
 bool colorImageReady;
-ros::Subscriber candSub;
+ros::Subscriber boxSub;
 ros::Subscriber colorImageSub;
 ros::Publisher objectPub;
 
@@ -42,6 +42,13 @@ int init(){
 	int errorCode = 0;
 
 	config = Config();
+	errorCode = configBuild(config);
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not load configuration" << endl;
+		return errorCode;
+	}
+
 	context = Context(config);
 
 	return errorCode;
@@ -60,25 +67,7 @@ int publishResults(
 	int errorCode = 0;
 
 	if(inResults.empty()) return errorCode;
-
-	/**
-	* TODO
-	* Clean up
-	*/
-	size_t numbCands = candVect.size();
-	if(!numbCands) return errorCode;
-
-	Candidate * candPtr = NULL;
-	for(size_t i = 0; i < numbCands; i++){
-		if(candCheckIfValid(candVect[i], context.camera)){
-			candPtr = &candVect[i];
-		}
-	}
-
-	if(!candPtr) return errorCode;
-
-	double box[3][2];
-	candToBox(*candPtr, context.camera, box);
+	if(validCandVect.empty()) return errorCode;
 
 	// sort results
 	vector< pair<Object, ObjectDataResult> > workingVect(inResults);
@@ -87,13 +76,17 @@ int publishResults(
 	const Object & object = inResults[0].first;
 	const ObjectDataResult & result = inResults[0].second;
 
+	// TODO
+	// improve
+	const Candidate & cand = validCandVect[0];
+
 	cout << "Best Object: " << object.name;
 	
 	vision_object::Object msg;
 	msg.objectName = object.name;
 	msg.objectAngle = result.angle;
-	msg.distX = (box[0][0] + box[0][1]) / 2;
-	msg.distY = (box[1][0] + box[1][1]) / 2;
+	msg.distX = (cand.robXMin + cand.robXMax) / 2;
+	msg.distY = (cand.robYMin + cand.robYMax) / 2;
 
 	objectPub.publish(msg);
 
@@ -104,15 +97,40 @@ int match(){
 	int errorCode = 0;
 
 	size_t numbObjects = objectVect.size();
+	if(!numbObjects) return errorCode;
+
+	size_t numbCands = candVect.size();
+	if(!numbCands) return errorCode;
+
+	validCandVect.clear();
+	errorCode = candFilterValid(candVect, validCandVect);
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not filter valid candidates" << endl;
+		return errorCode;
+	}
+
+	size_t numbValidCands = validCandVect.size();
+	if(!numbValidCands){
+		cout << "No valid object candidates" << endl;
+		return errorCode;
+	}
+
 	pair<Object, ObjectDataResult> bestResult;
 	vector< pair<Object, ObjectDataResult> > resultVect;
 
 	for(size_t i = 0; i < numbObjects; i++){
-		ObjectDataResult result;
-
+		// Better:
+		// const Object & object = objectVect[i];
 		Object & object = objectVect[i];
+
+		ObjectDataResult result;
 		errorCode = object.match(sampleData, context, result);
-		if(errorCode) return errorCode;
+		if(errorCode){
+			cout << "Error in " << __FUNCTION__ << endl;
+			cout << "Object matching failed" << endl;
+			return errorCode;
+		}
 
 		cout << "Object: " << object.name << endl;
 		cout << "Score: " << result.colorImage.meanSquareError << endl;
@@ -141,23 +159,13 @@ int train(){
 	size_t numbObjects = objectVect.size();
 	for(size_t i = 0; i < numbObjects; i++){
 		Object & object = objectVect[i];
-		size_t numbData = object.objectDataVect.size();
-
-		cout << "Object " << i << endl;
-		cout << " Name: " << object.name << endl;
-		cout << " # Data: " << numbData << endl;
-		
-		cout << " Train .." << endl;
 
 		errorCode = object.train(context);
-		if(errorCode) return errorCode;
-
-		cout << " Show results .." << endl;
-		for(size_t j = 0; j < numbData; j++){
-			ObjectData & data = object.objectDataVect[j];
-			data.colorImage.showKeypoints();
+		if(errorCode){
+			cout << "Error in " << __FUNCTION__ << endl;
+			cout << "Could not train " << object.name << endl;
+			return errorCode;
 		}
-
 	}
 
 	return errorCode;
@@ -178,34 +186,31 @@ int tryToMatch(){
 	return errorCode;
 }
 
-int candDebug(){
+void boxCallback(const BoxesConstPtr & boxesMsgPtr){
 	int errorCode = 0;
 
-	if(!candVectReady) return errorCode;
-	if(!colorImageReady) return errorCode;
+	const vector<Box> & boxVect = boxesMsgPtr->boxes;
 
-/*
-	cv::Mat image;
-	errorCode = candShow(
-		candVect,
-		sampleData.colorImage.image,
-		image
-	);
-	if(errorCode) return errorCode;
+	size_t numbBoxes = boxVect.size();
+	if(!numbBoxes) return;
 
-	cv::imshow("Candidates", image);
-	cv::waitKey(0);
-*/
+	candVect.clear();
+	for(size_t i = 0; i < numbBoxes; i++){
+		const Box & box = boxVect[i];
 
-	return errorCode;
-}
+		Candidate cand;
+		errorCode = candFromBox(box, context.camera, cand);
+		if(errorCode){
+			cout << "Error in " << __FUNCTION__ << endl;
+			cout << "Conversion from box to candidate failed" << endl;
+			return;	
+		}
 
-void candCallback(const CandidatesConstPtr & candsMsgPtr){
-	int errorCode = 0;
+		candVect.push_back(cand);
+	}
 
-	// copy candidates
-	candVect = vector<Candidate>(candsMsgPtr->candidates);
-	candVectReady = true;
+	size_t numbCands = candVect.size();
+	candVectReady = (numbCands > 0);
 
 	errorCode = tryToMatch();
 	if(errorCode){
@@ -250,7 +255,6 @@ void colorCallback(const ImageConstPtr & colorMsgPtr){
 int main(int argc, char ** argv){
 	int errorCode = 0;
 
-	candValid = false;
 	candVectReady = false;
 	colorImageReady = false;
 
@@ -258,7 +262,7 @@ int main(int argc, char ** argv){
 	ros::NodeHandle node;
 
 	// subscribers
-	candSub = node.subscribe(TOPIC_IN_CAND, 5, candCallback);
+	boxSub = node.subscribe(TOPIC_IN_BOX, 5, boxCallback);
 	colorImageSub = node.subscribe(TOPIC_IN_COLOR, 1, colorCallback);
 
 	// publisher

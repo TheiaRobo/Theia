@@ -3,35 +3,48 @@
 
 #include <vector>
 #include <opencv2/core/core.hpp>
-#include <vision_plane/Candidate.h>
+#include <vision_plane/Box.h>
+
 #include "cameracontext.h"
 
-bool candCheckIfValid(
-	const vision_plane::Candidate & inCand,
-	const CameraContext & inContext
+class Candidate {
+	public:
+		double robXMin;
+		double robXMax;
+		double robYMin;
+		double robYMax;
+		double robZMin;
+		double robZMax;
+
+		double camLatMin;
+		double camLatMax;
+		double camLongMin;
+		double camLongMax;
+};
+
+int candFilterValid(
+	const std::vector<Candidate> & inCands,
+	std::vector<Candidate> & outCands
 );
 
-/*
-int candFilterValid(
+int candFromBox(
+	const vision_plane::Box & inBox,
 	const CameraContext & inContext,
-	std::vector<vision_plane::Candidate> & ioCandVect
+	Candidate & outCand
 );
-*/
+
+bool candIsValid(const Candidate & inCand);
+
+int candPrint(const Candidate & inCand);
 
 int candShow(
-	const std::vector<vision_plane::Candidate> & inCandVect,
+	const std::vector<Candidate> & inCandVect,
 	const cv::Mat & inImage,
 	cv::Mat & outImage
 );
 
-int candToBox(
-	const vision_plane::Candidate & inCand,
-	const CameraContext & inContext,
-	double outBox[3][2]
-);
-
 int candToRect(
-	const vision_plane::Candidate & inCand,
+	const Candidate & inCand,
 	const cv::Mat & inImage,
 	cv::Rect & outRect
 );

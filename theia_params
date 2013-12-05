@@ -3,6 +3,10 @@ core: {L: 21.35, R1: 5.0, R2: 5.0}
 vision_object:
     config:
         camera:
+            posX: -0.15
+            posY: 0
+            posZ: 0.35
+            angle: 0
             totalFOVLat: 45
             totalFOVLong: 57.5
             initLat: 22.5

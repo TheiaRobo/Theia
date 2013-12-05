@@ -3,6 +3,10 @@
 
 class CameraConfig {
 	public:
+		double posX;
+		double posY;
+		double posZ;
+		double angle;
 		double fovLat;
 		double fovLong;
 		double initLat;

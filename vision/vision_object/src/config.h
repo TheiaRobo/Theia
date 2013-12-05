@@ -13,6 +13,6 @@ class Config {
 		ColorImageConfig colorImage;
 };
 
-int buildConfig(Config & outConfig);
+int configBuild(Config & outConfig);
 
 #endif

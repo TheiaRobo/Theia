@@ -8,7 +8,7 @@
 
 using namespace std;
 
-int buildConfig(Config & outConfig){
+int configBuild(Config & outConfig){
 	int errorCode = 0;
 
 	string prefix = "~config/";

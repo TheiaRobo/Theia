@@ -14,14 +14,14 @@
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <vision/cloud.h>
-#include <vision_plane/Candidate.h>
-#include <vision_plane/Candidates.h>
+#include <vision_plane/Box.h>
+#include <vision_plane/Boxes.h>
 
 #include "vision_plane.h"
 
 #define NODE_NAME "vision_plane"
 #define TOPIC_IN "/camera/depth_registered/points"
-#define TOPIC_OUT_CAND "/vision/plane/cand"
+#define TOPIC_OUT_BOX "/vision/plane/box"
 #define TOPIC_DEBUG_CROPPED_OUT "/vision/plane/debug/cropped"
 #define TOPIC_DEBUG_NON_PLANE_OUT "/vision/plane/debug/nonPlane"
 #define TOPIC_DEBUG_PLANE_OUT "/vision/plane/debug/plane"
@@ -34,37 +34,33 @@ using namespace vision_plane;
 */
 Config config;
 ros::Subscriber cloudSub;
-ros::Publisher candPub;
+ros::Publisher boxPub;
 ros::Publisher debugCroppedPub;
 ros::Publisher debugNonPlanePub;
 ros::Publisher debugPlanePub;
 
-int clusterToCandidate(
+int clusterToBox(
 	TheiaCloudPtr inCloud,
 	PointIndices & inIndices,
-	Candidate & outCand
+	Box & outBox
 ){
 	int errorCode = 0;
 
+	// find box
 	Eigen::Vector4f minPoint;
 	Eigen::Vector4f maxPoint;
 	getMinMax3D(*inCloud, inIndices, minPoint, maxPoint);
 
-	double means[3];
-	double distSquare = 0;
-	for(size_t i = 0; i < 3; i++){
-		means[i] = (minPoint[i] + maxPoint[i]) / 2; 
-		distSquare += means[i] * means[i];
-	}
+	// build message
+	Box box;
+	box.minX = minPoint[0];
+	box.maxX = maxPoint[0];
+	box.minY = minPoint[1];
+	box.maxY = maxPoint[1];
+	box.minZ = minPoint[2];
+	box.maxZ = maxPoint[2];
 
-	Candidate cand;
-	cand.dist = sqrt(distSquare);
-	cand.minLatitude = -1 * asin(minPoint[1] / minPoint[2]);
-	cand.maxLatitude = -1 * asin(maxPoint[1] / minPoint[2]);
-	cand.minLongitude = -1 * asin(minPoint[0] / minPoint[2]);
-	cand.maxLongitude = -1 * asin(maxPoint[0] / minPoint[2]);
-
-	outCand = cand;
+	outBox = box;
 
 	return errorCode;
 }
@@ -162,9 +158,9 @@ void filterPlanes(
 	*outObjects = TheiaCloud(*workingCloudPtr);
 }
 
-int findObjects(
+int findBoxes(
 	TheiaCloudPtr inCloud,
-	std::vector<Candidate> & outCandVect
+	std::vector<Box> & outBoxVect
 ){
 	int errorCode = 0;
 
@@ -187,11 +183,11 @@ int findObjects(
 	for(size_t i = 0; i < numbClusters; i++){
 		PointIndices & cluster = clusterVect[i];
 		
-		Candidate cand;
-		errorCode = clusterToCandidate(inCloud, cluster, cand);
+		Box box;
+		errorCode = clusterToBox(inCloud, cluster, box);
 		if(errorCode) return errorCode;
 	
-		outCandVect.push_back(cand);
+		outBoxVect.push_back(box);
 	}
 
 	return errorCode;
@@ -207,10 +203,10 @@ void initConfig(){
 	ros::param::getCached("~config/planeOptimize", config.planeOptimize);
 }
 
-void publishCandidates(std::vector<Candidate> & inCandVect){
-	Candidates candVectMsg;
-	candVectMsg.candidates = inCandVect;
-	candPub.publish(candVectMsg);
+void publishBoxes(std::vector<Box> & inBoxVect){
+	Boxes boxesMsg;
+	boxesMsg.boxes = inBoxVect;
+	boxPub.publish(boxesMsg);
 }
 
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
@@ -227,9 +223,9 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & rosMsgPtr){
 	TheiaCloudPtr objectCloudPtr(new TheiaCloud());
 	filterPlanes(scaledCloudPtr, planeCloudPtr, objectCloudPtr);
 
-	std::vector<Candidate> candVect;
-	findObjects(objectCloudPtr, candVect);
-	publishCandidates(candVect);
+	std::vector<Box> boxVect;
+	findBoxes(objectCloudPtr, boxVect);
+	publishBoxes(boxVect);
 
 	// debug
 	visionCloudDebug(planeCloudPtr, debugPlanePub);
@@ -244,7 +240,7 @@ int main (int argc, char ** argv){
 	ros::NodeHandle node;
 
 	cloudSub = node.subscribe(TOPIC_IN, 1, cloudCallback);
-	candPub = node.advertise<Candidates>(TOPIC_OUT_CAND, 1);
+	boxPub = node.advertise<Boxes>(TOPIC_OUT_BOX, 1);
 	debugCroppedPub = node.advertise<sensor_msgs::PointCloud2>(
 		TOPIC_DEBUG_CROPPED_OUT, 1
 	);
