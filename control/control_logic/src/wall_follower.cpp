@@ -1001,6 +1001,7 @@ bool status(theia_services::brain_wall::Request &req, theia_services::brain_wall
 	theia_services::stop stop_msg;
 
 	if(!req.active && active){
+		ROS_ERROR("Im going to stop the robot");
 		stop_msg.stop=1;	
 		stop_pub.publish(stop_msg);
 	}

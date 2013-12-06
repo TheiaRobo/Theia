@@ -26,7 +26,7 @@ double y=NO_VAL;
 double x_i=NO_VAL;
 double y_i=NO_VAL;
 double init_time = 45; //sec
-double P=0.15; //meter
+double P=0.05; //meter
 char heading='E';
 
 const int black=100;
@@ -46,6 +46,7 @@ std::vector<signed char>  Proc_Map(x_matrix*y_matrix,white);
 ros::Time orig_time;
 
 bool blind_done = true;
+bool prev_flag = true;
 bool phase_2 = false;
 int goal = -1;
 
@@ -101,8 +102,11 @@ void order_slaves(int slave,theia_services::brain_wall wall_req, theia_services:
 		blind_req.request.commands=commands;
 		blind_req.request.vals=vals;
 		blind_req.request.heading=heading;
-		order_wall.call(wall_req);
-		order_blind.call(blind_req);
+		if(!blind_done && prev_flag){
+			prev_flag = false;
+			order_wall.call(wall_req);
+			order_blind.call(blind_req);
+		}
 		break;
 	default:
 		wall_req.request.active=false;
@@ -175,6 +179,9 @@ bool time_for_more(ros::Time orig){
 		phase_2=true;
 		return false;
 		
+	}else if((int)(ros::Time::now().toSec()-orig.toSec())%30==0){
+
+		ROS_WARN("TIME: %.2f",ros::Time::now().toSec()-orig.toSec());
 	}
 	
 	return true;
@@ -190,7 +197,7 @@ bool closed_perimeter(ros::Time init){
 	if(x_i!=NO_VAL){
 
 		if((ros::Time::now().toSec()-init.toSec()) > init_time){
-			return true;
+			
 			if(sqrt((x-x_i)*(x-x_i)+(y-y_i)*(y-y_i) < P))
 				return true;
 
@@ -224,11 +231,11 @@ void reset_odo_mapping(ros::Publisher p){
 path_planner::path_srv path_req_update(nav_msgs::OccupancyGrid map_f, int x_f, int y_f, int goal_f, char heading_f){
     path_planner::path_srv path_req_f;
 
-path_req_f.request.map = map_f;
-path_req_f.request.x = (x_f);
-path_req_f.request.y = (y_f);
-path_req_f.request.goal = goal_f; // we want to explore more :)
-path_req_f.request.heading = heading_f;
+	path_req_f.request.map = map_f;
+	path_req_f.request.x = (x_f);
+	path_req_f.request.y = (y_f);
+	path_req_f.request.goal = goal_f; // we want to explore more :)
+	path_req_f.request.heading = heading_f;
 
     return path_req_f;
 }
@@ -247,10 +254,11 @@ void grab_path_ans(std::vector<int> *commands_f, std::vector<double> *vals_f, pa
 void blind_flag(theia_services::blind_done::ConstPtr msg){
 
 	blind_done = msg->done;
+	prev_flag = msg->done;
 	
 	if(blind_done){
 	
-		ROS_WARN("Blind is done");
+		ROS_WARN("Blind is done and that's awesome");
 	}
 
 }
@@ -308,43 +316,48 @@ int main(int argc, char ** argv){
 
 
 		if(closed_perimeter(init_time)){
+			ROS_INFO("Closed a perimeter");
+
 			if(time_for_more(orig_time) && !phase_2){
 				if(blind_done){ // I'll call it
 					ROS_INFO("Closed a perimeter and I have time for more");
 					ROS_WARN("I'll call the path planner");
-					order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals);
-					
+					slave = 2;
+					init_time = ros::Time::now(); // reset time for the closed_perimeter function
+					order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals); // stop everything
+					blind_done=false;
 					if(request_map.call(map_req)){
+						
+						// got a fresh map
+						path_req = path_req_update(map_req.response.map, cell_round(x*100), cell_round(y*100), gray, heading);
 
-							path_req = path_req_update(map_req.response.map, cell_round(x*100), cell_round(y*100), gray, heading);
+						if(request_path.call(path_req)){
 
-							if(request_path.call(path_req)){
-
-					   			grab_path_ans(&commands, &vals, path_req);
+				   			grab_path_ans(&commands, &vals, path_req);
 
 
-								if(path_req.response.size<=1){
-									ROS_WARN("No path found. I will go back to the start");
+							if(path_req.response.size<=1){
+								ROS_WARN("No path found. I will go back to the start");
 
-									path_req = path_req_update(map_req.response.map, cell_round(x*100), cell_round(y*100), -1, heading);
+								path_req = path_req_update(map_req.response.map, cell_round(x*100), cell_round(y*100), -1, heading);
 
-									if(request_path.call(path_req)){
+								if(request_path.call(path_req)){
 
-										grab_path_ans(&commands, &vals, path_req);
-						    
-									}
-
-									phase_2=true;
-
+									grab_path_ans(&commands, &vals, path_req);
+					    
 								}
-								
-								blind_done = false;
-								slave = 2;
-							}else{
 
-								ROS_ERROR("Could not get path from path_planner");
+								phase_2=true;
 
 							}
+							
+							blind_done = false;
+
+						}else{
+
+							ROS_ERROR("Could not get path from path_planner");
+
+						}
 
 						}else{
 
@@ -362,16 +375,18 @@ int main(int argc, char ** argv){
 					ROS_ERROR("Ran out of time :(");
 					order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals);
 					phase_2 = true;
+					slave = 2;
 					reset_odo_mapping(phase_2_pub);
 					heading = 'E';
 					ROS_ERROR("Press any key to continue...");
 					getchar();
 				}
 
-				if(blind_done){
+				else if(blind_done){
 					ROS_INFO("Ready to start phase 2");
 					goal = goal_picker();
 					ROS_WARN("I'll call the blind");
+					slave = 2;
 					order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals);
 					if(request_map.call(map_req)){
 	
@@ -386,7 +401,6 @@ int main(int argc, char ** argv){
 								slave = 0;
 							}else{
 								blind_done = false;
-								slave = 2;
 							}
 						}else{
 	
@@ -404,10 +418,9 @@ int main(int argc, char ** argv){
 			}
             
             ////////////////////////////////////////////////
-		}else if(blind_done && slave == 2){
+		}else if(blind_done && slave == 2 && !phase_2){
 			
 			ROS_INFO("Will explore another perimeter");
-			getchar();
 			x_i=x;
 			y_i=y;
 			init_time = ros::Time::now();
@@ -415,6 +428,18 @@ int main(int argc, char ** argv){
 			slave = 1;
 			
 			//blind_done = true;
+		}
+		
+		if(!phase_2 && !time_for_more(orig_time)){
+			ROS_ERROR("Ran out of time :(");
+			order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals);
+			phase_2 = true;
+			reset_odo_mapping(phase_2_pub);
+			heading = 'E';
+			ROS_ERROR("Press any key to continue...");
+			getchar();
+			
+			
 		}
 
 		if(close_object()){

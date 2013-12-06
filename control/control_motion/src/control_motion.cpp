@@ -645,13 +645,13 @@ int none(ros::Rate loop_rate){
 			if(srv.response.B!=0){
 				ROS_WARN("BLIND ACTIVE");
 				if(srv.response.B==2){
-					ROS_WARN("WILL ROTATE");
+					ROS_ERROR("WILL ROTATE");
 					heading_ref=srv.response.parameter;
 				}else if(srv.response.B==3){
 					wall_to_follow=(int) srv.response.parameter;
 				}else{ // forward
 					forward_distance=srv.response.parameter;
-					ROS_WARN("WILL MOVE FORWARD %.2f",forward_distance);
+					ROS_ERROR("WILL MOVE FORWARD %.2f",forward_distance);
 				}
 
 				return srv.response.B;

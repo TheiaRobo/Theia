@@ -77,7 +77,7 @@ double heur(int coords[2], int goal_coords[2]){
 
 	if(goal_coords[0]!=NO_VAL){
 		t_h = std::abs(coords[0]-goal_coords[0])+std::abs(coords[1]-goal_coords[1]);
-		return 1.1*t_h;
+		return 1.0*t_h;
 	}else{ // no goal, no heuristic
 		return 0.0;
 	}
@@ -613,10 +613,16 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 
 
 
+	} // end for
+	
+	// at the end of the for cycle we may still have forward counter != 0. If that's not the case, we set the last rotation to zero for convenience
+	
+	if(forward_counter!=0){ 
+		(*commands).push_back(FORWARD);
+		(*vals).push_back(forward_counter);
+	}else if((*vals).size()!=0){
+		(*vals)[(*vals).size()-1]=0;
 	}
-
-
-
 	return;
 
 }

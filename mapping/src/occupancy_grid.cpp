@@ -47,7 +47,7 @@ const int white=0;
 // sensor array
 
 double ir[8];
-double inf_thres=10;
+double inf_thres=20;
 
 
 int x_Current_Pose=round(x_matrix/2); //x,y coordinates
@@ -504,7 +504,7 @@ void ir_line(int ir_num,int x_position, int y_position,double ir_val){
 void place_ir(){
 	
 	if(wall!=-1){
-		for(int i=0; i<6; i++){
+		for(int i=2; i<6; i++){
 			if(ir[i]<inf_thres)
 				ir_line(i+1,x_Current_Pose, y_Current_Pose,ir[i]);
 			else
