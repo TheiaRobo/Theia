@@ -4,6 +4,7 @@
 #include "control_logic/info.h"
 #include <core_sensors/ir.h>
 #include <theia_services/brain_blind.h>
+#include <theia_services/blind_done.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
@@ -40,6 +41,7 @@ char info_heading='E';
 int info_wall=0;
 
 ros::Publisher info_pub;
+ros::Publisher done_pub;
 
 std::vector<int> b_commands;
 std::vector<double> b_parameters;
@@ -103,6 +105,15 @@ void change_heading(char delta_heading){
 
 }
 
+void warn_brain(){
+	theia_services::blind_done msg;
+	
+	msg.done=done;
+	
+	done_pub.publish(msg);
+
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
 // EXECUTE SECTION
@@ -118,7 +129,15 @@ bool execute(theia_services::MotionCommand::Request &req, theia_services::Motion
 		res.B=0;
 		return true;
 	}
-
+	
+	if(done){
+	
+		warn_brain();
+		res.B=0;
+		return true;
+	
+	}
+	
 	info_wall=0;
 	
 	ros::Duration refresh(0.1);
@@ -128,12 +147,10 @@ bool execute(theia_services::MotionCommand::Request &req, theia_services::Motion
 	res.B = b_commands[current_idx];
 	switch (b_commands[current_idx]){
 	case 1: 
-		ROS_DEBUG("I'm going to send a forward instruction");
 		res.parameter = b_parameters[current_idx];
 		info_wall = 3;
 		break;
 	case 2: 
-		ROS_DEBUG("I'm going to send a rotation instruction");
 		res.parameter = b_parameters[current_idx];
 		info_wall = -1;
 		if (b_parameters[current_idx] == PI/2){
@@ -153,6 +170,9 @@ bool execute(theia_services::MotionCommand::Request &req, theia_services::Motion
 	if(current_idx >= b_parameters.size()){
 		ROS_WARN("Finished the instructions");
 		done = true;
+		warn_brain();
+		res.B=0;
+		return true;
 		
 	}
 
@@ -188,31 +208,25 @@ bool execute(theia_services::MotionCommand::Request &req, theia_services::Motion
 
 bool status(theia_services::brain_blind::Request &req, theia_services::brain_blind::Response &res){
 
-	if (active != req.active){
-		active=req.active;
-		info_heading=req.heading;
+	done = false;
+	active=req.active;
+	info_heading=req.heading;
 
-		b_parameters.resize(req.size);
-		b_commands.resize(req.size);
+	b_parameters.resize(req.size);
+	b_commands.resize(req.size);
 
-		for (int i=0; i< req.size; i++){
-			b_parameters[i]=req.vals[i];
-			b_commands[i]=req.commands[i];
-		}
-		
-		if(req.size<=1){
-			ROS_WARN("There is no path");
-			done=true;
-			active=false;
-		}
+	for (int i=0; i< req.size; i++){
+		b_parameters[i]=req.vals[i];
+		b_commands[i]=req.commands[i];
 	}
 	
-	res.done=done;
-	
-	if(done == true){
-		done=false;
-		active=false;
+	if(req.size<=1){
+		ROS_WARN("There is no path");
+		active = false;
+		done = true;
 	}
+	
+	res.done=true;
 	
 	return true;
 }
@@ -235,6 +249,7 @@ int main(int argc, char ** argv){
 	ros::ServiceServer orders = n.advertiseService("/blind/instructions",status);
 
 	info_pub = n.advertise<control_logic::info>("/control_logic/info",1);
+	done_pub = n.advertise<theia_services::blind_done>("/blind/done",1);
 
 	while(ros::ok()){
 		loop_rate.sleep();
