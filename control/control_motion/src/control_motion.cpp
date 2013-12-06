@@ -80,7 +80,7 @@ double align_thres=100;//0.003;
 double dist_thres=6.0;
 double max_angle = 0.723; // atan(max_ir/17);
 double ERROR_VAL = -123456789;
-const int OUTLIERS_MIN = 3;
+const int OUTLIERS_MIN = 3000000;
 
 int cross_outliers = 0;
 double cross_thres1=0.0;

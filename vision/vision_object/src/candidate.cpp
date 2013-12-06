@@ -78,12 +78,16 @@ int candFromBox(
 	return errorCode;
 }
 
-bool candIsValid(const Candidate & inCand){	
+bool candIsValid(const Candidate & inCand){
 	// right
 	if(inCand.robYMin < -0.15) return false;
 	// left
 	if(inCand.robYMax > +0.15) return false;
-	
+	// height
+	if((inCand.robZMax - inCand.robZMin) > 0.20) return false;
+	// distance
+	if(inCand.robXMax > 0.55) return false;
+
 	return true;
 }
 

@@ -3,16 +3,16 @@ core: {L: 21.35, R1: 5.0, R2: 5.0}
 vision_object:
     config:
         camera:
-            posX: -0.15
+            posX: 0.30
             posY: 0
             posZ: 0.35
-            angle: 0
+            angle: 22.7
             totalFOVLat: 45
             totalFOVLong: 57.5
             initLat: 22.5
             validFOVLat: 45
             validFOVLong: 25
-        path: /home/robo/DD2425_2013/Project/vision/vision_object/train2
+        path: /home/robo/DD2425_2013/Project/vision/vision_object/train
         colorImage:
             minHessian: 400
             maxMeanSquareError: 0.35

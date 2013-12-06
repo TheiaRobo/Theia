@@ -73,14 +73,14 @@ int publishResults(
 	vector< pair<Object, ObjectDataResult> > workingVect(inResults);
 	sort(workingVect.begin(), workingVect.end(), compareResultPairs);
 
-	const Object & object = inResults[0].first;
-	const ObjectDataResult & result = inResults[0].second;
+	const Object & object = workingVect[0].first;
+	const ObjectDataResult & result = workingVect[0].second;
 
 	// TODO
 	// improve
 	const Candidate & cand = validCandVect[0];
 
-	cout << "Best Object: " << object.name;
+	cout << "Best Object: " << object.name << endl;
 	
 	vision_object::Object msg;
 	msg.objectName = object.name;
@@ -101,6 +101,11 @@ int match(){
 
 	size_t numbCands = candVect.size();
 	if(!numbCands) return errorCode;
+
+	cout << "Candidates" << endl;
+	for(size_t i = 0; i < numbCands; i++){
+//		candPrint(candVect[i]);
+	}
 
 	validCandVect.clear();
 	errorCode = candFilterValid(candVect, validCandVect);

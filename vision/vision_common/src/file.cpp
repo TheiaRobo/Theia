@@ -17,7 +17,7 @@ int visionFileFindDirs(
 
     outDirVect.clear();
 
-    DIR * dirPtr = opendir("/home/robo/DD2425_2013/Project/vision/vision_object/train2");//inPath.c_str());
+    DIR * dirPtr = opendir(inPath.c_str());
     if(!dirPtr){
         cout << "Error in visionFileFindDirs" << endl;
         cout << "Could not open directory" << endl;

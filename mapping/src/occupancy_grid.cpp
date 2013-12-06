@@ -593,7 +593,7 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 	object_list.push_back(new_object);
 	
 
-	distance=convert_object_distance(msg->distX,msg->distY);	
+	distance=convert_object_distance(0.20,0);//msg->distX,msg->distY);	
 
 	switch(heading){
 		

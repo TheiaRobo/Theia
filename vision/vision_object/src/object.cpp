@@ -20,7 +20,7 @@ int Object::find(
 	for(size_t i = 0; i < numbFiles; i++){
 		Object object;
 		object.name = dirVect[i];
-		object.path = inPath + VISION_DIR_SEP + dirVect[i];
+		object.path = inPath + VISION_DIR_SEP + dirVect[i] + VISION_DIR_SEP;
 
 		errorCode = ObjectData::find(object.path, object.objectDataVect);
 		if(errorCode) return errorCode;
@@ -36,7 +36,9 @@ int Object::train(const Context & context){
 
 	size_t numbData = objectDataVect.size();
 	for(size_t i = 0; i < numbData; i++){
-		errorCode = objectDataVect[i].train(context);
+		ObjectData & data = objectDataVect[i];
+
+		errorCode = data.train(context);
 		if(errorCode) return errorCode;
 	}
 	
