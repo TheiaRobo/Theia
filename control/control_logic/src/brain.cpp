@@ -11,6 +11,12 @@
 #include <theia_services/end.h>
 #include <path_planner/path_srv.h>
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// VARIABLE INITIALIZATION SECTION
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 const int freq=100;
 const double NO_VAL=-1234567890;
 double x=NO_VAL;
@@ -41,6 +47,12 @@ bool blind_done = true;
 bool phase_2 = false;
 int goal = -1;
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// FUNCTIONS() SECTION
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int cell_round(double val){
 	double cm_res=resolution_matrix*100;
@@ -212,6 +224,36 @@ void reset_odo_mapping(ros::Publisher p){
 	
 }
 
+path_planner::path_srv path_req_update(nav_msgs::OccupancyGrid map_f, int x_f, int y_f, int goal_f, char heading_f){
+    path_planner::path_srv path_req_f;
+
+path_req_f.request.map = map_f;
+path_req_f.request.x = (x_f);
+path_req_f.request.y = (y_f);
+path_req_f.request.goal = goal_f; // we want to explore more :)
+path_req_f.request.heading = heading_f;
+
+    return path_req_f;
+}
+
+void grab_path_ans(std::vector<int> *commands_f, std::vector<double> *vals_f, path_planner::path_srv path_req_f){
+    (*commands_f).resize(path_req_f.response.size);
+    (*vals_f).resize((*commands_f).size());
+    for(int i=0; i < commands.size(); i++){
+        (*commands_f)[i] = path_req_f.response.commands[i];
+        (*vals_f)[i] = path_req_f.response.vals[i];
+    }
+    
+    return void;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// MAIN() SECTION
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 int main(int argc, char ** argv){
 
 	ros::init(argc, argv, "brain");
@@ -250,44 +292,28 @@ int main(int argc, char ** argv){
 		if(closed_perimeter(init_time)){
 			if(time_for_more(orig_time) && !phase_2){
 				if(blind_done){
-
 					ROS_INFO("Closed a perimeter and I have time for more");
 					ROS_WARN("I'll call the path planner");
 					order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals);
-					if(request_map.call(map_req)){
+					
+                    if(request_map.call(map_req)){
 
-						path_req.request.map = map_req.response.map;
-						path_req.request.x = cell_round(x*100);
-						path_req.request.y = cell_round(y*100);
-						path_req.request.goal = gray; // we want to explore more :)
-						path_req.request.heading = heading;
+						path_req = path_req_update(map_req.response.map, cell_round(x*100), cell_round(y*100), gray, heading);
 
 						if(request_path.call(path_req)){
 							
-							commands.resize(path_req.response.size);
-							vals.resize(commands.size());
-							for(int i=0; i < commands.size(); i++){
-								commands[i] = path_req.response.commands[i];
-								vals[i] = path_req.response.vals[i];
-							}
+                            grab_path_ans(&commands, &vals, path_req);
+							
 
 							if(path_req.response.size<=1){
 								ROS_WARN("No path found. I will go back to the start");
-
-								path_req.request.map = map_req.response.map;
-								path_req.request.x = cell_round(x*100);
-								path_req.request.y = cell_round(y*100);
-								path_req.request.goal = -1; // back to the start
-								path_req.request.heading = heading;
+                                
+                                path_req = path_req_update(map_req.response.map, cell_round(x*100), cell_round(y*100), -1, heading);
 
 								if(request_path.call(path_req)){
 
-									commands.resize(path_req.response.size);
-									vals.resize(commands.size());
-									for(int i=0; i < commands.size(); i++){
-										commands[i] = path_req.response.commands[i];
-										vals[i] = path_req.response.vals[i];
-									}
+									grab_path_ans(&commands, &vals, path_req);
+                                    
 								}
 
 								phase_2=true;
@@ -327,21 +353,12 @@ int main(int argc, char ** argv){
 					order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals);
 					if(request_map.call(map_req)){
 	
-						path_req.request.map = map_req.response.map;
-						path_req.request.x = cell_round(x*100);
-						path_req.request.y = cell_round(y*100);
-						path_req.request.goal = goal; // the chosen object
-						path_req.request.heading = heading;
-	
+						path_req = path_req_update(map_req.response.map, cell_round(x*100), cell_round(y*100), goal, heading);
+
 						if(request_path.call(path_req)){
 	
-							commands.resize(path_req.response.size);
-							vals.resize(commands.size());
-							for(int i=0; i < commands.size(); i++){
-								commands[i] = path_req.response.commands[i];
-								vals[i] = path_req.response.vals[i];
-							}
-	
+							grab_path_ans(&commands, &vals, path_req);
+                            
 							if(path_req.response.size<=1){
 								ROS_WARN("No path found.");
 								slave = 0;
@@ -363,6 +380,8 @@ int main(int argc, char ** argv){
 				}
 
 			}
+            
+            ////////////////////////////////////////////////
 		}else if(blind_done && slave == 2){
 			
 			ROS_INFO("Will explore another perimeter");
@@ -374,10 +393,7 @@ int main(int argc, char ** argv){
 			slave = 1;
 			
 			blind_done = false;
-			
-			
 		}
-
 
 		if(close_object()){
 			ROS_INFO("OBJECT TOO CLOSE");
@@ -385,7 +401,9 @@ int main(int argc, char ** argv){
 			object_pub.publish(object_msg);
 		}
 
-		order_slaves(slave,wall_req,blind_req,order_wall,order_blind,commands,vals);
+        
+        //FINISHED CASES
+        order_slaves(slave,wall_req,blind_req,order_wall,order_blind,commands,vals);
 		loop_rate.sleep();
 		ros::spinOnce();
 	}
