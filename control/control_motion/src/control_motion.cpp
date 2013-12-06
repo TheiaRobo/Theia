@@ -451,7 +451,7 @@ int sign(double val){
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
-// CONTROLLER
+// CONTROLLERS DEFINITION
 //  
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -461,7 +461,7 @@ int sign(double val){
 double PID_control(double P,double I,double D,double * integrator_sum, double * previous_error,double Ref,double val){
 
 	double error=Ref-val;  		
-	double P_part=0,I_part=0,D_part=0, total=0;
+	double P_part=0,I_part=0,D_part=0, pid_total=0;
 
 	//integrator_sum  +=(error*dt);	// I Part
 	(*integrator_sum)+=error/freq;
@@ -477,34 +477,33 @@ double PID_control(double P,double I,double D,double * integrator_sum, double * 
 	I_part=I*(*integrator_sum);
 	D_part=D*D_part;
 
-	total=P_part+I_part+D_part;
+	pid_total=P_part+I_part+D_part;
 
-	return total;
+	return pid_total;
 }
 
-
-
-/* PARALEL CONTROLLER 
+/* PARALlEL CONTROLLER 
  * Controller that tries to keep a distance and an angle towards a wall
  */		
 double paralel_controller(int wall,double ir_wall[2],double t_ref,double d_ref,double * last_E_r, double * I_sum_r, double * last_R_d, double * I_sum_d){
 
 	double error_theta=0.0, error_dist=0.0,u_theta=0.0,u_dist=0.0;
+	double k_theta = 4;
+	double k_u_dist = 5;
+	
 	// get angle and distance to wall
 	error_theta=compute_ir_error(wall,ir_wall,t_ref);
 	error_dist=compute_ir_dist(wall,ir_wall,d_ref);
 
 	if(std::abs(error_theta)>max_angle){
-
 		return ERROR_VAL;
-
 	}
 
-
 	//Control the angle to the wall
-	if(std::abs(error_theta) < epsilon_theta || error_dist > 0 ){ //Small epsilon OR wall too close
-
-		u_theta=PID_control(k_paralel,i_paralel,d_paralel,I_sum_r,last_E_r,error_theta,0)/4;
+	if( (std::abs(error_theta) < epsilon_theta) || (error_dist > 0) ){ //Small epsilon OR (error_dist > 0) on the wall side
+		u_theta=PID_control(k_paralel,i_paralel,d_paralel,I_sum_r,last_E_r,error_theta,0)/k_theta;
+		
+		
 		//control_pub(velocity_fw,u_theta+u_dist);
 	}else{
 		u_theta=PID_control(k_paralel,i_paralel,d_paralel,I_sum_r,last_E_r,error_theta,0);
@@ -512,20 +511,21 @@ double paralel_controller(int wall,double ir_wall[2],double t_ref,double d_ref,d
 	}
 
 	//Control the distance to the wall
-	if(std::abs(error_dist) < epsilon_dist){ //Small epsilon
+	if(std::abs(error_dist) < epsilon_dist){ //	epsilon_dist is ZERO
 		u_dist=0;
 		//control_pub(velocity_fw,u_theta+u_dist);
 	}else{
 		if (wall==1)
 			u_dist=-PID_control(k_dist,i_dist,d_dist,I_sum_d,last_R_d,error_dist,0);
-		else
+		else if (wall==2)
 			u_dist=PID_control(k_dist,i_dist,d_dist,I_sum_d,last_R_d,error_dist,0);
-
+		else
+			ROS_ERROR("ERROR wall is not 1 or 2");
 		//control_pub(velocity_fw,u_theta+u_dist);
 	}
 
 	if(error_dist > 0){ // too close to wall
-		u_dist=5*u_dist;
+		u_dist=k_u_dist*u_dist;
 	}
 
 	return u_theta+u_dist;		
@@ -590,7 +590,6 @@ int none(ros::Rate loop_rate){
 			wall=0;
 		}
 
-
 		if (wall == 1 || wall == 2){
 			// get angle to wall
 			error_theta=compute_ir_error(wall,ir_wall,theta_ref);
@@ -602,12 +601,8 @@ int none(ros::Rate loop_rate){
 			}
 			u_theta=PID_control(k_align,i_align,d_align,&I_sum, &last_E,error_theta,0);
 			control_pub(0,u_theta);
-
-
-
-
-		}else{ 
-			// if (wall == 0) which is equivalent to if ((wall != 1 && wall != 2))
+			
+		}else{ // if ((wall != 1 && wall != 2))
 			if (last_angle != 0){
 				//heading_ref=-last_angle;
 				heading_ref=0;

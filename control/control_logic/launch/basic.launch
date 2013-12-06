@@ -4,4 +4,9 @@
 		type="wall_follower"
 		name="wall_follower"
 	/>
+	<node
+		pkg="control_logic"
+		type="blind"
+		name="blind"
+	/>
 </launch>

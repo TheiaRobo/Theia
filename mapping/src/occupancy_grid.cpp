@@ -14,10 +14,12 @@
 #include <tf/transform_broadcaster.h>
 #include <theia_services/mapsrv.h>
 #include <theia_services/corrected_odo.h>
+#include <theia_services/end.h>
 #include <vision_object/Object.h>
 
  //Initialize
 const float PI=3.1415926f;
+const double NO_VAL=-1234567890;
 const double resolution_matrix=0.01; // in meter!
 const int x_matrix=15/resolution_matrix; 
 const int y_matrix=15/resolution_matrix;
@@ -44,7 +46,7 @@ const int white=0;
 // sensor array
 
 double ir[8];
-double inf_thres=20;
+double inf_thres=10;
 
 
 int x_Current_Pose=round(x_matrix/2); //x,y coordinates
@@ -90,7 +92,7 @@ ros::Subscriber	odometry_sub;
 ros::Subscriber	camera_sub;
 ros::Subscriber	logic_sub;
 ros::Subscriber ir_sub;
-
+ros::Subscriber stop_sub;
 
 /* cell_round
  * Rounds the received value to the nearest cell coordinate
@@ -117,6 +119,7 @@ void Get_Readings_Odometry(nav_msgs::Odometry::ConstPtr odometry_msg){
 	odo_x[0]=odometry_msg->pose.pose.position.x+x_matrix*resolution_matrix/2;
 	odo_y[0]=odometry_msg->pose.pose.position.y+y_matrix*resolution_matrix/2;
 	odo_theta=atan2(odometry_msg->pose.pose.orientation.z,odometry_msg->pose.pose.orientation.w)*2;
+
 	
 	delta_x=odo_x[0]-odo_x[1];
 	delta_y=odo_y[0]-odo_y[1];
@@ -740,6 +743,8 @@ void update_robot(){
 	
 	odo.type = visualization_msgs::Marker::ARROW;
 	odo.pose.position.z=0.1;
+	odo.color.b=1.0f;
+	odo.color.g=0.0f;
 	odo.id = 1;
 
 	// Publish the marker
@@ -781,6 +786,30 @@ bool provide_map(theia_services::mapsrv::Request &req, theia_services::mapsrv::R
 	
 }
 
+void reset_odo(theia_services::end::ConstPtr msg){
+	
+	
+	ROS_WARN("Press any key to reset odometry...");
+	getchar();
+	
+	odo_x[0]=x_matrix*resolution_matrix/2;
+	odo_x[1]=odo_x[0];
+	odo_y[0]=y_matrix*resolution_matrix/2;
+	odo_y[1]=odo_y[0];
+	
+	corrected_odo_x[0]=x_matrix*resolution_matrix/2;
+	corrected_odo_x[1]=corrected_odo_x[0];
+	
+	corrected_odo_y[0]=y_matrix*resolution_matrix/2;
+	corrected_odo_y[1]=corrected_odo_y[0];
+	
+	odo_correct=0.0;
+	s_delta_x=0.0;
+	s_delta_y=0.0;
+	heading = 'E';
+	
+}
+
 // ########################## MAIN ################################
 
 int main(int argc, char **argv)
@@ -793,6 +822,7 @@ int main(int argc, char **argv)
 	logic_sub = n.subscribe("/control_logic/info",100000,Get_Motion_Info);
 	ir_sub = n.subscribe("/core_sensors_ir/ir",100000,Get_Ir);
 	camera_sub = n.subscribe("/vision/object",1,Place_Object);
+	stop_sub = n.subscribe("/control_logic/stop",1,reset_odo);
 	
 	occ_pub = n.advertise<nav_msgs::OccupancyGrid>("/mapping/occ",1);
 	map_pub = n.advertise<nav_msgs::MapMetaData>("/mapping/map",1);

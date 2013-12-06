@@ -77,37 +77,37 @@ double heur(int coords[2], int goal_coords[2]){
 
 	if(goal_coords[0]!=NO_VAL){
 		t_h = std::abs(coords[0]-goal_coords[0])+std::abs(coords[1]-goal_coords[1]);
-		return 1.0*t_h;
+		return 1.1*t_h;
 	}else{ // no goal, no heuristic
-		return 0;
+		return 0.0;
 	}
 
 
 }
 
 double g_cost(int coords[2], int prev_coords[2], int prev_from_coords[2]){
-	
+
 	if(prev_coords[0]-prev_from_coords[0]!=0){ // movement along x
-		
+
 		if(coords[0]-prev_coords[0]!=0){ // keep the same direction of movement
-			
+
 			return 1;
-		
+
 		}else{ // implies rotation
-		
+
 			return 100;
 		}
-	
+
 	}else{ // movement along y
-	
+
 		if(coords[1]-prev_coords[1]!=0){
-			
+
 			return 1;
 		}else{
 			return 100;
 		}
 	}
-	
+
 	return 1; // just in case
 }
 
@@ -138,7 +138,6 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 	std::vector<node> return_error;
 	double t_f=0, t_g=0, t_h=0;
 
-
 	// Conversion to matrix
 	for(int i=0; i < lateral_size; i++){
 
@@ -151,20 +150,52 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 		}
 	}
 
+	ROS_INFO("val_to_find = %d", val_to_find);
+	ROS_INFO("lateral_size = %d", lateral_size);
+
 	// values different from white and val_to_find are obstacles
 
-	for(int x=0; x < lateral_size; x++){
-		for(int y=0; y < lateral_size; y++){
-			if(matrix[x][y]!=white && matrix[x][y]!=val_to_find){
-				matrix[x][y]=black;
-			}else if(val_to_find!=gray && matrix[x][y]==val_to_find){
-				goal_coords[0]=x;
-				goal_coords[1]=y;
+	if(val_to_find==-1){ // back to start
+		ROS_WARN("Will plan a path back to the start");
+
+		goal_coords[0]=lateral_size/2;
+		goal_coords[1]=lateral_size/2;
+
+		ROS_WARN("My goal is set to the start position: (%d,%d)",goal_coords[0],goal_coords[1]);
+
+	}else{
+		for(int x=0; x < lateral_size; x++){
+			for(int y=0; y < lateral_size; y++){
+				if(matrix[x][y]!=white && matrix[x][y]!=val_to_find){
+					matrix[x][y]=black;
+				}else if(val_to_find!=gray && matrix[x][y]==val_to_find){
+					goal_coords[0]=x;
+					goal_coords[1]=y;
+				}
 			}
 		}
 	}
-	
-	
+
+	if(val_to_find==gray){ // inefficient, but better than running A* without an heuristic
+
+		for(int i=0; i < lateral_size/2-1 && goal_coords[0]==NO_VAL;i++){
+			for(int x=x_i-i/2; x < x_i+i/2;x++){
+				for(int y=y_i-i/2; y<y_i+i/2;y++){
+
+					if(matrix[x][y]==gray){
+						goal_coords[0]=x;
+						goal_coords[1]=y;
+					}
+
+
+				}
+			}
+		}
+
+	}
+
+
+	ROS_WARN("My goal is set to: (%d,%d)",goal_coords[0],goal_coords[1]);
 
 
 	// A*
@@ -184,10 +215,10 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 	t_f = t_g + t_h;
 
 	current=create_node(coords,t_f,t_g,from);
-	
+
 	return_error.push_back(current);
-	
-	if(val_to_find!=gray && goal_coords[0]==NO_VAL){
+
+	if(goal_coords[0]==NO_VAL){
 		ROS_INFO("No solution exists");
 		return return_error;
 	}
@@ -212,12 +243,7 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 		ROS_INFO(" t_f = %.2f, t_g = %.2f",current.t_f,current.t_g);
 		getchar();*/
 
-		if(goal_coords[0]==-1){
-			if(matrix[current.coords[0]][current.coords[1]]==val_to_find){
-				ROS_INFO("Found solution at %d %d!",current.coords[0],current.coords[1]);
-				return retrieve_path(current, &closedset); // later, the path
-			}
-		}else if(current.coords[0]==goal_coords[0] && current.coords[1]==goal_coords[1]){
+		if(current.coords[0]==goal_coords[0] && current.coords[1]==goal_coords[1]){
 			ROS_INFO("Found solution at %d %d!",current.coords[0],current.coords[1]);
 			return retrieve_path(current, &closedset);
 		}
@@ -232,7 +258,7 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 			coords[0]=current.coords[0]-1;
 			coords[1]=current.coords[1];
 
-			if(matrix[coords[0]][coords[1]] != black){
+			if(matrix[coords[0]][coords[1]] == white || matrix[coords[0]][coords[1]] == val_to_find){
 				t_h=heur(n.coords,goal_coords);
 				t_g = current.t_g + g_cost(coords,current.coords,current.came_from);
 				t_f = t_g + t_h;
@@ -264,7 +290,7 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 			coords[0]=current.coords[0]+1;
 			coords[1]=current.coords[1];
 
-			if(matrix[coords[0]][coords[1]] != black){
+			if(matrix[coords[0]][coords[1]] == white || matrix[coords[0]][coords[1]] == val_to_find){
 				t_h=heur(n.coords,goal_coords);
 				t_g = current.t_g + g_cost(coords,current.coords,current.came_from);
 				t_f = t_g + t_h;
@@ -297,7 +323,7 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 			coords[0]=current.coords[0];
 			coords[1]=current.coords[1]-1;
 
-			if(matrix[coords[0]][coords[1]] != black){
+			if(matrix[coords[0]][coords[1]] == white || matrix[coords[0]][coords[1]] == val_to_find){
 				t_h=heur(n.coords,goal_coords);
 				t_g = current.t_g + g_cost(coords,current.coords,current.came_from);
 				t_f = t_g + t_h;
@@ -330,7 +356,7 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 			coords[0]=current.coords[0];
 			coords[1]=current.coords[1]+1;
 
-			if(matrix[coords[0]][coords[1]] != black){
+			if(matrix[coords[0]][coords[1]] == white || matrix[coords[0]][coords[1]] == val_to_find){
 				t_h=heur(n.coords,goal_coords);
 				t_g = current.t_g + g_cost(coords,current.coords,current.came_from);
 				t_f = t_g + t_h;
@@ -598,7 +624,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 
 bool planning_service(path_planner::path_srv::Request &req, path_planner::path_srv::Response &res){
 
- 
+
 
 	int size = req.map.info.width;
 	std::vector<node> solution;
@@ -615,13 +641,13 @@ bool planning_service(path_planner::path_srv::Request &req, path_planner::path_s
 
 	for(int i=0; i < size*size; i++)
 		Occupancy_Grid[i]=req.map.data[i];
-	
-	
+
+
 	Correct_Map_Msg.info=req.map.info;
 	Correct_Map_Msg.data=Occupancy_Grid;
-		
+
 	map_pub.publish(Correct_Map_Msg);
-	
+
 	solution = find_closest(req.x,req.y,Occupancy_Grid,req.goal);
 
 	convert_to_commands(solution,&commands,&vals);
