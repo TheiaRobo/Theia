@@ -68,6 +68,8 @@ double corrected_odo_y[2]={y_matrix*resolution_matrix/2,y_matrix*resolution_matr
 double odo_correct=0.0;
 double s_delta_x=0.0;
 double s_delta_y=0.0;
+double offset_x=0.0;
+double offset_y=0.0;
 
 const int freq=100;
 
@@ -116,8 +118,8 @@ void Get_Readings_Odometry(nav_msgs::Odometry::ConstPtr odometry_msg){
 	corrected_odo_x[1]=corrected_odo_x[0];
 	corrected_odo_y[1]=corrected_odo_y[0];
 	
-	odo_x[0]=odometry_msg->pose.pose.position.x+x_matrix*resolution_matrix/2;
-	odo_y[0]=odometry_msg->pose.pose.position.y+y_matrix*resolution_matrix/2;
+	odo_x[0]=odometry_msg->pose.pose.position.x+x_matrix*resolution_matrix/2-offset_x;
+	odo_y[0]=odometry_msg->pose.pose.position.y+y_matrix*resolution_matrix/2-offset_y;
 	odo_theta=atan2(odometry_msg->pose.pose.orientation.z,odometry_msg->pose.pose.orientation.w)*2;
 
 	
@@ -791,6 +793,9 @@ void reset_odo(theia_services::end::ConstPtr msg){
 	
 	ROS_WARN("Press any key to reset odometry...");
 	getchar();
+	
+	offset_x=odo_x[0];
+	offset_y=odo_y[0];
 	
 	odo_x[0]=x_matrix*resolution_matrix/2;
 	odo_x[1]=odo_x[0];
