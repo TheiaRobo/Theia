@@ -496,7 +496,7 @@ double paralel_controller(int wall,double ir_wall[2],double t_ref,double d_ref,d
 	error_dist=compute_ir_dist(wall,ir_wall,d_ref);
 
 	if(std::abs(error_theta)>max_angle){
-		return ERROR_VAL;
+		return 0;
 	}
 
 	//Control the angle to the wall

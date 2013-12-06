@@ -15,6 +15,7 @@
 #include <theia_services/mapsrv.h>
 #include <theia_services/corrected_odo.h>
 #include <theia_services/end.h>
+#include <theia_services/phase.h>
 #include <vision_object/Object.h>
 
  //Initialize
@@ -73,6 +74,7 @@ double offset_y=0.0;
 
 const int freq=100;
 
+bool phase_2 = false;
 
 // high level info
 
@@ -95,6 +97,7 @@ ros::Subscriber	camera_sub;
 ros::Subscriber	logic_sub;
 ros::Subscriber ir_sub;
 ros::Subscriber stop_sub;
+ros::Subscriber p_sub;
 
 /* cell_round
  * Rounds the received value to the nearest cell coordinate
@@ -791,7 +794,7 @@ bool provide_map(theia_services::mapsrv::Request &req, theia_services::mapsrv::R
 void reset_odo(theia_services::end::ConstPtr msg){
 	
 	
-	ROS_WARN("Press any key to reset odometry...");
+	ROS_ERROR("Press any key to reset odometry...");
 	getchar();
 	
 	offset_x=odo_x[0];
@@ -815,6 +818,11 @@ void reset_odo(theia_services::end::ConstPtr msg){
 	
 }
 
+void phase_up(theia_services::phase::ConstPtr msg){
+
+	phase_2 = msg->phase_2;
+}
+
 // ########################## MAIN ################################
 
 int main(int argc, char **argv)
@@ -828,6 +836,7 @@ int main(int argc, char **argv)
 	ir_sub = n.subscribe("/core_sensors_ir/ir",100000,Get_Ir);
 	camera_sub = n.subscribe("/vision/object",1,Place_Object);
 	stop_sub = n.subscribe("/control_logic/stop",1,reset_odo);
+	p_sub = n.subscribe("/control_logic/p2",1,phase_up);
 	
 	occ_pub = n.advertise<nav_msgs::OccupancyGrid>("/mapping/occ",1);
 	map_pub = n.advertise<nav_msgs::MapMetaData>("/mapping/map",1);
@@ -853,11 +862,15 @@ int main(int argc, char **argv)
 	
 	while(ros::ok()){
 
-		Occupancy_Grid=place_map(Occupancy_Grid,x_Current_Pose,y_Current_Pose,robot_delta_x,robot_delta_y,0);
 		/*if(wall==-1){
 			Correct_Map(robot_delta_x,robot_delta_y);
 		}*/
-		place_ir();
+		
+		if(!phase_2){
+			Occupancy_Grid=place_map(Occupancy_Grid,x_Current_Pose,y_Current_Pose,robot_delta_x,robot_delta_y,0);
+			place_ir();
+		}
+			
 		update_robot();
 		Send_Message();
 		Send_Odometry();

@@ -9,6 +9,8 @@
 #include <theia_services/corrected_odo.h>
 #include <theia_services/object.h>
 #include <theia_services/end.h>
+#include <theia_services/blind_done.h>
+#include <theia_services/phase.h>
 #include <path_planner/path_srv.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -91,7 +93,6 @@ void order_slaves(int slave,theia_services::brain_wall wall_req, theia_services:
 		wall_req.request.heading=heading;
 		order_wall.call(wall_req);
 		order_blind.call(blind_req);
-		blind_done = true;
 		break;
 	case 2:
 		wall_req.request.active=false;
@@ -102,9 +103,6 @@ void order_slaves(int slave,theia_services::brain_wall wall_req, theia_services:
 		blind_req.request.heading=heading;
 		order_wall.call(wall_req);
 		order_blind.call(blind_req);
-		blind_done = blind_req.response.done;
-		if(blind_done)
-			ROS_WARN("Blind is done");
 		break;
 	default:
 		wall_req.request.active=false;
@@ -112,7 +110,6 @@ void order_slaves(int slave,theia_services::brain_wall wall_req, theia_services:
 		wall_req.request.heading=heading;
 		order_wall.call(wall_req);
 		order_blind.call(blind_req);
-		// blind_done = blind_done --> no change in status is intended
 		break;
 	}
 
@@ -239,12 +236,31 @@ path_req_f.request.heading = heading_f;
 void grab_path_ans(std::vector<int> *commands_f, std::vector<double> *vals_f, path_planner::path_srv path_req_f){
     (*commands_f).resize(path_req_f.response.size);
     (*vals_f).resize((*commands_f).size());
-    for(int i=0; i < commands.size(); i++){
+    for(int i=0; i < (*commands_f).size(); i++){
         (*commands_f)[i] = path_req_f.response.commands[i];
         (*vals_f)[i] = path_req_f.response.vals[i];
     }
     
-    return void;
+    return;
+}
+
+void blind_flag(theia_services::blind_done::ConstPtr msg){
+
+	blind_done = msg->done;
+	
+	if(blind_done){
+	
+		ROS_WARN("Blind is done");
+	}
+
+}
+
+void pub_phase(ros::Publisher p){
+	theia_services::phase msg;
+	
+	msg.phase_2=phase_2;
+	
+	p.publish(msg);
 }
 
 
@@ -280,9 +296,11 @@ int main(int argc, char ** argv){
 	ros::Subscriber odo_sub = n.subscribe("/mapping/corrected_odo",1,get_odo);
 	ros::Subscriber info_sub = n.subscribe("/control_logic/info",1,get_info);
 	ros::Subscriber raw_sub = n.subscribe("/mapping/occ",1,get_map);
+	ros::Subscriber blind_sub = n.subscribe("/blind/done",1,blind_flag);
 
 	ros::Publisher object_pub = n.advertise<theia_services::object>("/control_logic/object",1);
 	ros::Publisher phase_2_pub = n.advertise<theia_services::end>("/control_logic/stop",1);
+	ros::Publisher p2 = n.advertise<theia_services::phase>("/control_logic/p2",1);
 
 	while(ros::ok()){
 
@@ -291,59 +309,63 @@ int main(int argc, char ** argv){
 
 		if(closed_perimeter(init_time)){
 			if(time_for_more(orig_time) && !phase_2){
-				if(blind_done){
+				if(blind_done){ // I'll call it
 					ROS_INFO("Closed a perimeter and I have time for more");
 					ROS_WARN("I'll call the path planner");
 					order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals);
 					
-                    if(request_map.call(map_req)){
+					if(request_map.call(map_req)){
 
-						path_req = path_req_update(map_req.response.map, cell_round(x*100), cell_round(y*100), gray, heading);
+							path_req = path_req_update(map_req.response.map, cell_round(x*100), cell_round(y*100), gray, heading);
 
-						if(request_path.call(path_req)){
-							
-                            grab_path_ans(&commands, &vals, path_req);
-							
+							if(request_path.call(path_req)){
 
-							if(path_req.response.size<=1){
-								ROS_WARN("No path found. I will go back to the start");
-                                
-                                path_req = path_req_update(map_req.response.map, cell_round(x*100), cell_round(y*100), -1, heading);
+					   			grab_path_ans(&commands, &vals, path_req);
 
-								if(request_path.call(path_req)){
 
-									grab_path_ans(&commands, &vals, path_req);
-                                    
+								if(path_req.response.size<=1){
+									ROS_WARN("No path found. I will go back to the start");
+
+									path_req = path_req_update(map_req.response.map, cell_round(x*100), cell_round(y*100), -1, heading);
+
+									if(request_path.call(path_req)){
+
+										grab_path_ans(&commands, &vals, path_req);
+						    
+									}
+
+									phase_2=true;
+
 								}
+								
+								blind_done = false;
+								slave = 2;
+							}else{
 
-								phase_2=true;
+								ROS_ERROR("Could not get path from path_planner");
 
 							}
 
-							slave = 2;
 						}else{
 
-							ROS_ERROR("Could not get path from path_planner");
+							ROS_ERROR("Could not get processed map from mapping");
 
 						}
 
-					}else{
-
-						ROS_ERROR("Could not get processed map from mapping");
-
-					}
-
-				}
+					} // I'm waiting
 
 
-			}else{
+			}else{ // no time for more OR in phase 2
 
-				if (!phase_2){
+				if (!phase_2){ // no time for more
 
-					ROS_WARN("Ran out of time :(");
+					ROS_ERROR("Ran out of time :(");
+					order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals);
 					phase_2 = true;
 					reset_odo_mapping(phase_2_pub);
 					heading = 'E';
+					ROS_ERROR("Press any key to continue...");
+					getchar();
 				}
 
 				if(blind_done){
@@ -363,7 +385,7 @@ int main(int argc, char ** argv){
 								ROS_WARN("No path found.");
 								slave = 0;
 							}else{
-	
+								blind_done = false;
 								slave = 2;
 							}
 						}else{
@@ -392,7 +414,7 @@ int main(int argc, char ** argv){
 			
 			slave = 1;
 			
-			blind_done = false;
+			//blind_done = true;
 		}
 
 		if(close_object()){
@@ -403,7 +425,8 @@ int main(int argc, char ** argv){
 
         
         //FINISHED CASES
-        order_slaves(slave,wall_req,blind_req,order_wall,order_blind,commands,vals);
+        	pub_phase(p2);
+     		order_slaves(slave,wall_req,blind_req,order_wall,order_blind,commands,vals);
 		loop_rate.sleep();
 		ros::spinOnce();
 	}
