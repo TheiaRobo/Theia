@@ -52,7 +52,6 @@ bool prev_flag = true;
 bool phase_2 = false;
 int goal = -1;
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // FUNCTIONS() SECTION
@@ -290,6 +289,11 @@ void blind_flag(theia_services::blind_done::ConstPtr msg){
 
 	blind_done = msg->done;
 	prev_flag = msg->done;
+
+	if (prev_flag)
+		ROS_WARN("prev_flag = TRUE");
+	else
+		ROS_WARN("prev_flag = FALSE");
 
 	if(blind_done){
 
