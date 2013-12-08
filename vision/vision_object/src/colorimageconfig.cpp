@@ -18,8 +18,8 @@ int colorImageConfigBuild(ColorImageConfig & outConfig){
 		outConfig.minHessian
 	);
 	ros::param::getCached(
-		prefix + "maxMeanSquareError",
-		outConfig.maxMeanSquareError
+		prefix + "maxTotalError",
+		outConfig.maxTotalError
 	);
 	ros::param::getCached(
 		prefix + "numbMatchesHomography",

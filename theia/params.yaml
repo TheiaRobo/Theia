@@ -13,7 +13,7 @@ vision_object:
         colorImage:
             histBins: 32
             minHessian: 400
-            maxMeanSquareError: 0.35
+            maxTotalError: 0.35
             numbMatchesHomography: 6
 vision_plane:
     config:

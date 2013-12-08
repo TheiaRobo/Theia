@@ -10,20 +10,20 @@
 
 class ColorImageResult {
 	public:
-		double histError;
-		double meanError;
-		double meanSquareError;
-		double variance;
+		double colorError;
+		double keypointError;
+		double totalError;
 		cv::Mat homography;
 		std::vector<cv::DMatch> matches;
 
 		ColorImageResult();
+		void calcTotalError(const ColorImageContext & inContext);
 		int getBestMatches(
 			int inNumbMatches,
 			std::vector<cv::DMatch> & outMatches
 		) const;
 		bool isBetterThan(const ColorImageResult & result) const;
-		bool isBetterThan(double maxMeanSquareError) const;
+		bool isBetterThan(double maxTotalError) const;
 		bool isGoodEnough(const ColorImageContext & inContext) const;
 };
 

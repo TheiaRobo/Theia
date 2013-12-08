@@ -9,6 +9,6 @@ extractor(),
 matcher(NORM_L2)
 {
 	histBins = config.histBins;
-	maxMeanSquareError = config.maxMeanSquareError;
+	maxTotalError = config.maxTotalError;
 	numbMatchesHomography = config.numbMatchesHomography;
 }

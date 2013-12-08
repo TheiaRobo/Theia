@@ -148,7 +148,9 @@ int match(){
 			}
 
 			cout << "Object: " << object.name << endl;
-			cout << "Score: " << result.colorImage.meanSquareError << endl;
+			cout << " Color: " << result.colorImage.colorError << endl;
+			cout << " Keypoint: " << result.colorImage.keypointError << endl;
+			cout << " Total: " << result.colorImage.totalError << endl;
 
 			if(result.isGoodEnough(context)){
 				resultVect.push_back(make_pair(object, result));

@@ -10,10 +10,13 @@
 using namespace cv;
 
 ColorImageResult::ColorImageResult(){
-	histError = std::numeric_limits<double>::infinity();
-	meanError = std::numeric_limits<double>::infinity();
-	meanSquareError = std::numeric_limits<double>::infinity();
-	variance = 0;
+	colorError = std::numeric_limits<double>::infinity();
+	keypointError = std::numeric_limits<double>::infinity();
+	totalError = std::numeric_limits<double>::infinity();
+}
+
+void ColorImageResult::calcTotalError(const ColorImageContext & inContext){
+	totalError = colorError + keypointError;
 }
 
 int ColorImageResult::getBestMatches(
@@ -40,15 +43,15 @@ int ColorImageResult::getBestMatches(
 }
 
 bool ColorImageResult::isBetterThan(const ColorImageResult & result) const {
-	return isBetterThan(result.meanSquareError);
+	return isBetterThan(result.totalError);
 }
 
-bool ColorImageResult::isBetterThan(double maxMeanSquareError) const {
-	return (meanSquareError < maxMeanSquareError);
+bool ColorImageResult::isBetterThan(double maxTotalError) const {
+	return (totalError < maxTotalError);
 }
 
 bool ColorImageResult::isGoodEnough(const ColorImageContext & inContext) const {
-	return isBetterThan(inContext.maxMeanSquareError);
+	return isBetterThan(inContext.maxTotalError);
 }
 
 int ColorImageData::findHomography(
@@ -112,6 +115,12 @@ int ColorImageData::match(
 
 	errorCode = matchHistogram(inSample, inContext, outResult);
 	if(errorCode) return errorCode;
+
+	/*
+	* TODO
+	* Make use of context to pass parameters
+	*/
+	outResult.calcTotalError(inContext);
 	
 	return errorCode;
 }
@@ -127,7 +136,7 @@ int ColorImageData::matchHistogram(
 	int method = CV_COMP_INTERSECT;
 
 	error = compareHist(hist, inSample.hist, method);
-	outResult.histError = error;
+	outResult.colorError = error;
 
 	return errorCode;
 }
@@ -161,15 +170,8 @@ int ColorImageData::matchKeypoints(
   		totalSquareError += distance * distance;
   	}
 
-  	double meanError = totalError / numbMatches;
-  	double meanSquareError = totalSquareError / numbMatches;
-  	double variance = meanSquareError - meanError * meanError;
-
-  	outResult.meanError = meanError;
-  	outResult.meanSquareError = meanSquareError;
-  	outResult.variance = variance;
-  	outResult.matches = matches;
-
+  	outResult.keypointError = totalSquareError / numbMatches;
+  	
 	return errorCode;
 }
 
