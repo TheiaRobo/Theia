@@ -29,7 +29,10 @@ class ColorImageResult {
 class ColorImageData {
 	public:
 		std::string path;
-		cv::Mat image;
+		// RGB8 version
+		cv::Mat color;
+		// HLS8 version
+		cv::Mat gray;
 		std::vector<cv::KeyPoint> keypoints;
 		cv::Mat descriptors;
 

@@ -224,7 +224,7 @@ void colorCallback(const ImageConstPtr & colorMsgPtr){
 	int errorCode = 0;
 
 	cv_bridge::CvImagePtr imagePtr;
-	imagePtr = cv_bridge::toCvCopy(colorMsgPtr);
+	imagePtr = cv_bridge::toCvCopy(colorMsgPtr, "bgr8");
 
 	cv::Mat & image = imagePtr->image; 
 	if(!image.data){

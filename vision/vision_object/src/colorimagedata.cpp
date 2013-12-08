@@ -3,6 +3,7 @@
 #include <limits>
 #include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 #include "colorimagedata.h"
 
@@ -55,42 +56,6 @@ int ColorImageData::findHomography(
 	ColorImageResult & ioResult
 ){
 	int errorCode = 0;
-
-/*
-  	size_t numbGoodMatches = inContext.numbMatchesHomography;
-  	size_t numbMatches = ioResult.matches.size();
-  	if(numbMatches < numbGoodMatches){
-  		std::cout << "Error in " << __FUNCTION__ << std::endl;
-  		std::cout << "Not enough matches" << std::endl;
-  		std::cout << path << std::endl;
-  		return -1;
-  	}
-
-  	std::vector<DMatch> goodMatches;
-  	errorCode = ioResult.getBestMatches(numbGoodMatches, goodMatches);
-  	if(errorCode) return errorCode;
-
-  	// construct point vectors
-  	std::vector<Point2f> samplePoints;
-  	std::vector<Point2f> trainPoints;
-  	for(size_t i = 0; i < numbGoodMatches; i++){
-  		size_t sampleIndex = goodMatches[i].trainIdx;
-  		size_t trainIndex = goodMatches[i].queryIdx;
-
-  		samplePoints.push_back(inSample.keypoints[sampleIndex].pt);
-  		trainPoints.push_back(keypoints[trainIndex].pt);
-  	}
-
-  	Mat homography;
-  	try{
-  		// homography = cv::findHomography(trainPoints, samplePoints);
-  		homography = cv::findHomography(trainPoints, samplePoints, CV_RANSAC);
-  	}catch(Exception ex){
-  		std::cout << "Error in " << __FUNCTION__ << std::endl;
-  		std::cout << "Could not find homography" << std::endl;
-  		return -1;
-  	}
-*/
 
   	size_t numbMatches = ioResult.matches.size();
   	if(numbMatches < 4){
@@ -196,9 +161,9 @@ int ColorImageData::showHomography(
 
 	std::vector<Point2f> corners(4);
 	corners[0] = cvPoint(0, 0);
-	corners[1] = cvPoint(image.cols, 0);
-	corners[2] = cvPoint(image.cols, image.rows);
-	corners[3] = cvPoint(0, image.rows);
+	corners[1] = cvPoint(gray.cols, 0);
+	corners[2] = cvPoint(gray.cols, gray.rows);
+	corners[3] = cvPoint(0, gray.rows);
 
 	std::vector<Point2f> transformedCorners(4);
 	perspectiveTransform(
@@ -207,7 +172,7 @@ int ColorImageData::showHomography(
 		inResult.homography
 	);
 
-	Mat imageWithHomography(inSample.image);
+	Mat imageWithHomography(inSample.gray);
 	for(size_t i = 0; i < 4; i++){
 		line(
 			imageWithHomography,
@@ -229,7 +194,7 @@ int ColorImageData::showKeypoints(){
 
 	Mat imageWithKeypoints;
 	drawKeypoints(
-		image,
+		gray,
 		keypoints,
 		imageWithKeypoints,
 		Scalar::all(-1),
@@ -254,8 +219,8 @@ int ColorImageData::showMatches(
 	
 	Mat imageWithMatches;
 	drawMatches(
-		image, keypoints,
-		inSample.image, inSample.keypoints,
+		gray, keypoints,
+		inSample.gray, inSample.keypoints,
 		bestMatches,
 		imageWithMatches,
 		Scalar::all(-1),
@@ -279,7 +244,7 @@ int ColorImageData::train(const ColorImageContext & context){
 		return -1;
 	}
 
-	Mat image = imread(path, CV_LOAD_IMAGE_GRAYSCALE);
+	Mat image = imread(path, CV_LOAD_IMAGE_COLOR);
 	if(!image.data){
 		std::cout << "Error in " << __FUNCTION__ << std::endl;
 		std::cout << "Could not read image" << std::endl;
@@ -299,9 +264,11 @@ int ColorImageData::train(
 ){
 	int errorCode = 0;
 
-	image = inImage;
-	context.detector.detect(image, keypoints);
-	context.extractor.compute(image, keypoints, descriptors);
+	cvtColor(inImage, color, CV_BGR2HLS);
+	cvtColor(inImage, gray, CV_BGR2GRAY);
+
+	context.detector.detect(gray, keypoints);
+	context.extractor.compute(gray, keypoints, descriptors);
 
 	return errorCode;
 }
