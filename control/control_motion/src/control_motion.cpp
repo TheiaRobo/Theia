@@ -66,7 +66,7 @@ double d_paralel=0.015;
 // Forward velocity
 double std_velocity=25.0;
 double wall_velocity=10.0;
-double blind_velocity=30.0;
+double blind_velocity=25.0;
 double cut_speed = 5;
 double velocity_fw=std_velocity;
 double dist_wall_min=0.0;
@@ -101,7 +101,7 @@ int stop_flag=0;
 
 // master
 
-bool wall = true;
+bool blind = true;
 
 // Debug
 int count=0;
@@ -639,7 +639,7 @@ int none(ros::Rate loop_rate){
 	if(ask_logic.call(srv)){
 		if(srv.response.B!=0){
 			ROS_WARN("WALL FOLLOWER ACTIVE");
-			wall = true;
+			blind=false;
 			if(srv.response.B==2){
 				heading_ref=srv.response.parameter;
 			}else if(srv.response.B==3){
@@ -652,7 +652,7 @@ int none(ros::Rate loop_rate){
 		}else if(ask_blind.call(srv)){
 			if(srv.response.B!=0){
 				ROS_WARN("BLIND ACTIVE");
-				wall = false;
+				blind=true;
 				if(srv.response.B==2){
 					ROS_ERROR("WILL ROTATE");
 					heading_ref=srv.response.parameter;
@@ -707,7 +707,7 @@ int forward(ros::Rate loop_rate){
 			return 0;
 		}
 		
-		if(wall){
+		if(!blind){
 			std_velocity=wall_velocity;
 		}else{
 			std_velocity=blind_velocity;

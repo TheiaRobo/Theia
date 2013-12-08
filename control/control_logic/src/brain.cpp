@@ -184,16 +184,24 @@ bool time_for_more(ros::Time orig){
 
 		ROS_WARN("TIME: %.2f",ros::Time::now().toSec()-orig.toSec());
 	}
-	
+
+	if(phase_2)
+		return false;
+
+
 	return true;
 	
 }
 
 bool closed_perimeter(ros::Time init){
 
-	if(!time_for_more(orig_time))
+	if(!time_for_more(orig_time) && !phase_2)
 		return true;
 	
+
+	if(phase_2)
+		return false;
+
 	//ROS_INFO("Distance from starting position: %.2f",sqrt((x-x_i)*(x-x_i)+(y-y_i)*(y-y_i)));
 	if(x_i!=NO_VAL){
 
@@ -236,11 +244,11 @@ int goal_picker(ros::ServiceClient srv){
 			
 		}
 		
-		scanf("%d",ret);
+		scanf("%d",&ret);
 		
 	}
 	
-	return ret-1;
+	return ret;
 	
 	
 }
@@ -346,7 +354,7 @@ int main(int argc, char ** argv){
 		if(closed_perimeter(init_time)){
 			ROS_INFO("Closed a perimeter");
 
-			if(time_for_more(orig_time) && !phase_2){
+			if(time_for_more(orig_time) && !phase_2 && false){ // disabled for now
 				if(blind_done){ // I'll call it
 					ROS_INFO("Closed a perimeter and I have time for more");
 					ROS_WARN("I'll call the path planner");
@@ -405,7 +413,7 @@ int main(int argc, char ** argv){
 					phase_2 = true;
 					slave = 2;
 					reset_odo_mapping(phase_2_pub);
-					heading = 'E';
+					//heading = 'E';
 					ROS_ERROR("Press any key to continue...");
 					getchar();
 				}
@@ -456,6 +464,35 @@ int main(int argc, char ** argv){
 			slave = 1;
 			
 			//blind_done = true;
+		}else if(phase_2){
+			goal = goal_picker(request_objects);
+			ROS_WARN("I'll call the blind");
+			slave = 2;
+			order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals);
+			if(request_map.call(map_req)){
+
+				path_req = path_req_update(map_req.response.map, cell_round(x*100), cell_round(y*100), goal, heading);
+				if(request_path.call(path_req)){
+					grab_path_ans(&commands, &vals, path_req);
+                           
+					if(path_req.response.size<=1){
+						ROS_WARN("No path found.");
+						slave = 0;
+					}else{
+						blind_done = false;
+					}
+				}else{
+	
+					ROS_ERROR("Could not get path from path_planner");
+	
+				}
+			}else{
+				ROS_ERROR("Could not get processed map from mapping");
+	
+			}
+
+			
+
 		}
 		
 		if(!phase_2 && !time_for_more(orig_time)){

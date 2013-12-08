@@ -703,7 +703,7 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 	object_list.push_back(new_object);
 
 
-	distance=convert_object_distance(0.20,0);//msg->distX,msg->distY);	
+	distance=convert_object_distance(msg->distX,msg->distY);	
 
 	switch(heading){
 
@@ -897,7 +897,7 @@ void reset_odo(theia_services::end::ConstPtr msg){
 
 
 	ROS_ERROR("Press any key to reset odometry...");
-	getchar();
+/*	getchar();
 
 	offset_x=odo_x[0];
 	offset_y=odo_y[0];
@@ -917,6 +917,7 @@ void reset_odo(theia_services::end::ConstPtr msg){
 	s_delta_x=0.0;
 	s_delta_y=0.0;
 	heading = 'E';
+*/
 
 }
 
