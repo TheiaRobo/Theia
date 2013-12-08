@@ -11,6 +11,7 @@ class ColorImageContext {
 		cv::SurfFeatureDetector detector;
 		cv::SurfDescriptorExtractor extractor;
 		cv::BFMatcher matcher;
+		int histBins;
 		double maxMeanSquareError;
 		int numbMatchesHomography;
 

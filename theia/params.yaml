@@ -11,13 +11,10 @@ vision_object:
             fovLong: 57.5
         path: /home/amotta/Documents/Theia/vision/vision_object/train
         colorImage:
+            histBins: 32
             minHessian: 400
             maxMeanSquareError: 0.35
             numbMatchesHomography: 6
-        depthImage:
-            blurring: 3
-            cannyLevelOne: 3
-            cannyLevelTwo: 9
 vision_plane:
     config:
         leafSize: 0.02

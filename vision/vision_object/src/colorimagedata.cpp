@@ -266,9 +266,8 @@ int ColorImageData::train(const ColorImageContext & context){
 int ColorImageData::trainHistogram(const ColorImageContext & inContext){
 	int errorCode = 0;
 
-	int hBins = 32;
-	int sBins = 32;
-	int histSize[] = {hBins, sBins};
+	int histBins = inContext.histBins;
+	int histSize[] = {histBins, histBins};
 
 	float hRange[] = {0, 180};
 	float sRange[] = {0, 256};

@@ -8,6 +8,7 @@ detector(config.minHessian),
 extractor(),
 matcher(NORM_L2)
 {
+	histBins = config.histBins;
 	maxMeanSquareError = config.maxMeanSquareError;
 	numbMatchesHomography = config.numbMatchesHomography;
 }

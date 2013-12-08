@@ -3,6 +3,7 @@
 
 class ColorImageConfig {
 	public:
+		int histBins;
 		int minHessian;
 		double maxMeanSquareError;
 		int numbMatchesHomography;
