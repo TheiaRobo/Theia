@@ -11,6 +11,7 @@
 #include <theia_services/end.h>
 #include <theia_services/blind_done.h>
 #include <theia_services/phase.h>
+#include <theia_services/object_list.h>
 #include <path_planner/path_srv.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42,6 +43,7 @@ const int obj_thres=20/(resolution_matrix*100); // in meter to cells
 
 std::vector<signed char>  Raw_Map(x_matrix*y_matrix,white);
 std::vector<signed char>  Proc_Map(x_matrix*y_matrix,white);
+std::vector<std::string> ob_list;
 
 ros::Time orig_time;
 
@@ -190,8 +192,8 @@ bool time_for_more(ros::Time orig){
 
 bool closed_perimeter(ros::Time init){
 
-	/*if(!time_for_more(orig_time)) // NOT WORKING
-		return true;*/
+	if(!time_for_more(orig_time))
+		return true;
 	
 	//ROS_INFO("Distance from starting position: %.2f",sqrt((x-x_i)*(x-x_i)+(y-y_i)*(y-y_i)));
 	if(x_i!=NO_VAL){
@@ -209,12 +211,38 @@ bool closed_perimeter(ros::Time init){
 
 }
 
-int goal_picker(){
+int goal_picker(ros::ServiceClient srv){
 	
-	ROS_INFO("Press any key to go back to the start...");
-	getchar();
+	theia_services::object_list req;
+	int size, ret=-1;
 	
-	return -1;
+	srv.call(req);
+	
+	size = req.response.size;
+	
+	if(size < 1){
+		
+		ROS_ERROR("Did not find any object during exploration phase");
+				
+	}else{
+		
+		ob_list.resize(size);
+		
+		ROS_INFO("Choose object from the list:");
+		for(int i=0; i < size; i++){
+			
+			ob_list[i]=req.response.name[i];
+			
+			std::cout << i+1 << " - " << ob_list[i] << '\n' << std::endl;
+			
+		}
+		
+		scanf("%d",ret);
+		
+	}
+	
+	return ret;
+	
 	
 }
 
@@ -300,6 +328,7 @@ int main(int argc, char ** argv){
 	ros::ServiceClient order_wall = n.serviceClient<theia_services::brain_wall>("/wall_follower/instructions");
 	ros::ServiceClient order_blind = n.serviceClient<theia_services::brain_blind>("/blind/instructions");
 	ros::ServiceClient request_path = n.serviceClient<path_planner::path_srv>("/path_planner/plan_trajectory");
+	ros::ServiceClient request_objects = n.serviceClient<theia_services::object_list>("mapping/objectlist");
 
 	ros::Subscriber odo_sub = n.subscribe("/mapping/corrected_odo",1,get_odo);
 	ros::Subscriber info_sub = n.subscribe("/control_logic/info",1,get_info);
@@ -384,7 +413,7 @@ int main(int argc, char ** argv){
 
 				else if(blind_done){
 					ROS_INFO("Ready to start phase 2");
-					goal = goal_picker();
+					goal = goal_picker(request_objects);
 					ROS_WARN("I'll call the blind");
 					slave = 2;
 					order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals);
@@ -449,9 +478,9 @@ int main(int argc, char ** argv){
 		}
 
         
-        //FINISHED CASES
-        	pub_phase(p2);
-     		order_slaves(slave,wall_req,blind_req,order_wall,order_blind,commands,vals);
+		//FINISHED CASES
+		pub_phase(p2);
+		order_slaves(slave,wall_req,blind_req,order_wall,order_blind,commands,vals);
 		loop_rate.sleep();
 		ros::spinOnce();
 	}

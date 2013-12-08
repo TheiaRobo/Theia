@@ -16,6 +16,7 @@
 #include <theia_services/corrected_odo.h>
 #include <theia_services/end.h>
 #include <theia_services/phase.h>
+#include <theia_services/object_list.h>
 #include <vision_object/Object.h>
 
  //Initialize
@@ -823,6 +824,25 @@ void phase_up(theia_services::phase::ConstPtr msg){
 	phase_2 = msg->phase_2;
 }
 
+bool provide_objects(theia_services::object_list::Request &req, theia_services::object_list::Response &res){
+	
+	std::vector<std::string> ret_list;
+	
+	ret_list.resize(object_list.size());
+	
+	for(int i=0; i < object_list.size(); i++){
+		
+		ret_list[i]=object_list[i].name;
+		
+	}
+	
+	res.name=ret_list;
+	res.size=object_list.size();
+	
+	return true;
+	
+}
+
 // ########################## MAIN ################################
 
 int main(int argc, char **argv)
@@ -849,6 +869,7 @@ int main(int argc, char **argv)
 	
 	
 	ros::ServiceServer map_sender = n.advertiseService("/mapping/ProcessedMap", provide_map);
+	ros::ServiceServer obj_sender = n.advertiseService("mapping/objectlist", provide_objects);
 
 
 	ROS_INFO("Started the mapping Node");
