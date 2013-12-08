@@ -9,6 +9,13 @@ vision_object:
             angle: 0
             fovLat: 45
             fovLong: 57.5
+        cand:
+            minX:  0.00
+            maxX:  0.60
+            minY: -0.15
+            maxY:  0.15
+            minZ: -0.10
+            maxZ:  0.20
         path: /home/amotta/Documents/Theia/vision/vision_object/train
         colorImage:
             histBins: 32

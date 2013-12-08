@@ -103,7 +103,11 @@ int match(){
 	if(!numbCands) return errorCode;
 
 	validCandVect.clear();
-	errorCode = candFilterValid(candVect, validCandVect);
+	errorCode = candFilterValid(
+		candVect,
+		context.candidate,
+		validCandVect
+	);
 	if(errorCode){
 		cout << "Error in " << __FUNCTION__ << endl;
 		cout << "Could not filter valid candidates" << endl;

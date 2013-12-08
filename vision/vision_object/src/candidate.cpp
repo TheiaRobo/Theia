@@ -84,15 +84,13 @@ int Candidate::calcRobCoordsFromBox(
 	return errorCode;
 }
 
-/**
-* TODO
-* Use context in order to define valid region.
-*/
-bool Candidate::isValid() const {	
-	// right
-	if(robYMin < -0.15) return false;
-	// left
-	if(robYMax > +0.15) return false;
+bool Candidate::isValid(const CandidateContext & inContext) const {	
+	if(robXMin < inContext.minX) return false;
+	if(robXMax > inContext.maxX) return false;
+	if(robYMin < inContext.minY) return false;
+	if(robYMax > inContext.maxY) return false;
+	if(robZMin < inContext.minZ) return false;
+	if(robZMax > inContext.maxZ) return false;
 	
 	return true;
 }
@@ -148,6 +146,7 @@ int Candidate::toRect(
 
 int candFilterValid(
 	const vector<Candidate> & inCands,
+	const CandidateContext & inContext,
 	vector<Candidate> & outCands
 ){
 	int errorCode = 0;
@@ -157,7 +156,7 @@ int candFilterValid(
 
 	outCands.clear();
 	for(size_t i = 0; i < numbCands; i++){
-		if(inCands[i].isValid()){
+		if(inCands[i].isValid(inContext)){
 			outCands.push_back(inCands[i]);
 		}
 	}

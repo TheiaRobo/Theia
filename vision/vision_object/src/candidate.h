@@ -6,6 +6,7 @@
 #include <vision_plane/Box.h>
 
 #include "cameracontext.h"
+#include "candidatecontext.h"
 
 class Candidate {
 	public:
@@ -26,7 +27,7 @@ class Candidate {
 			const vision_plane::Box & inBox,
 			const CameraContext & inContext
 		);
-		bool isValid() const;
+		bool isValid(const CandidateContext & inContext) const;
 		int print() const;
 		int toRect(
 			const CameraContext & inContext,
@@ -47,11 +48,13 @@ class Candidate {
 
 int candFilterValid(
 	const std::vector<Candidate> & inCands,
+	const CandidateContext & inContext,
 	std::vector<Candidate> & outCands
 );
 
 int candShow(
 	const std::vector<Candidate> & inCandVect,
+	const CameraContext & inContext,
 	const cv::Mat & inImage,
 	cv::Mat & outImage
 );
