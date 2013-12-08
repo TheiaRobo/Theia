@@ -897,10 +897,10 @@ void reset_odo(theia_services::end::ConstPtr msg){
 
 
 	ROS_ERROR("Press any key to reset odometry...");
-/*	getchar();
+	getchar();
 
-	offset_x=odo_x[0];
-	offset_y=odo_y[0];
+	offset_x=odo_x[0]-x_matrix*resolution_matrix/2;
+	offset_y=odo_y[0]-y_matrix*resolution_matrix/2;
 
 	odo_x[0]=x_matrix*resolution_matrix/2;
 	odo_x[1]=odo_x[0];
@@ -917,7 +917,7 @@ void reset_odo(theia_services::end::ConstPtr msg){
 	s_delta_x=0.0;
 	s_delta_y=0.0;
 	heading = 'E';
-*/
+
 
 }
 

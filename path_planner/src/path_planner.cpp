@@ -152,6 +152,13 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 
 	ROS_INFO("val_to_find = %d", val_to_find);
 	ROS_INFO("lateral_size = %d", lateral_size);
+	
+	if(x_i < 0 || y_i < 0 || x_i >= lateral_size || y_i >= lateral_size){
+		
+		ROS_ERROR("Invalid initial coordinates");
+		return return_error;
+		
+	}
 
 	// values different from white and val_to_find are obstacles
 
