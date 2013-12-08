@@ -66,7 +66,8 @@ double d_paralel=0.015;
 // Forward velocity
 double std_velocity=25.0;
 double wall_velocity=10.0;
-double blind_velocity=30;
+double blind_velocity=30.0;
+double cut_speed = 5;
 double velocity_fw=std_velocity;
 double dist_wall_min=0.0;
 double epsilon_theta=0.00; // 5 degrees
@@ -881,12 +882,12 @@ int forward(ros::Rate loop_rate){
 				initial_flag_dist2break_1 = close_ir;
 				flag_dist2break_1 = 0;
 
-				control_pub(std_velocity,u_theta);
+				control_pub(cut_speed,u_theta);
 			}else{
 				//2 yields (1/2)*std_velocity... 1 gives 0 
 				BreakingRatio_1 = ((inf_thres-close_ir)/(1.1*(inf_thres-dist_thres))); 
 				//control_pub(abs(std_velocity*( 1 - BreakingRatio_1 )),u_theta);
-				control_pub(wall_velocity,u_theta);
+				control_pub(cut_speed,u_theta);
 			}
 		}else{
 			control_pub(std_velocity,u_theta);
@@ -1072,12 +1073,12 @@ int forward_wall(ros::Rate loop_rate){
 				flag_dist2break_3 = 0;
 				initial_flag_dist2break_3 = close_ir; 
 				velocity_fw=std_velocity;
-				control_pub(velocity_fw,u_theta);
+				control_pub(cut_speed,u_theta);
 			}else{
 				BreakingRatio_3 = (inf_thres-close_ir)/(1.1*(inf_thres-dist_thres));	//2 yields (1/2)*std_velocity... 1 gives 0 
 				velocity_fw=abs(std_velocity*( 1 - BreakingRatio_3 ));
 				//control_pub(velocity_fw,u_theta); // u_theta should be the result of a PID controller
-				control_pub(wall_velocity,u_theta);
+				control_pub(cut_speed,u_theta);
 			}
 		}else{
 			//Distance to wall > inf_thres ---> normal

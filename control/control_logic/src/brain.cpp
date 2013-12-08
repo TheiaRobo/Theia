@@ -177,7 +177,6 @@ bool time_for_more(ros::Time orig){
 	
 	if((ros::Time::now().toSec()-orig.toSec()) > 5*60){
 		ROS_WARN("NO TIME FOR MORE!");
-		getchar();
 		phase_2=true;
 		return false;
 		
@@ -241,7 +240,7 @@ int goal_picker(ros::ServiceClient srv){
 		
 	}
 	
-	return ret;
+	return ret-1;
 	
 	
 }

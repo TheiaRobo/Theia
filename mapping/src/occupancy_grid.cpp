@@ -191,6 +191,25 @@ std::vector<signed char> place_map(std::vector<signed char> map,int x_position, 
 	
 }
 
+
+/*
+int Largest_grey(int x_pixel_delta,int y_pixel_delta){
+
+	Corrected_Map=Occupancy_Grid;
+	for(int x=0; x < x_matrix; x++){
+		for(int y=0; y < y_matrix*y_matrix; y+=y_matrix){
+			//ROS_INFO("x: %d y:%d",x,y);
+			//Occupancy_Grid[x+y]=1;
+			if(Occupancy_Grid[x+y]==grey && Occupancy_Grid[x+y]==grey)
+				consecutive_grey++;
+			
+		}
+	}
+	
+
+}*/
+
+
 void Correct_Map(int x_pixel_delta,int y_pixel_delta){
 
 	Corrected_Map=Occupancy_Grid;
