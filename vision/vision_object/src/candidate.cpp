@@ -32,12 +32,11 @@ int candCamCoordsFromBox(
 ){
 	int errorCode = 0;
 
-	double latMin = -atan2(inBox.maxY, inBox.minZ);
-	double latMax = -atan2(inBox.minY, inBox.maxZ);
+	double latMin = atan2(inBox.maxY, inBox.minZ);
+	double latMax = atan2(inBox.minY, inBox.maxZ);
 
-	double longMin = 0;
-	double longMax = 0;
-
+	double longMin;
+	double longMax;
 	if(inBox.maxX < 0){
 		longMin = -atan2(inBox.maxX, inBox.maxZ);
 		longMax = -atan2(inBox.minX, inBox.minZ);
@@ -165,28 +164,28 @@ int candShow(
 	return errorCode;
 }
 
-/**
-* TODO
-* Put this in parameter server
-*/
 int candToRect(
 	const Candidate & inCand,
+	const CameraContext & inContext,
 	const cv::Mat & inImage,
 	cv::Rect & outRect
 ){
-	static double camFOVLat = 45 * M_PI / 180;
-	static double camFOVLong = 57.5 * M_PI / 180;
-
 	int errorCode = 0;
+
+	double camFOVLat = inContext.fovLat * M_PI / 180;
+	double camFOVLong = inContext.fovLong * M_PI / 180;
 
 	size_t imageCols = inImage.cols;
 	size_t imageRows = inImage.rows;
 
-	double minX = imageCols * (0.5 - inCand.camLongMin / camFOVLong);
-	double maxX = imageCols * (0.5 - inCand.camLongMax / camFOVLong);
-	double minY = imageRows * (0.5 - inCand.camLatMin / camFOVLat);
-	double maxY = imageRows * (0.5 - inCand.camLatMax / camFOVLat);
+	double tanDepthX = (double) imageCols / (2 * tan(camFOVLong / 2));
+	double tanDepthY = (double) imageRows / (2 * tan(camFOVLat / 2));
 
+	double minX = tanDepthX * atan(inCand.camLongMin);
+	double maxX = tanDepthX * atan(inCand.camLongMax);
+	double minY = tanDepthY * atan(inCand.camLatMin);
+	double maxY = tanDepthY * atan(inCand.camLatMax);
+	
 	outRect = cv::Rect(
 		cv::Point(minX, minY),
 		cv::Point(maxX, maxY)

@@ -45,6 +45,7 @@ int candShow(
 
 int candToRect(
 	const Candidate & inCand,
+	const CameraContext & inContext,
 	const cv::Mat & inImage,
 	cv::Rect & outRect
 );
