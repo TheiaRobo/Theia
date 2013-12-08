@@ -10,6 +10,7 @@
 
 class ColorImageResult {
 	public:
+		double histError;
 		double meanError;
 		double meanSquareError;
 		double variance;
@@ -62,6 +63,11 @@ class ColorImageData {
 			const ColorImageData & inSample,
 			const ColorImageContext & inContext,
 			ColorImageResult & ioResult
+		);
+		int matchHistogram(
+			const ColorImageData & inSample,
+			const ColorImageContext & inContext,
+			ColorImageResult & outResult
 		);
 		int matchKeypoints(
 			const ColorImageData & inSample,

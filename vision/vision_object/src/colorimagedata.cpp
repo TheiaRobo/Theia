@@ -10,6 +10,7 @@
 using namespace cv;
 
 ColorImageResult::ColorImageResult(){
+	histError = std::numeric_limits<double>::infinity();
 	meanError = std::numeric_limits<double>::infinity();
 	meanSquareError = std::numeric_limits<double>::infinity();
 	variance = 0;
@@ -108,7 +109,26 @@ int ColorImageData::match(
 	errorCode = findHomography(inSample, inContext, outResult);
 	if(errorCode) return errorCode;
 */
+
+	errorCode = matchHistogram(inSample, inContext, outResult);
+	if(errorCode) return errorCode;
 	
+	return errorCode;
+}
+
+int ColorImageData::matchHistogram(
+	const ColorImageData & inSample,
+	const ColorImageContext & inContext,
+	ColorImageResult & outResult
+){
+	int errorCode = 0;
+
+	double error = std::numeric_limits<double>::infinity();
+	int method = CV_COMP_INTERSECT;
+
+	error = compareHist(hist, inSample.hist, method);
+	outResult.histError = error;
+
 	return errorCode;
 }
 
