@@ -140,6 +140,7 @@ int candPrint(const Candidate & inCand){
 
 int candShow(
 	const vector<Candidate> & inCandVect,
+	const CameraContext & inContext,
 	const cv::Mat & inImage,
 	cv::Mat & outImage
 ){
@@ -155,7 +156,7 @@ int candShow(
 		const Candidate & cand = inCandVect[i];
 
 		cv::Rect rect;
-		errorCode = candToRect(cand, outImage, rect);
+		errorCode = candToRect(cand, inContext, outImage, rect);
 		if(errorCode) return errorCode;
 		
 		cv::rectangle(outImage, rect, color);
@@ -185,7 +186,7 @@ int candToRect(
 	double maxX = tanDepthX * atan(inCand.camLongMax);
 	double minY = tanDepthY * atan(inCand.camLatMin);
 	double maxY = tanDepthY * atan(inCand.camLatMax);
-	
+
 	outRect = cv::Rect(
 		cv::Point(minX, minY),
 		cv::Point(maxX, maxY)
