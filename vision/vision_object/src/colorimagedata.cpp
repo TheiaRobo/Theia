@@ -296,8 +296,10 @@ int ColorImageData::trainHistogram(const ColorImageContext & inContext){
 	// hue and saturation only	
 	int channels[] = {0, 2};
 
-	calcHist(&color, 1, channels, Mat(), hist, 2, histSize, ranges);
-
+	MatND workingHist;
+	calcHist(&color, 1, channels, Mat(), workingHist, 2, histSize, ranges);
+	normalize(workingHist, hist);
+	
 	return errorCode;
 }
 
