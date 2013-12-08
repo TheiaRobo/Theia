@@ -64,7 +64,9 @@ double d_paralel=0.015;
 
 
 // Forward velocity
-double std_velocity=20.0;
+double std_velocity=25.0;
+double wall_velocity=10.0;
+double blind_velocity=30;
 double velocity_fw=std_velocity;
 double dist_wall_min=0.0;
 double epsilon_theta=0.00; // 5 degrees
@@ -95,6 +97,10 @@ double delay_thres=3.0; // no real time :(
 int behavior=0; 
 int wall_to_follow=0;
 int stop_flag=0;
+
+// master
+
+bool wall = true;
 
 // Debug
 int count=0;
@@ -632,6 +638,7 @@ int none(ros::Rate loop_rate){
 	if(ask_logic.call(srv)){
 		if(srv.response.B!=0){
 			ROS_WARN("WALL FOLLOWER ACTIVE");
+			wall = true;
 			if(srv.response.B==2){
 				heading_ref=srv.response.parameter;
 			}else if(srv.response.B==3){
@@ -644,6 +651,7 @@ int none(ros::Rate loop_rate){
 		}else if(ask_blind.call(srv)){
 			if(srv.response.B!=0){
 				ROS_WARN("BLIND ACTIVE");
+				wall = false;
 				if(srv.response.B==2){
 					ROS_ERROR("WILL ROTATE");
 					heading_ref=srv.response.parameter;
@@ -697,8 +705,12 @@ int forward(ros::Rate loop_rate){
 			ROS_INFO("Object ahead!\n");
 			return 0;
 		}
-
-		std_velocity=10.0; // sorry :(
+		
+		if(wall){
+			std_velocity=wall_velocity;
+		}else{
+			std_velocity=blind_velocity;
+		}
 
 		//Distance to wall < delay_thres ---> very close! STOP
 		if(wall_in_range(3,dist_thres,ir_readings) || wall_in_range(4,cross_thres1,ir_readings)){ //
@@ -873,7 +885,8 @@ int forward(ros::Rate loop_rate){
 			}else{
 				//2 yields (1/2)*std_velocity... 1 gives 0 
 				BreakingRatio_1 = ((inf_thres-close_ir)/(1.1*(inf_thres-dist_thres))); 
-				control_pub(abs(std_velocity*( 1 - BreakingRatio_1 )),u_theta);
+				//control_pub(abs(std_velocity*( 1 - BreakingRatio_1 )),u_theta);
+				control_pub(wall_velocity,u_theta);
 			}
 		}else{
 			control_pub(std_velocity,u_theta);
@@ -1063,7 +1076,8 @@ int forward_wall(ros::Rate loop_rate){
 			}else{
 				BreakingRatio_3 = (inf_thres-close_ir)/(1.1*(inf_thres-dist_thres));	//2 yields (1/2)*std_velocity... 1 gives 0 
 				velocity_fw=abs(std_velocity*( 1 - BreakingRatio_3 ));
-				control_pub(velocity_fw,u_theta); // u_theta should be the result of a PID controller
+				//control_pub(velocity_fw,u_theta); // u_theta should be the result of a PID controller
+				control_pub(wall_velocity,u_theta);
 			}
 		}else{
 			//Distance to wall > inf_thres ---> normal
