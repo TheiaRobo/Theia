@@ -1,4 +1,5 @@
 <launch>
+	<rosparam command="load" file="$(find theia)/params.yaml"/>
 	<include file="$(find control)/launch/all.launch"/>
 	<include file="$(find core)/launch/all.launch"/>
 	<include file="$(find vision)/launch/all.launch"/>
