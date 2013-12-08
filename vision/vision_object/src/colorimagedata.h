@@ -33,6 +33,7 @@ class ColorImageData {
 		cv::Mat color;
 		// HLS8 version
 		cv::Mat gray;
+		cv::MatND hist;
 		std::vector<cv::KeyPoint> keypoints;
 		cv::Mat descriptors;
 
@@ -67,6 +68,8 @@ class ColorImageData {
 			const ColorImageContext & inContext,
 			ColorImageResult & outResult
 		);
+		int trainHistogram(const ColorImageContext & inContext);
+		int trainKeypoints(const ColorImageContext & inContext);
 };
 
 #endif

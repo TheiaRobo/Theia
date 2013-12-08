@@ -258,6 +258,39 @@ int ColorImageData::train(const ColorImageContext & context){
 	return errorCode;
 }
 
+/**
+* Calculating histogram from HLS8 image
+* Highly inspired by:
+* http://docs.opencv.org/modules/imgproc/doc/histograms.html?highlight=calchist#calchist
+*/
+int ColorImageData::trainHistogram(const ColorImageContext & inContext){
+	int errorCode = 0;
+
+	int hBins = 32;
+	int sBins = 32;
+	int histSize[] = {hBins, sBins};
+
+	float hRange[] = {0, 180};
+	float sRange[] = {0, 256};
+	const float * ranges[] = {hRange, sRange};
+
+	// hue and saturation only	
+	int channels[] = {0, 2};
+
+	calcHist(&color, 1, channels, Mat(), hist, 2, histSize, ranges);
+
+	return errorCode;
+}
+
+int ColorImageData::trainKeypoints(const ColorImageContext & inContext){
+	int errorCode = 0;
+	
+	inContext.detector.detect(gray, keypoints);
+	inContext.extractor.compute(gray, keypoints, descriptors);	
+
+	return errorCode;
+}
+
 int ColorImageData::train(
 	const Mat & inImage,
 	const ColorImageContext & context
@@ -267,8 +300,19 @@ int ColorImageData::train(
 	cvtColor(inImage, color, CV_BGR2HLS);
 	cvtColor(inImage, gray, CV_BGR2GRAY);
 
-	context.detector.detect(gray, keypoints);
-	context.extractor.compute(gray, keypoints, descriptors);
+	errorCode = trainKeypoints(context);
+	if(errorCode){
+		std::cout << "Error in " << __FUNCTION__ << std::endl;
+		std::cout << "Keypoint training failed" << std::endl;
+		return errorCode;
+	}
+
+	errorCode = trainHistogram(context);
+	if(errorCode){
+		std::cout << "Error in " << __FUNCTION__ << std::endl;
+		std::cout << "Histogram training failed" << std::endl;
+		return errorCode;
+	}
 
 	return errorCode;
 }
