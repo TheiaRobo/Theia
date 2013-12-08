@@ -123,7 +123,7 @@ int match(){
 		Candidate & cand = validCandVect[nCand];
 
 		cv::Rect rect;
-		candToRect(cand, context.camera, colorImage, rect);
+		cand.toRect(context.camera, colorImage, rect);
 
 		ObjectData sampleData;
 		ColorImageData & colorData = sampleData.colorImage;
@@ -216,14 +216,7 @@ void boxCallback(const BoxesConstPtr & boxesMsgPtr){
 	for(size_t i = 0; i < numbBoxes; i++){
 		const Box & box = boxVect[i];
 
-		Candidate cand;
-		errorCode = candFromBox(box, context.camera, cand);
-		if(errorCode){
-			cout << "Error in " << __FUNCTION__ << endl;
-			cout << "Conversion from box to candidate failed" << endl;
-			return;	
-		}
-
+		Candidate cand(box, context.camera);
 		candVect.push_back(cand);
 	}
 

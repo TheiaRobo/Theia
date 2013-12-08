@@ -6,29 +6,21 @@
 using namespace std;
 using namespace vision_plane;
 
-int candFilterValid(
-	const vector<Candidate> & inCands,
-	vector<Candidate> & outCands
-){
-	int errorCode = 0;
-
-	size_t numbCands = inCands.size();
-	if(!numbCands) return errorCode;
-
-	outCands.clear();
-	for(size_t i = 0; i < numbCands; i++){
-		if(candIsValid(inCands[i])){
-			outCands.push_back(inCands[i]);
-		}
-	}
-
-	return errorCode;
+Candidate::Candidate(){
+	// nothing
 }
 
-int candCamCoordsFromBox(
+Candidate::Candidate(
 	const Box & inBox,
-	const CameraContext & inContext,
-	Candidate & cand
+	const CameraContext & inContext
+){
+	calcRobCoordsFromBox(inBox, inContext);	
+	calcCamCoordsFromBox(inBox, inContext);
+}
+
+int Candidate::calcCamCoordsFromBox(
+	const Box & inBox,
+	const CameraContext & inContext
 ){
 	int errorCode = 0;
 
@@ -48,18 +40,17 @@ int candCamCoordsFromBox(
 		longMax = -atan2(inBox.minX, inBox.minZ);
 	}
 
-	cand.camLatMin = latMin;
-	cand.camLatMax = latMax;
-	cand.camLongMin = longMin;
-	cand.camLongMax = longMax;
+	camLatMin = latMin;
+	camLatMax = latMax;
+	camLongMin = longMin;
+	camLongMax = longMax;
 
 	return errorCode;
 }
 
-int candRobCoordsFromBox(
+int Candidate::calcRobCoordsFromBox(
 	const Box & inBox,
-	const CameraContext & inContext,
-	Candidate & cand
+	const CameraContext & inContext
 ){
 	int errorCode = 0;
 
@@ -78,62 +69,98 @@ int candRobCoordsFromBox(
 	double robXCenter = offsetX;
 	robXCenter += centerBoxX * cos(offsetAngle);
 	robXCenter += centerBoxZ * sin(offsetAngle);
-	cand.robXMin = robXCenter - lengthBoxX / 2;
-	cand.robXMax = robXCenter + lengthBoxX / 2;
+	robXMin = robXCenter - lengthBoxX / 2;
+	robXMax = robXCenter + lengthBoxX / 2;
 
-	cand.robYMin = offsetY - inBox.maxX;
-	cand.robYMax = offsetY - inBox.minX;
+	robYMin = offsetY - inBox.maxX;
+	robYMax = offsetY - inBox.minX;
 
 	double robZCenter = offsetZ;
 	robZCenter += - centerBoxX * sin(offsetAngle);
 	robZCenter += centerBoxZ * cos(offsetAngle);
-	cand.robZMin = robZCenter - lengthBoxZ / 2;
-	cand.robZMax = robZCenter + lengthBoxZ / 2;
+	robZMin = robZCenter - lengthBoxZ / 2;
+	robZMax = robZCenter + lengthBoxZ / 2;
 
 	return errorCode;
 }
 
-int candFromBox(
-	const Box & inBox,
-	const CameraContext & inContext,
-	Candidate & outCand
-){
-	int errorCode = 0;
-
-	Candidate cand;
-	errorCode = candRobCoordsFromBox(inBox, inContext, cand);	
-	errorCode = candCamCoordsFromBox(inBox, inContext, cand);
-	
-	outCand = cand;
-	
-	return errorCode;
-}
-
-bool candIsValid(const Candidate & inCand){	
+/**
+* TODO
+* Use context in order to define valid region.
+*/
+bool Candidate::isValid() const {	
 	// right
-	if(inCand.robYMin < -0.15) return false;
+	if(robYMin < -0.15) return false;
 	// left
-	if(inCand.robYMax > +0.15) return false;
+	if(robYMax > +0.15) return false;
 	
 	return true;
 }
 
-int candPrint(const Candidate & inCand){
+int Candidate::print() const {
 	int errorCode = 0;
 
 	cout << "Candidate" << endl;
 
-	cout << " xMin: " << inCand.robXMin;
-	cout << " xMax: " << inCand.robXMax;
+	cout << " xMin: " << robXMin;
+	cout << " xMax: " << robXMax;
 	cout << endl;
 
-	cout << " yMin: " << inCand.robYMin;
-	cout << " yMax: " << inCand.robYMax;
+	cout << " yMin: " << robYMin;
+	cout << " yMax: " << robYMax;
 	cout << endl;
 
-	cout << " zMin: " << inCand.robZMin;
-	cout << " zMax: " << inCand.robZMax;
+	cout << " zMin: " << robZMin;
+	cout << " zMax: " << robZMax;
 	cout << endl;
+
+	return errorCode;
+}
+
+int Candidate::toRect(
+	const CameraContext & inContext,
+	const cv::Mat & inImage,
+	cv::Rect & outRect
+) const {
+	int errorCode = 0;
+
+	double camFOVLat = inContext.fovLat * M_PI / 180;
+	double camFOVLong = inContext.fovLong * M_PI / 180;
+
+	size_t imageCols = inImage.cols;
+	size_t imageRows = inImage.rows;
+
+	double tanDepthX = (double) imageCols / (2 * tan(camFOVLong / 2));
+	double tanDepthY = (double) imageRows / (2 * tan(camFOVLat / 2));
+
+	double minX = tanDepthX * atan(camLongMin);
+	double maxX = tanDepthX * atan(camLongMax);
+	double minY = tanDepthY * atan(camLatMin);
+	double maxY = tanDepthY * atan(camLatMax);
+
+	outRect = cv::Rect(
+		cv::Point(minX, minY),
+		cv::Point(maxX, maxY)
+	);
+
+	return errorCode;
+}
+
+int candFilterValid(
+	const vector<Candidate> & inCands,
+	vector<Candidate> & outCands
+){
+	int errorCode = 0;
+
+	size_t numbCands = inCands.size();
+	if(!numbCands) return errorCode;
+
+	outCands.clear();
+	for(size_t i = 0; i < numbCands; i++){
+		if(inCands[i].isValid()){
+			outCands.push_back(inCands[i]);
+		}
+	}
 
 	return errorCode;
 }
@@ -156,41 +183,11 @@ int candShow(
 		const Candidate & cand = inCandVect[i];
 
 		cv::Rect rect;
-		errorCode = candToRect(cand, inContext, outImage, rect);
+		errorCode = cand.toRect(inContext, outImage, rect);
 		if(errorCode) return errorCode;
 		
 		cv::rectangle(outImage, rect, color);
 	}
-
-	return errorCode;
-}
-
-int candToRect(
-	const Candidate & inCand,
-	const CameraContext & inContext,
-	const cv::Mat & inImage,
-	cv::Rect & outRect
-){
-	int errorCode = 0;
-
-	double camFOVLat = inContext.fovLat * M_PI / 180;
-	double camFOVLong = inContext.fovLong * M_PI / 180;
-
-	size_t imageCols = inImage.cols;
-	size_t imageRows = inImage.rows;
-
-	double tanDepthX = (double) imageCols / (2 * tan(camFOVLong / 2));
-	double tanDepthY = (double) imageRows / (2 * tan(camFOVLat / 2));
-
-	double minX = tanDepthX * atan(inCand.camLongMin);
-	double maxX = tanDepthX * atan(inCand.camLongMax);
-	double minY = tanDepthY * atan(inCand.camLatMin);
-	double maxY = tanDepthY * atan(inCand.camLatMax);
-
-	outRect = cv::Rect(
-		cv::Point(minX, minY),
-		cv::Point(maxX, maxY)
-	);
 
 	return errorCode;
 }

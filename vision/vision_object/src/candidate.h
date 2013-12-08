@@ -9,6 +9,11 @@
 
 class Candidate {
 	public:
+		double camLatMin;
+		double camLatMax;
+		double camLongMin;
+		double camLongMax;
+		
 		double robXMin;
 		double robXMax;
 		double robYMin;
@@ -16,10 +21,28 @@ class Candidate {
 		double robZMin;
 		double robZMax;
 
-		double camLatMin;
-		double camLatMax;
-		double camLongMin;
-		double camLongMax;
+		Candidate();
+		Candidate(
+			const vision_plane::Box & inBox,
+			const CameraContext & inContext
+		);
+		bool isValid() const;
+		int print() const;
+		int toRect(
+			const CameraContext & inContext,
+			const cv::Mat & inImage,
+			cv::Rect & outRect
+		) const;
+
+	protected:
+		int calcCamCoordsFromBox(
+			const vision_plane::Box & inBox,
+			const CameraContext & inContext
+		);
+		int calcRobCoordsFromBox(
+			const vision_plane::Box & inBox,
+			const CameraContext & inContext
+		);
 };
 
 int candFilterValid(
@@ -27,27 +50,10 @@ int candFilterValid(
 	std::vector<Candidate> & outCands
 );
 
-int candFromBox(
-	const vision_plane::Box & inBox,
-	const CameraContext & inContext,
-	Candidate & outCand
-);
-
-bool candIsValid(const Candidate & inCand);
-
-int candPrint(const Candidate & inCand);
-
 int candShow(
 	const std::vector<Candidate> & inCandVect,
 	const cv::Mat & inImage,
 	cv::Mat & outImage
-);
-
-int candToRect(
-	const Candidate & inCand,
-	const CameraContext & inContext,
-	const cv::Mat & inImage,
-	cv::Rect & outRect
 );
 
 #endif
