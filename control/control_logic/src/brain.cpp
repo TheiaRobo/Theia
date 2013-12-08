@@ -119,7 +119,7 @@ void order_slaves(int slave,theia_services::brain_wall wall_req, theia_services:
 		break;
 	}
 
-
+	ros::Duration(0.5).sleep();
 }
 
 void get_info(control_logic::info::ConstPtr msg){
@@ -419,7 +419,6 @@ int main(int argc, char ** argv){
 
 									if(path_req.response.size<=1){
 										ROS_WARN("No path found.");
-										slave = 0;
 									}else{
 										blind_done = false;
 									}
@@ -471,7 +470,6 @@ int main(int argc, char ** argv){
 
 							if(path_req.response.size<=1){
 								ROS_WARN("No path found.");
-								slave = 0;
 							}else{
 								blind_done = false;
 							}
@@ -511,6 +509,8 @@ int main(int argc, char ** argv){
 		//  FINISHED CASES
 		////////////////////////////////////////////////////////////////////////////////////////////////
 		pub_phase(p2);
+		if(phase_2)
+			ROS_INFO("IM CALLING SLAVE %d",slave);
 		order_slaves(slave,wall_req,blind_req,order_wall,order_blind,commands,vals);
 		loop_rate.sleep();
 		ros::spinOnce();

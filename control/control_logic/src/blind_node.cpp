@@ -221,16 +221,20 @@ bool status(theia_services::brain_blind::Request &req, theia_services::brain_bli
 		b_commands[i]=req.commands[i];
 	}
 
+	if(active)
+		ROS_INFO("I'm being called and I am active");	
+	else
+		ROS_INFO("I'm being called and I am not active");
 
 	if(req.size<=1 && active){
 		ROS_WARN("There is no path");
 		active = false;
 		done = true;
 	}
-	/*if(req.size>1 && active){
+	if(req.size>1 && active){
 		ROS_INFO("GOT A NEW PATH. PRESS ANY KEY TO GO ON");
 		getchar();
-	}*/
+	}
 	
 	res.done=true;
 	
