@@ -25,8 +25,40 @@ int candFilterValid(
 	return errorCode;
 }
 
+int candCamCoordsFromBox(
+	const Box & inBox,
+	const CameraContext & inContext,
+	Candidate & cand
+){
+	int errorCode = 0;
+
+	double latMin = -atan2(inBox.maxY, inBox.minZ);
+	double latMax = -atan2(inBox.minY, inBox.maxZ);
+
+	double longMin = 0;
+	double longMax = 0;
+
+	if(inBox.maxX < 0){
+		longMin = -atan2(inBox.maxX, inBox.maxZ);
+		longMax = -atan2(inBox.minX, inBox.minZ);
+	}else if(inBox.minX > 0){
+		longMin = -atan2(inBox.maxX, inBox.minZ);
+		longMax = -atan2(inBox.minX, inBox.maxZ);
+	}else{
+		longMin = -atan2(inBox.maxX, inBox.minZ);
+		longMax = -atan2(inBox.minX, inBox.minZ);
+	}
+
+	cand.camLatMin = latMin;
+	cand.camLatMax = latMax;
+	cand.camLongMin = longMin;
+	cand.camLongMax = longMax;
+
+	return errorCode;
+}
+
 int candRobCoordsFromBox(
-	const Box  & inBox,
+	const Box & inBox,
 	const CameraContext & inContext,
 	Candidate & cand
 ){
@@ -71,7 +103,7 @@ int candFromBox(
 
 	Candidate cand;
 	errorCode = candRobCoordsFromBox(inBox, inContext, cand);	
-	// errorCode = candCamCoordsFromBox();
+	errorCode = candCamCoordsFromBox(inBox, inContext, cand);
 	
 	outCand = cand;
 	

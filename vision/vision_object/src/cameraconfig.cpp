@@ -15,9 +15,6 @@ int cameraConfigBuild(CameraConfig & outConfig){
 	ros::param::getCached(prefix + "angle", outConfig.angle);
 	ros::param::getCached(prefix + "totalFOVLat", outConfig.fovLat);
 	ros::param::getCached(prefix + "totalFOVLong", outConfig.fovLong);
-	ros::param::getCached(prefix + "initLat", outConfig.initLat);
-	ros::param::getCached(prefix + "validFOVLat", outConfig.validFovLat);
-	ros::param::getCached(prefix + "validFOVLong", outConfig.validFovLong);
 	
 	return errorCode;
 }

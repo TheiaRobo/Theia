@@ -9,9 +9,6 @@ class CameraConfig {
 		double angle;
 		double fovLat;
 		double fovLong;
-		double initLat;
-		double validFovLat;
-		double validFovLong;
 };
 
 int cameraConfigBuild(CameraConfig & outConfig);

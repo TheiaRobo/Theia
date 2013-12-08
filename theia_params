@@ -7,11 +7,8 @@ vision_object:
             posY: 0
             posZ: 0.35
             angle: 0
-            totalFOVLat: 45
-            totalFOVLong: 57.5
-            initLat: 22.5
-            validFOVLat: 45
-            validFOVLong: 25
+            fovLat: 45
+            fovLong: 57.5
         path: /home/amotta/Documents/Theia/vision/vision_object/train
         colorImage:
             minHessian: 400
