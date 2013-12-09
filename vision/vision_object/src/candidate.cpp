@@ -124,17 +124,22 @@ int Candidate::toRect(
 
 	double camFOVLat = inContext.fovLat * M_PI / 180;
 	double camFOVLong = inContext.fovLong * M_PI / 180;
-
+	
 	size_t imageCols = inImage.cols;
 	size_t imageRows = inImage.rows;
 
 	double tanDepthX = (double) imageCols / (2 * tan(camFOVLong / 2));
 	double tanDepthY = (double) imageRows / (2 * tan(camFOVLat / 2));
 
-	double minX = tanDepthX * atan(camLongMin);
-	double maxX = tanDepthX * atan(camLongMax);
-	double minY = tanDepthY * atan(camLatMin);
-	double maxY = tanDepthY * atan(camLatMax);
+	double minX = imageCols / 2 + tanDepthX * atan(camLongMin);
+	double maxX = imageCols / 2 + tanDepthX * atan(camLongMax);
+	double minY = imageRows / 2 + tanDepthY * atan(camLatMin);
+	double maxY = imageRows / 2 + tanDepthY * atan(camLatMax);
+
+	if(minX < 0) minX = 0;
+	if(maxX > imageCols) maxX = imageCols - 1;
+	if(minY < 0) minY = 0;
+	if(maxY > imageRows) maxY = imageRows - 1;
 
 	outRect = cv::Rect(
 		cv::Point(minX, minY),

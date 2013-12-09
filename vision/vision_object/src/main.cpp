@@ -120,6 +120,9 @@ int match(){
 		return errorCode;
 	}
 
+	cout << "# total candidates: " << numbCands << endl;
+	cout << "# valid candidates: " << numbValidCands << endl;
+
 	pair<Object, ObjectDataResult> bestResult;
 	vector< pair<Object, ObjectDataResult> > resultVect;
 
