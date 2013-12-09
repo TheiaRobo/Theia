@@ -149,9 +149,6 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 			matrix[x][y]=matrix_array[x+y*lateral_size];
 		}
 	}
-
-	ROS_INFO("val_to_find = %d", val_to_find);
-	ROS_INFO("lateral_size = %d", lateral_size);
 	
 	if(x_i < 0 || y_i < 0 || x_i >= lateral_size || y_i >= lateral_size){
 		
@@ -206,9 +203,6 @@ std::vector<node> find_closest(int x_i, int y_i, std::vector<signed char> matrix
 
 
 	// A*
-	//ROS_INFO("Will start A*. Goal found in pos (%d,%d). Lateral size is %d. In pos (868,807) we have the value %d.Press any key to continue...",goal_coords[0],goal_coords[1],lateral_size,matrix[868][807]);
-	//getchar();
-
 
 	node current,n;
 
@@ -627,10 +621,19 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 	if(forward_counter!=0){ 
 		(*commands).push_back(FORWARD);
 		(*vals).push_back(forward_counter);
-	}else if((*vals).size()>0 && (*commands)[(*commands).size()-1]==ROTATE){
+	}else{
+		int size = (*commands).size();
 		
-		(*vals)[(*vals).size()-1]=0; // eliminate useless last rotation
+		if((*commands)[size-1] == 2){
+		
+			ROS_WARN("LAST COMMAND IS A ROTATION THAT I AM GOING TO ELIMINATE");
+			(*vals)[size-1] = 0.0;
+		
+		}
+		
+	
 	}
+	
 	
 	return;
 

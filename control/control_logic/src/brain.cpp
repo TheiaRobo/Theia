@@ -104,8 +104,7 @@ void order_slaves(int slave,theia_services::brain_wall wall_req, theia_services:
 		blind_req.request.vals=vals;
 		blind_req.request.heading=heading;
 		if(!blind_done && prev_flag){
-			ROS_WARN("IM CALLING THE BRAIN! PRESS KEY");
-			getchar();
+			ROS_WARN("IM CALLING THE BRAIN!");
 			prev_flag = false;
 			order_wall.call(wall_req);
 			order_blind.call(blind_req);
@@ -208,7 +207,7 @@ bool closed_perimeter(ros::Time init){
 
 		if((ros::Time::now().toSec()-init.toSec()) > init_time){
 
-			if(sqrt((x-x_i)*(x-x_i)+(y-y_i)*(y-y_i) < P))
+			if(sqrt((x-x_i)*(x-x_i)+(y-y_i)*(y-y_i)) < P)
 				return true;
 
 		}
@@ -375,21 +374,29 @@ int main(int argc, char ** argv){
 						ROS_INFO("Closed a perimeter and I have time for more");
 						ROS_WARN("I'll call the path planner");
 						slave = 2;
-						init_time = ros::Time::now(); // reset time for the closed_perimeter function
 						order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals); // stop everything
-						blind_done=false;
 						if(request_map.call(map_req)){
 							// got a fresh map
 							path_req = path_req_update(map_req.response.map, cell_round(x*100), cell_round(y*100), gray, heading);
 							if(request_path.call(path_req)){
 								grab_path_ans(&commands, &vals, path_req);
 								if(path_req.response.size<=1){
-									ROS_WARN("No path found. I will go back to the start");
-									path_req = path_req_update(map_req.response.map, cell_round(x*100), cell_round(y*100), -1, heading);
-									if(request_path.call(path_req)){
-										grab_path_ans(&commands, &vals, path_req);
+									if(sqrt((x-x_i)*(x-x_i)+(y-y_i)*(y-y_i)) > 2*P){
+										ROS_WARN("No path found. I will go back to the start");
+										path_req = path_req_update(map_req.response.map, cell_round(x*100), cell_round(y*100), -1, heading);
+										if(request_path.call(path_req)){
+											grab_path_ans(&commands, &vals, path_req);
+										}
+									}else{
+										ROS_WARN("No path found and I am close to the start. I'm ready for phase 2.");
 									}
 									phase_2=true;
+								}else{
+								
+									x_i=x;
+									y_i=y;
+									init_time = ros::Time::now(); // reset time for the closed_perimeter function	
+									
 								}
 								blind_done = false;
 							}else{
@@ -406,53 +413,18 @@ int main(int argc, char ** argv){
 						;
 					}
 
-					//  NO Time4more OR phase_2
+					//  NO Time4more
 				}else{
-					if (phase_2){
-						if(blind_done){
-							ROS_INFO("Ready to start phase 2");
-							goal = goal_picker(request_objects);
-							ROS_WARN("I'll call the blind");
-							slave = 2;
-							order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals);
-							if(request_map.call(map_req)){
-
-								path_req = path_req_update(map_req.response.map, cell_round(x*100), cell_round(y*100), goal, heading);
-
-								if(request_path.call(path_req)){
-
-									grab_path_ans(&commands, &vals, path_req);
-
-									if(path_req.response.size<=1){
-										ROS_WARN("No path found.");
-									}else{
-										blind_done = false;
-									}
-								}else{
-
-									ROS_ERROR("Could not get path from path_planner");
-
-								}
-
-							}else{
-
-								ROS_ERROR("Could not get processed map from mapping");
-
-							}
-						}
-
-					}else{
-						//Not it phase_2... Therefore I have no time
-						ROS_ERROR("Ran out of time :(");
-						order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals);
-						phase_2 = true;
-						slave = 2;
-						reset_odo_mapping(phase_2_pub);
-						//heading = 'E';
-						ROS_ERROR("Press any key to continue...");
-						getchar();
-
-					}
+					
+					//I have no time
+					ROS_ERROR("Ran out of time :(");
+					order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals);
+					phase_2 = true;
+					slave = 2;
+					reset_odo_mapping(phase_2_pub);
+					heading = 'E';
+					ROS_ERROR("Press any key to continue...");
+					getchar();
 
 				}
 
@@ -476,9 +448,9 @@ int main(int argc, char ** argv){
 
 							if(path_req.response.size<=1){
 								ROS_WARN("No path found.");
-							}else{
-								blind_done = false;
 							}
+							blind_done = false;
+							
 						}else{
 
 							ROS_ERROR("Could not get path from path_planner");

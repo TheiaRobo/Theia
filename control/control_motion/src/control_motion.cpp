@@ -65,9 +65,9 @@ double d_paralel=0.015;
 
 // Forward velocity
 double std_velocity=25.0;
-double wall_velocity=10.0;
+double wall_velocity=15.0;
 double blind_velocity=25.0;
-double cut_speed = 7;
+double cut_speed = 7.5;
 double velocity_fw=std_velocity;
 double dist_wall_min=0.0;
 double epsilon_theta=0.00; // 5 degrees
@@ -78,7 +78,7 @@ double last_angle = 0.0;
 double forward_distance=20.0;
 
 // Threshold for the sensors
-double heading_thres=0.005;
+double heading_thres=0.01;
 double align_thres=100;//0.003;
 double dist_thres=6.0;
 double max_angle = 0.723; // atan(max_ir/17);
@@ -92,7 +92,6 @@ double cross_thres2=0.0;
 double dist_ref=2.0;
 double inf_thres=20.0;
 double rotation_error_thres=0.10;
-double delay_thres=3.0; // no real time :(
 
 //0 - None; 1 - Forward; 2 - Rotate xº; 3 - Forward with wall
 int behavior=0; 

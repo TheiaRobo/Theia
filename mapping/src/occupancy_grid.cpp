@@ -195,25 +195,6 @@ std::vector<signed char> place_map(std::vector<signed char> map,int x_position, 
 
 }
 
-
-/*
-int Largest_grey(int x_pixel_delta,int y_pixel_delta){
-
-	Corrected_Map=Occupancy_Grid;
-	for(int x=0; x < x_matrix; x++){
-		for(int y=0; y < y_matrix*y_matrix; y+=y_matrix){
-			//ROS_INFO("x: %d y:%d",x,y);
-			//Occupancy_Grid[x+y]=1;
-			if(Occupancy_Grid[x+y]==grey && Occupancy_Grid[x+y]==grey)
-				consecutive_grey++;
-
-		}
-	}
-
-
-}*/
-
-
 void Correct_Map(int x_pixel_delta,int y_pixel_delta){
 
 	std::vector<signed char>  Temp_Map(x_matrix*y_matrix,blue);
@@ -648,30 +629,8 @@ void Send_Message(){
 EVERZTHING IN METERZ
  */
 double * convert_object_distance(double distX, double distY){
-	//ROS_INFO("Lat %.5f", Lat);
-	//ROS_INFO("Long %.5f", Long);
-	//ROS_INFO("Dist: %.5f", dist);
 
 	double * ret_val;
-	//double x_0=0.0;
-	//double y_0=0.0;
-	//double z_0=camera_initial_z; //cms already
-	//double x_i=0.0, y_i=0.0, z_i=0.35;
-
-	// insert code to convert to (dx,dy)	
-	//x_i=(y_i-y_0)*tan(Lat?Lat_0)+x_0;
-	// x_i = 0.35 * tan(Lat + Lat_0) + x_0;
-	//x_i = dist * sin(Lat + Lat_0) + x_0;
-	//x_i=(z_i-(z_0))*tan(Lat+Lat_0)+x_0;
-	//z_i=(x_i-x_0)*tan(Long-Long_0)+z_0;
-	//y_i=((x_i-x_0)*tan(Long+Long_0)+(-y_0));
-	//y_i = -(x_i - x_0) * tan(Long+Long_0);
-	//y_i=y_0;
-	//z_i=z_0;
-
-	//Testing coord
-	//x_i = dist * sin(Lat_0) + x_0;
-	//y_i = 0;
 
 	ret_val=new double(2);
 
@@ -692,7 +651,7 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 	std_msgs::String talk_msg;
 	contest_msgs::evidence comp_msg;
 
-	for(int i=0; i<object_list.size();i++){ // IMPROVE LATER
+	for(int i=0; i<object_list.size();i++){
 		if(object_list[i].name==new_name)
 			return;
 	}
@@ -739,6 +698,7 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 	
 	comp_msg.stamp = ros::Time::now();
 	comp_msg.group_number = 3;
+	// comp_msg.image = image?
 	comp_msg.object_id = new_object.name;
 	
 	//robot/talk
