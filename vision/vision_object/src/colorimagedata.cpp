@@ -301,8 +301,8 @@ int ColorImageData::trainHistogram(const ColorImageContext & inContext){
 	int histBins = inContext.histBins;
 	int histSize[] = {histBins, histBins};
 
-	float hRange[] = {0, 180};
-	float sRange[] = {0, 256};
+	float hRange[] = {0, 360};
+	float sRange[] = {0, 1};
 	const float * ranges[] = {hRange, sRange};
 
 	// hue and saturation only	
@@ -348,7 +348,7 @@ int ColorImageData::train(
 		return errorCode;
 	}
 */
-	
+
 	errorCode = trainHistogram(context);
 	if(errorCode){
 		std::cout << "Error in " << __FUNCTION__ << std::endl;
