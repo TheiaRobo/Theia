@@ -699,7 +699,7 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 	
 	comp_msg.stamp = ros::Time::now();
 	comp_msg.group_number = 3;
-	// comp_msg.image = image?
+	comp_msg.image_evidence = msg->image;
 	comp_msg.object_id = new_object.name;
 	
 	//robot/talk
