@@ -18,11 +18,14 @@ vision_object:
             maxZ:  0.20
         path: /home/amotta/Documents/Theia/vision/vision_object/train
         colorImage:
-            blurRad: 3
-            cannyThresh: 22
+            blurRad: 2
+            cannyThresh: 10
+            coefsColor: 1
+            coefsKeypoints: 0
+            coefsShape: 0.35
             histBins: 32
             minHessian: 400
-            maxTotalError: 0.35
+            maxTotalError: 2
             numbMatchesHomography: 6
 vision_plane:
     config:

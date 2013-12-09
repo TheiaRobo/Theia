@@ -13,6 +13,9 @@ class ColorImageContext {
 		cv::BFMatcher matcher;
 		double blurRad;
 		double cannyThresh;
+		double coefColor;
+		double coefKeypoints;
+		double coefShape;
 		int histBins;
 		double maxTotalError;
 		int numbMatchesHomography;

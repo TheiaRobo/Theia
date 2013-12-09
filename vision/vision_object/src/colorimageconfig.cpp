@@ -18,6 +18,18 @@ int colorImageConfigBuild(ColorImageConfig & outConfig){
 		outConfig.cannyThresh
 	);
 	ros::param::getCached(
+		prefix + "coefColor",
+		outConfig.coefColor
+	);
+	ros::param::getCached(
+		prefix + "coefKeypoints",
+		outConfig.coefKeypoints
+	);
+	ros::param::getCached(
+		prefix + "coefShape",
+		outConfig.coefShape
+	);
+	ros::param::getCached(
 		prefix + "histBins",
 		outConfig.histBins
 	);

@@ -17,9 +17,12 @@ ColorImageResult::ColorImageResult(){
 }
 
 void ColorImageResult::calcTotalError(const ColorImageContext & inContext){
-	// totalError = colorError;
-	totalError = shapeError;
-	// totalError = colorError + keypointError;
+	double total = 0;
+	total += inContext.coefColor * colorError;
+	total += inContext.coefKeypoints * keypointError;
+	total += inContext.coefShape * shapeError;
+
+	totalError = total;
 }
 
 int ColorImageResult::getBestMatches(
@@ -122,10 +125,6 @@ int ColorImageData::match(
 	errorCode = matchShape(inSample, inContext, outResult);
 	if(errorCode) return errorCode;
 
-	/*
-	* TODO
-	* Make use of context to pass parameters
-	*/
 	outResult.calcTotalError(inContext);
 	
 	return errorCode;

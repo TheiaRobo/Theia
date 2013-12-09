@@ -5,6 +5,9 @@ class ColorImageConfig {
 	public:
 		double blurRad;
 		double cannyThresh;
+		double coefColor;
+		double coefKeypoints;
+		double coefShape;
 		int histBins;
 		int minHessian;
 		double maxTotalError;
