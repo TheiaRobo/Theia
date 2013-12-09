@@ -1,12 +1,12 @@
-control_mux: {V_MAX: 10.0, W_MAX: 1.0}
+<control_mux: {V_MAX: 10.0, W_MAX: 1.0}
 core: {L: 21.35, R1: 5.0, R2: 5.0}
 vision_object:
     config:
         camera:
             posX: 0.30
             posY: 0
-            posZ: 0.35
-            angle: 25
+            posZ: 0.28
+            angle: 22.5
             fovLat: 45
             fovLong: 57.5
         cand:
