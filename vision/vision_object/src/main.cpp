@@ -19,7 +19,7 @@
 
 #define NODE_NAME "vision_object"
 #define TOPIC_IN_BOX "/vision/plane/box"
-#define TOPIC_IN_COLOR "/camera/rgb/image_rect"
+#define TOPIC_IN_COLOR "/camera/rgb/image_rect_color"
 #define TOPIC_OUT_OBJECT "/vision/object"
 
 using namespace std;
@@ -122,7 +122,7 @@ int match(){
 
 	cout << "# total candidates: " << numbCands << endl;
 	cout << "# valid candidates: " << numbValidCands << endl;
-	
+
 	pair<Object, ObjectDataResult> bestResult;
 	vector< pair<Object, ObjectDataResult> > resultVect;
 

@@ -16,7 +16,8 @@ ColorImageResult::ColorImageResult(){
 }
 
 void ColorImageResult::calcTotalError(const ColorImageContext & inContext){
-	totalError = colorError + keypointError;
+	//totalError = colorError + keypointError;
+	totalError = colorError;
 }
 
 int ColorImageResult::getBestMatches(
@@ -132,12 +133,10 @@ int ColorImageData::matchHistogram(
 ){
 	int errorCode = 0;
 
-	double error = std::numeric_limits<double>::infinity();
-	int method = CV_COMP_INTERSECT;
-
-	error = compareHist(hist, inSample.hist, method);
+	int method = CV_COMP_HELLINGER;
+	double error = compareHist(hist, inSample.hist, method);
 	outResult.colorError = error;
-
+	
 	return errorCode;
 }
 
@@ -301,8 +300,8 @@ int ColorImageData::trainHistogram(const ColorImageContext & inContext){
 	int histBins = inContext.histBins;
 	int histSize[] = {histBins, histBins};
 
-	float hRange[] = {0, 360};
-	float sRange[] = {0, 1};
+	float hRange[] = {0, 180};
+	float sRange[] = {0, 255};
 	const float * ranges[] = {hRange, sRange};
 
 	// hue and saturation only	
@@ -311,7 +310,7 @@ int ColorImageData::trainHistogram(const ColorImageContext & inContext){
 	MatND workingHist;
 	calcHist(&color, 1, channels, Mat(), workingHist, 2, histSize, ranges);
 	normalize(workingHist, hist);
-	
+
 	return errorCode;
 }
 
