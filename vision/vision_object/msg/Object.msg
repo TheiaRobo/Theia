@@ -4,3 +4,4 @@ string objectName
 float32 objectAngle
 float32 distX
 float32 distY
+sensor_msgs/Image image

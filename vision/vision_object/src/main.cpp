@@ -88,6 +88,12 @@ int publishResults(
 	msg.distX = (cand.robXMin + cand.robXMax) / 2;
 	msg.distY = (cand.robYMin + cand.robYMax) / 2;
 
+	// convert colorImage to image message
+	cv_bridge::CvImage cvImage;
+	cvImage.encoding = "bgr8";
+	cvImage.image = colorImage;
+	cvImage.toImageMsg(msg.image);
+
 	objectPub.publish(msg);
 
 	return errorCode;
