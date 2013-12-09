@@ -119,6 +119,9 @@ int ColorImageData::match(
 	errorCode = matchHistogram(inSample, inContext, outResult);
 	if(errorCode) return errorCode;
 
+	errorCode = matchShape(inSample, inContext, outResult);
+	if(errorCode) return errorCode;
+
 	/*
 	* TODO
 	* Make use of context to pass parameters
