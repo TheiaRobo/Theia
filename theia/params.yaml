@@ -11,7 +11,7 @@ vision_object:
             fovLong: 57.5
         cand:
             minX:  0.00
-            maxX:  0.60
+            maxX:  0.40
             minY: -0.15
             maxY:  0.15
             minZ: -0.10
