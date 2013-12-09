@@ -168,10 +168,11 @@ bool execute(theia_services::MotionCommand::Request &req, theia_services::Motion
 	current_idx++;
 
 	if(current_idx >= b_parameters.size()){
-		//ROS_WARN("Finished the instructions. press any key to go on");
+		ROS_WARN("Finished the instructions.");
 		//getchar();
 		done = true;
-		warn_brain();
+		if(current_idx==b_parameters.size())
+			warn_brain();
 		res.B=0;
 		return true;
 		
@@ -230,6 +231,7 @@ bool status(theia_services::brain_blind::Request &req, theia_services::brain_bli
 		ROS_WARN("There is no path");
 		active = false;
 		done = true;
+		warn_brain();
 	}
 	if(req.size>1 && active){
 		ROS_INFO("GOT A NEW PATH. PRESS ANY KEY TO GO ON");

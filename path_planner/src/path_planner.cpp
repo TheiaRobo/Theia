@@ -95,7 +95,7 @@ double g_cost(int coords[2], int prev_coords[2], int prev_from_coords[2]){
 
 		}else{ // implies rotation
 
-			return 100;
+			return 200;
 		}
 
 	}else{ // movement along y
@@ -104,7 +104,7 @@ double g_cost(int coords[2], int prev_coords[2], int prev_from_coords[2]){
 
 			return 1;
 		}else{
-			return 100;
+			return 200;
 		}
 	}
 
@@ -627,9 +627,11 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 	if(forward_counter!=0){ 
 		(*commands).push_back(FORWARD);
 		(*vals).push_back(forward_counter);
-	}else if((*vals).size()!=0){
-		(*vals)[(*vals).size()-1]=0;
+	}else if((*vals).size()>0 && (*commands)[(*commands).size()-1]==ROTATE){
+		
+		(*vals)[(*vals).size()-1]=0; // eliminate useless last rotation
 	}
+	
 	return;
 
 }

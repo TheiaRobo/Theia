@@ -104,6 +104,8 @@ void order_slaves(int slave,theia_services::brain_wall wall_req, theia_services:
 		blind_req.request.vals=vals;
 		blind_req.request.heading=heading;
 		if(!blind_done && prev_flag){
+			ROS_WARN("IM CALLING THE BRAIN! PRESS KEY");
+			getchar();
 			prev_flag = false;
 			order_wall.call(wall_req);
 			order_blind.call(blind_req);
@@ -460,7 +462,7 @@ int main(int argc, char ** argv){
 				////////////////////////////////////////////////////////////////////////////////////////////////
 			}else{
 
-				if(phase_2){
+				if(phase_2 && blind_done){
 
 					goal = goal_picker(request_objects);
 					ROS_WARN("I'll call the blind");
@@ -514,7 +516,7 @@ int main(int argc, char ** argv){
 		////////////////////////////////////////////////////////////////////////////////////////////////
 		pub_phase(p2);
 		if(phase_2)
-			ROS_INFO("IM CALLING SLAVE %d",slave);
+			ROS_INFO("IM CALLING SLAVE %d. Blind done: %d and prev_flag: %d",slave,blind_done,prev_flag);
 		order_slaves(slave,wall_req,blind_req,order_wall,order_blind,commands,vals);
 		loop_rate.sleep();
 		ros::spinOnce();

@@ -18,6 +18,7 @@
   <depend package="theia_services"/>
   <depend package="vision_object"/>
   <depend package="robot_talk"/>
+  <depend package="contest_msgs"/>
 
 </package>
 

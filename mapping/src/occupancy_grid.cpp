@@ -20,6 +20,7 @@
 #include <vision_object/Object.h>
 #include <cv.h>
 #include <opencv2/highgui/highgui.hpp>
+#include <contest_msgs/evidence.h>
 
 //Initialize
 const float PI=3.1415926f;
@@ -95,6 +96,7 @@ ros::Publisher object_pub;
 ros::Publisher odo_pub;
 ros::Publisher corrected_map_pub;
 ros::Publisher talk_pub;
+ros::Publisher comp_pub;
 ros::Subscriber	odometry_sub;
 ros::Subscriber	camera_sub;
 ros::Subscriber	logic_sub;
@@ -688,6 +690,7 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 	geometry_msgs::Point pos;
 	std::string new_name=msg->objectName;
 	std_msgs::String talk_msg;
+	contest_msgs::evidence comp_msg;
 
 	for(int i=0; i<object_list.size();i++){ // IMPROVE LATER
 		if(object_list[i].name==new_name)
@@ -733,6 +736,11 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 
 	talk_msg.data = new_object.name;
 	talk_pub.publish(talk_msg);
+	
+	comp_msg.stamp = ros::Time::now();
+	comp_msg.group_number = 3;
+	comp_msg.object_id = new_object.name;
+	
 	//robot/talk
 
 	object_marker.header.frame_id = "/mapping";
@@ -968,6 +976,7 @@ int main(int argc, char **argv)
 	corrected_map_pub = n.advertise<nav_msgs::OccupancyGrid>("/mapping/corrected_map",1);
 	odo_pub = n.advertise<theia_services::corrected_odo>("/mapping/corrected_odo",1);
 	talk_pub = n.advertise<std_msgs::String>("robot/talk",1);
+	comp_pub = n.advertise<contest_msgs::evidence>("/contest_evidence",1);
 
 
 	ros::ServiceServer map_sender = n.advertiseService("/mapping/ProcessedMap", provide_map);
