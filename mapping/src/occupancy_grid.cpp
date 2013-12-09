@@ -75,6 +75,7 @@ double s_delta_x=0.0;
 double s_delta_y=0.0;
 double offset_x=0.0;
 double offset_y=0.0;
+double offset_heading = 0.0;
 
 const int freq=100;
 
@@ -128,7 +129,7 @@ void Get_Readings_Odometry(nav_msgs::Odometry::ConstPtr odometry_msg){
 
 	odo_x[0]=odometry_msg->pose.pose.position.x+x_matrix*resolution_matrix/2-offset_x;
 	odo_y[0]=odometry_msg->pose.pose.position.y+y_matrix*resolution_matrix/2-offset_y;
-	odo_theta=atan2(odometry_msg->pose.pose.orientation.z,odometry_msg->pose.pose.orientation.w)*2;
+	odo_theta=atan2(odometry_msg->pose.pose.orientation.z,odometry_msg->pose.pose.orientation.w)*2 - offset_heading;
 
 
 	delta_x=odo_x[0]-odo_x[1];
@@ -864,11 +865,9 @@ bool provide_map(theia_services::mapsrv::Request &req, theia_services::mapsrv::R
 void reset_odo(theia_services::end::ConstPtr msg){
 
 
-	ROS_ERROR("Press any key to reset odometry...");
-	getchar();
-
 	offset_x=odo_x[0]-x_matrix*resolution_matrix/2;
 	offset_y=odo_y[0]-y_matrix*resolution_matrix/2;
+	offset_heading = odo_theta;
 
 	odo_x[0]=x_matrix*resolution_matrix/2;
 	odo_x[1]=odo_x[0];
@@ -885,6 +884,9 @@ void reset_odo(theia_services::end::ConstPtr msg){
 	s_delta_x=0.0;
 	s_delta_y=0.0;
 	heading = 'E';
+	
+	ROS_ERROR("Press any key when on start position...");
+	getchar();
 
 
 }
