@@ -350,10 +350,11 @@ int ColorImageData::trainShape(const ColorImageContext & inContext){
 	int errorCode = 0;
 
 	Mat blurredImage;
-	blur(gray, blurredImage, Size(3,3));
+	Size blurSize(inContext.blurRad, inContext.blurRad);
+	blur(gray, blurredImage, blurSize);
 
 	Mat cannyImage;
-	double thresh = 22;
+	double thresh = inContext.cannyThresh;
 	Canny(blurredImage, cannyImage, thresh, thresh * 2);
 	
 	vector< vector< Point > > contours;

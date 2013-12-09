@@ -3,6 +3,8 @@
 
 class ColorImageConfig {
 	public:
+		double blurRad;
+		double cannyThresh;
 		int histBins;
 		int minHessian;
 		double maxTotalError;

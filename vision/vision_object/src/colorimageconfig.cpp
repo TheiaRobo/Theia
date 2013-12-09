@@ -10,6 +10,14 @@ int colorImageConfigBuild(ColorImageConfig & outConfig){
 
 	string prefix = "~config/colorImage/"; 
 	ros::param::getCached(
+		prefix + "blurRad",
+		outConfig.blurRad
+	); 
+	ros::param::getCached(
+		prefix + "cannyThresh",
+		outConfig.cannyThresh
+	);
+	ros::param::getCached(
 		prefix + "histBins",
 		outConfig.histBins
 	);

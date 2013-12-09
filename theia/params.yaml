@@ -18,6 +18,8 @@ vision_object:
             maxZ:  0.20
         path: /home/amotta/Documents/Theia/vision/vision_object/train
         colorImage:
+            blurRad: 3
+            cannyThresh: 22
             histBins: 32
             minHessian: 400
             maxTotalError: 0.35
