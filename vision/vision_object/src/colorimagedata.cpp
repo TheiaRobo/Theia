@@ -3,15 +3,21 @@
 #include <limits>
 #include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 #include "colorimagedata.h"
 
 using namespace cv;
 
 ColorImageResult::ColorImageResult(){
-	meanError = std::numeric_limits<double>::infinity();
-	meanSquareError = std::numeric_limits<double>::infinity();
-	variance = 0;
+	colorError = std::numeric_limits<double>::infinity();
+	keypointError = std::numeric_limits<double>::infinity();
+	totalError = std::numeric_limits<double>::infinity();
+}
+
+void ColorImageResult::calcTotalError(const ColorImageContext & inContext){
+	//totalError = colorError + keypointError;
+	totalError = colorError;
 }
 
 int ColorImageResult::getBestMatches(
@@ -38,15 +44,15 @@ int ColorImageResult::getBestMatches(
 }
 
 bool ColorImageResult::isBetterThan(const ColorImageResult & result) const {
-	return isBetterThan(result.meanSquareError);
+	return isBetterThan(result.totalError);
 }
 
-bool ColorImageResult::isBetterThan(double maxMeanSquareError) const {
-	return (meanSquareError < maxMeanSquareError);
+bool ColorImageResult::isBetterThan(double maxTotalError) const {
+	return (totalError < maxTotalError);
 }
 
 bool ColorImageResult::isGoodEnough(const ColorImageContext & inContext) const {
-	return isBetterThan(inContext.maxMeanSquareError);
+	return isBetterThan(inContext.maxTotalError);
 }
 
 int ColorImageData::findHomography(
@@ -55,42 +61,6 @@ int ColorImageData::findHomography(
 	ColorImageResult & ioResult
 ){
 	int errorCode = 0;
-
-/*
-  	size_t numbGoodMatches = inContext.numbMatchesHomography;
-  	size_t numbMatches = ioResult.matches.size();
-  	if(numbMatches < numbGoodMatches){
-  		std::cout << "Error in " << __FUNCTION__ << std::endl;
-  		std::cout << "Not enough matches" << std::endl;
-  		std::cout << path << std::endl;
-  		return -1;
-  	}
-
-  	std::vector<DMatch> goodMatches;
-  	errorCode = ioResult.getBestMatches(numbGoodMatches, goodMatches);
-  	if(errorCode) return errorCode;
-
-  	// construct point vectors
-  	std::vector<Point2f> samplePoints;
-  	std::vector<Point2f> trainPoints;
-  	for(size_t i = 0; i < numbGoodMatches; i++){
-  		size_t sampleIndex = goodMatches[i].trainIdx;
-  		size_t trainIndex = goodMatches[i].queryIdx;
-
-  		samplePoints.push_back(inSample.keypoints[sampleIndex].pt);
-  		trainPoints.push_back(keypoints[trainIndex].pt);
-  	}
-
-  	Mat homography;
-  	try{
-  		// homography = cv::findHomography(trainPoints, samplePoints);
-  		homography = cv::findHomography(trainPoints, samplePoints, CV_RANSAC);
-  	}catch(Exception ex){
-  		std::cout << "Error in " << __FUNCTION__ << std::endl;
-  		std::cout << "Could not find homography" << std::endl;
-  		return -1;
-  	}
-*/
 
   	size_t numbMatches = ioResult.matches.size();
   	if(numbMatches < 4){
@@ -143,6 +113,29 @@ int ColorImageData::match(
 	errorCode = findHomography(inSample, inContext, outResult);
 	if(errorCode) return errorCode;
 */
+
+	errorCode = matchHistogram(inSample, inContext, outResult);
+	if(errorCode) return errorCode;
+
+	/*
+	* TODO
+	* Make use of context to pass parameters
+	*/
+	outResult.calcTotalError(inContext);
+	
+	return errorCode;
+}
+
+int ColorImageData::matchHistogram(
+	const ColorImageData & inSample,
+	const ColorImageContext & inContext,
+	ColorImageResult & outResult
+){
+	int errorCode = 0;
+
+	int method = CV_COMP_HELLINGER;
+	double error = compareHist(hist, inSample.hist, method);
+	outResult.colorError = error;
 	
 	return errorCode;
 }
@@ -154,6 +147,15 @@ int ColorImageData::matchKeypoints(
 ){
 	int errorCode = 0;
 
+	size_t numbKeypoints = keypoints.size();
+	size_t sampleNumbKeypoints = inSample.keypoints.size();
+
+	if(!numbKeypoints || !sampleNumbKeypoints){
+		std::cout << "Warning in " << __FUNCTION__ << std::endl;
+		std::cout << "Matching of empty descriptor set" << std::endl;
+		return errorCode;
+	}
+
 	std::vector<DMatch> matches;
   	inContext.matcher.match(
   		descriptors,
@@ -161,9 +163,10 @@ int ColorImageData::matchKeypoints(
   		matches
   	);
 
-  	size_t numbMatches;
-  	numbMatches = matches.size();
+  	size_t numbMatches = matches.size();
   	if(!numbMatches){
+  		std::cout << "Warning in " << __FUNCTION__ << std::endl;
+  		std::cout << "Empty set of matches" << std::endl;
   		return errorCode;
   	}
 
@@ -176,15 +179,8 @@ int ColorImageData::matchKeypoints(
   		totalSquareError += distance * distance;
   	}
 
-  	double meanError = totalError / numbMatches;
-  	double meanSquareError = totalSquareError / numbMatches;
-  	double variance = meanSquareError - meanError * meanError;
-
-  	outResult.meanError = meanError;
-  	outResult.meanSquareError = meanSquareError;
-  	outResult.variance = variance;
-  	outResult.matches = matches;
-
+  	outResult.keypointError = totalSquareError / numbMatches;
+  	
 	return errorCode;
 }
 
@@ -196,9 +192,9 @@ int ColorImageData::showHomography(
 
 	std::vector<Point2f> corners(4);
 	corners[0] = cvPoint(0, 0);
-	corners[1] = cvPoint(image.cols, 0);
-	corners[2] = cvPoint(image.cols, image.rows);
-	corners[3] = cvPoint(0, image.rows);
+	corners[1] = cvPoint(gray.cols, 0);
+	corners[2] = cvPoint(gray.cols, gray.rows);
+	corners[3] = cvPoint(0, gray.rows);
 
 	std::vector<Point2f> transformedCorners(4);
 	perspectiveTransform(
@@ -207,7 +203,7 @@ int ColorImageData::showHomography(
 		inResult.homography
 	);
 
-	Mat imageWithHomography(inSample.image);
+	Mat imageWithHomography(inSample.gray);
 	for(size_t i = 0; i < 4; i++){
 		line(
 			imageWithHomography,
@@ -229,7 +225,7 @@ int ColorImageData::showKeypoints(){
 
 	Mat imageWithKeypoints;
 	drawKeypoints(
-		image,
+		gray,
 		keypoints,
 		imageWithKeypoints,
 		Scalar::all(-1),
@@ -254,8 +250,8 @@ int ColorImageData::showMatches(
 	
 	Mat imageWithMatches;
 	drawMatches(
-		image, keypoints,
-		inSample.image, inSample.keypoints,
+		gray, keypoints,
+		inSample.gray, inSample.keypoints,
 		bestMatches,
 		imageWithMatches,
 		Scalar::all(-1),
@@ -279,7 +275,7 @@ int ColorImageData::train(const ColorImageContext & context){
 		return -1;
 	}
 
-	Mat image = imread(path, CV_LOAD_IMAGE_GRAYSCALE);
+	Mat image = imread(path, CV_LOAD_IMAGE_COLOR);
 	if(!image.data){
 		std::cout << "Error in " << __FUNCTION__ << std::endl;
 		std::cout << "Could not read image" << std::endl;
@@ -293,15 +289,71 @@ int ColorImageData::train(const ColorImageContext & context){
 	return errorCode;
 }
 
+/**
+* Calculating histogram from HLS8 image
+* Highly inspired by:
+* http://docs.opencv.org/modules/imgproc/doc/histograms.html?highlight=calchist#calchist
+*/
+int ColorImageData::trainHistogram(const ColorImageContext & inContext){
+	int errorCode = 0;
+
+	int histBins = inContext.histBins;
+	int histSize[] = {histBins, histBins};
+
+	float hRange[] = {0, 180};
+	float sRange[] = {0, 255};
+	const float * ranges[] = {hRange, sRange};
+
+	// hue and saturation only	
+	int channels[] = {0, 2};
+
+	MatND workingHist;
+	calcHist(&color, 1, channels, Mat(), workingHist, 2, histSize, ranges);
+	normalize(workingHist, hist);
+
+	return errorCode;
+}
+
+int ColorImageData::trainKeypoints(const ColorImageContext & inContext){
+	int errorCode = 0;
+	
+	inContext.detector.detect(gray, keypoints);
+	inContext.extractor.compute(gray, keypoints, descriptors);	
+
+	return errorCode;
+}
+
 int ColorImageData::train(
 	const Mat & inImage,
 	const ColorImageContext & context
 ){
 	int errorCode = 0;
 
-	image = inImage;
-	context.detector.detect(image, keypoints);
-	context.extractor.compute(image, keypoints, descriptors);
+	cvtColor(inImage, color, CV_BGR2HLS);
+	cvtColor(inImage, gray, CV_BGR2GRAY);
+
+	errorCode = trainKeypoints(context);
+	if(errorCode){
+		std::cout << "Error in " << __FUNCTION__ << std::endl;
+		std::cout << "Keypoint training failed" << std::endl;
+		return errorCode;
+	}
+
+/*
+	errorCode = showKeypoints();
+	if(errorCode){
+		std::cout << "Error in " << __FUNCTION__ << std::endl;
+		std::cout << "Could not show keypoints" << std::endl;
+		return errorCode;
+	}
+*/
+
+	errorCode = trainHistogram(context);
+	if(errorCode){
+		std::cout << "Error in " << __FUNCTION__ << std::endl;
+		std::cout << "Histogram training failed" << std::endl;
+		return errorCode;
+	}
 
 	return errorCode;
 }

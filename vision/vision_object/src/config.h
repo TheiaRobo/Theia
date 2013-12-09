@@ -4,12 +4,14 @@
 #include <string>
 
 #include "cameraconfig.h"
+#include "candidateconfig.h"
 #include "colorimageconfig.h"
 
 class Config {
 	public:
 		std::string path;
 		CameraConfig camera;
+		CandidateConfig candidate;
 		ColorImageConfig colorImage;
 };
 

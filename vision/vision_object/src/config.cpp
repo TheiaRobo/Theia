@@ -2,8 +2,6 @@
 #include <string>
 #include <ros/ros.h>
 
-#include "cameraconfig.h"
-#include "colorimageconfig.h"
 #include "config.h"
 
 using namespace std;
@@ -18,6 +16,13 @@ int configBuild(Config & outConfig){
 	if(errorCode){
 		cout << "Error in " << __FUNCTION__ << endl;
 		cout << "Could not build camera configuration" << endl;
+		return errorCode;
+	}
+
+	errorCode = candidateConfigBuild(outConfig.candidate);
+	if(errorCode){
+		cout << "Error in " << __FUNCTION__ << endl;
+		cout << "Could not build candidate configuration" << endl;
 		return errorCode;
 	}
 

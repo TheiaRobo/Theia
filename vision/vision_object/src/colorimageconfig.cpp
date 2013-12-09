@@ -10,12 +10,16 @@ int colorImageConfigBuild(ColorImageConfig & outConfig){
 
 	string prefix = "~config/colorImage/"; 
 	ros::param::getCached(
+		prefix + "histBins",
+		outConfig.histBins
+	);
+	ros::param::getCached(
 		prefix + "minHessian",
 		outConfig.minHessian
 	);
 	ros::param::getCached(
-		prefix + "maxMeanSquareError",
-		outConfig.maxMeanSquareError
+		prefix + "maxTotalError",
+		outConfig.maxTotalError
 	);
 	ros::param::getCached(
 		prefix + "numbMatchesHomography",

@@ -3,8 +3,9 @@
 
 class ColorImageConfig {
 	public:
+		int histBins;
 		int minHessian;
-		double maxMeanSquareError;
+		double maxTotalError;
 		int numbMatchesHomography;
 };
 

@@ -19,7 +19,7 @@
 
 #define NODE_NAME "vision_object"
 #define TOPIC_IN_BOX "/vision/plane/box"
-#define TOPIC_IN_COLOR "/camera/rgb/image_rect"
+#define TOPIC_IN_COLOR "/camera/rgb/image_rect_color"
 #define TOPIC_OUT_OBJECT "/vision/object"
 
 using namespace std;
@@ -28,11 +28,11 @@ using namespace sensor_msgs;
 
 Config config;
 Context context(config);
+vector<Object> objectVect;
 vector<Candidate> candVect;
 vector<Candidate> validCandVect;
-vector<Object> objectVect;
-ObjectData sampleData;
 bool candVectReady;
+cv::Mat colorImage;
 bool colorImageReady;
 ros::Subscriber boxSub;
 ros::Subscriber colorImageSub;
@@ -108,7 +108,11 @@ int match(){
 	}
 
 	validCandVect.clear();
-	errorCode = candFilterValid(candVect, validCandVect);
+	errorCode = candFilterValid(
+		candVect,
+		context.candidate,
+		validCandVect
+	);
 	if(errorCode){
 		cout << "Error in " << __FUNCTION__ << endl;
 		cout << "Could not filter valid candidates" << endl;
@@ -121,27 +125,48 @@ int match(){
 		return errorCode;
 	}
 
+	cout << "# total candidates: " << numbCands << endl;
+	cout << "# valid candidates: " << numbValidCands << endl;
+
 	pair<Object, ObjectDataResult> bestResult;
 	vector< pair<Object, ObjectDataResult> > resultVect;
 
-	for(size_t i = 0; i < numbObjects; i++){
-		// Better:
-		// const Object & object = objectVect[i];
-		Object & object = objectVect[i];
+	for(size_t nCand = 0; nCand < numbValidCands; nCand++){
+		Candidate & cand = validCandVect[nCand];
 
-		ObjectDataResult result;
-		errorCode = object.match(sampleData, context, result);
+		cv::Rect rect;
+		cand.toRect(context.camera, colorImage, rect);
+
+		ObjectData sampleData;
+		ColorImageData & colorData = sampleData.colorImage;
+
+		cv::Mat candImage(colorImage, rect);
+		errorCode = colorData.train(candImage, context.colorImage);
 		if(errorCode){
 			cout << "Error in " << __FUNCTION__ << endl;
-			cout << "Object matching failed" << endl;
+			cout << "Could not train color image" << endl;
 			return errorCode;
 		}
 
-		cout << "Object: " << object.name << endl;
-		cout << "Score: " << result.colorImage.meanSquareError << endl;
+		for(size_t nObj = 0; nObj < numbObjects; nObj++){
+			Object & object = objectVect[nObj];
 
-		if(result.isGoodEnough(context)){
-			resultVect.push_back(make_pair(object, result));
+			ObjectDataResult result;
+			errorCode = object.match(sampleData, context, result);
+			if(errorCode){
+				cout << "Error in " << __FUNCTION__ << endl;
+				cout << "Object matching failed" << endl;
+				return errorCode;
+			}
+
+			cout << "Object: " << object.name << endl;
+			cout << " Color: " << result.colorImage.colorError << endl;
+			cout << " Keypoint: " << result.colorImage.keypointError << endl;
+			cout << " Total: " << result.colorImage.totalError << endl;
+
+			if(result.isGoodEnough(context)){
+				resultVect.push_back(make_pair(object, result));
+			}
 		}
 	}
 
@@ -203,14 +228,7 @@ void boxCallback(const BoxesConstPtr & boxesMsgPtr){
 	for(size_t i = 0; i < numbBoxes; i++){
 		const Box & box = boxVect[i];
 
-		Candidate cand;
-		errorCode = candFromBox(box, context.camera, cand);
-		if(errorCode){
-			cout << "Error in " << __FUNCTION__ << endl;
-			cout << "Conversion from box to candidate failed" << endl;
-			return;	
-		}
-
+		Candidate cand(box, context.camera);
 		candVect.push_back(cand);
 	}
 
@@ -229,21 +247,12 @@ void colorCallback(const ImageConstPtr & colorMsgPtr){
 	int errorCode = 0;
 
 	cv_bridge::CvImagePtr imagePtr;
-	imagePtr = cv_bridge::toCvCopy(colorMsgPtr);
+	imagePtr = cv_bridge::toCvCopy(colorMsgPtr, "bgr8");
 
-	cv::Mat & image = imagePtr->image; 
-	if(!image.data){
+	colorImage = imagePtr->image; 
+	if(!colorImage.data){
 		cout << "Error in " << __FUNCTION__ << endl;
 		cout << "Could not convert image to OpenCV data" << endl;
-		return;
-	}
-
-	ColorImageData & imageData = sampleData.colorImage;
-	ColorImageContext & imageContext = context.colorImage;
-	errorCode = imageData.train(image, imageContext);
-	if(errorCode){
-		cout << "Error in " << __FUNCTION__ << endl;
-		cout << "Could not train color image" << endl;
 		return;
 	}
 

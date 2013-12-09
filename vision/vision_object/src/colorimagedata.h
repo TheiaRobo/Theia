@@ -10,26 +10,31 @@
 
 class ColorImageResult {
 	public:
-		double meanError;
-		double meanSquareError;
-		double variance;
+		double colorError;
+		double keypointError;
+		double totalError;
 		cv::Mat homography;
 		std::vector<cv::DMatch> matches;
 
 		ColorImageResult();
+		void calcTotalError(const ColorImageContext & inContext);
 		int getBestMatches(
 			int inNumbMatches,
 			std::vector<cv::DMatch> & outMatches
 		) const;
 		bool isBetterThan(const ColorImageResult & result) const;
-		bool isBetterThan(double maxMeanSquareError) const;
+		bool isBetterThan(double maxTotalError) const;
 		bool isGoodEnough(const ColorImageContext & inContext) const;
 };
 
 class ColorImageData {
 	public:
 		std::string path;
-		cv::Mat image;
+		// RGB8 version
+		cv::Mat color;
+		// HLS8 version
+		cv::Mat gray;
+		cv::MatND hist;
 		std::vector<cv::KeyPoint> keypoints;
 		cv::Mat descriptors;
 
@@ -59,11 +64,18 @@ class ColorImageData {
 			const ColorImageContext & inContext,
 			ColorImageResult & ioResult
 		);
+		int matchHistogram(
+			const ColorImageData & inSample,
+			const ColorImageContext & inContext,
+			ColorImageResult & outResult
+		);
 		int matchKeypoints(
 			const ColorImageData & inSample,
 			const ColorImageContext & inContext,
 			ColorImageResult & outResult
 		);
+		int trainHistogram(const ColorImageContext & inContext);
+		int trainKeypoints(const ColorImageContext & inContext);
 };
 
 #endif
