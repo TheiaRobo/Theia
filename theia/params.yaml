@@ -1,0 +1,33 @@
+<control_mux: {V_MAX: 10.0, W_MAX: 1.0}
+core: {L: 21.35, R1: 5.0, R2: 5.0}
+vision_object:
+    config:
+        camera:
+            posX: -0.15
+            posY: 0
+            posZ: 0.28
+            angle: 22.5
+            fovLat: 45
+            fovLong: 57.5
+        cand:
+            minX:  0.00
+            maxX:  0.40
+            minY: -0.15
+            maxY:  0.15
+            minZ: -0.10
+            maxZ:  0.20
+        path: /home/amotta/Documents/Theia/vision/vision_object/train
+        colorImage:
+            histBins: 32
+            minHessian: 400
+            maxTotalError: 0.35
+            numbMatchesHomography: 6
+vision_plane:
+    config:
+        leafSize: 0.02
+        minClusterSize: 5
+        minPercentage: 0.15
+        numbIterations: 1000
+        objectSize: 0.05
+        planeDistThresh: 0.02
+        planeOptimize: 1
