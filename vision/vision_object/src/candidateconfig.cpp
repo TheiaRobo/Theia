@@ -8,7 +8,7 @@ using namespace std;
 int candidateConfigBuild(CandidateConfig & outConfig){
 	int errorCode = 0;
 
-	string prefix = "~config/cand";
+	string prefix = "~config/cand/";
 	ros::param::getCached(prefix + "minX", outConfig.minX);
 	ros::param::getCached(prefix + "maxX", outConfig.maxX);
 	ros::param::getCached(prefix + "minY", outConfig.minY);
