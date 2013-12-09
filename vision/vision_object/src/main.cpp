@@ -73,8 +73,8 @@ int publishResults(
 	vector< pair<Object, ObjectDataResult> > workingVect(inResults);
 	sort(workingVect.begin(), workingVect.end(), compareResultPairs);
 
-	const Object & object = inResults[0].first;
-	const ObjectDataResult & result = inResults[0].second;
+	const Object & object = workingVect[0].first;
+	const ObjectDataResult & result = workingVect[0].second;
 
 	// TODO
 	// improve
