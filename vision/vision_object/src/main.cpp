@@ -80,7 +80,7 @@ int publishResults(
 	// improve
 	const Candidate & cand = validCandVect[0];
 
-	cout << "Best Object: " << object.name;
+	cout << "Best Object: " << object.name << endl;
 	
 	vision_object::Object msg;
 	msg.objectName = object.name;
@@ -122,7 +122,7 @@ int match(){
 
 	cout << "# total candidates: " << numbCands << endl;
 	cout << "# valid candidates: " << numbValidCands << endl;
-
+	
 	pair<Object, ObjectDataResult> bestResult;
 	vector< pair<Object, ObjectDataResult> > resultVect;
 
