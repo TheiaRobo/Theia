@@ -16,7 +16,7 @@ const float PI = 3.1415926f;
 
 //IR distance thresholds
 double front_max = 20.0;
-double front_min = 6.0;
+double front_min = 7.0;
 double side_max = 20.0;
 double side_min = 4.0;
 double side_ref = 4.0;
@@ -31,9 +31,9 @@ double range_exc = 20.0;
 double info_heading_ref = 0;
 double drive_mode = 0;
 double forward_avoid = 22.0;
-double forward_standard = 22.0;
-double forward_medium = 32.0;
-double forward_extended = 37.0;
+double forward_standard = 23.0;
+double forward_medium = 33.0;
+double forward_extended = 35.0;
 const int hist_size = 100;
 const int ir_size = 8;
 const int median_size = 3;
@@ -457,65 +457,38 @@ int * consecutive_rotations(void){
  * It will be called just when a wall is seen in front and we hace two options to choose.Then we have to decide where to rotate
  */
 int stuck(void){
-    
-	int i=1;
-	int flag_stuck=0;
-    
-    
-	for (i=1; i<hist_size; i++){
-		
-        if (history[i].driving_mode == 2){
-			if(history[i].driving_parameters == PI/2){
-                if(history[i+1].driving_parameters == -PI/2){
-                    if(history[i+2].driving_parameters == PI/2){
-                        if(history[i+3].driving_parameters == -PI/2){
-                            return 1;
-                        }
-                    }
-                }
-            }
-        }
-        
-        if (history[i].driving_mode == 2){
-			if(history[i].driving_parameters == -PI/2){
-                if(history[i+1].driving_parameters == PI/2){
-                    if(history[i+2].driving_parameters == -PI/2){
-                        if(history[i+3].driving_parameters == PI/2){
-                            return 1;
-                        }
-                    }
-                }
-            }
-        }
-        
-        /*
-         if (history[i].driving_mode == 2){
-         if(history[i].driving_parameters == -PI/2){
-         if(history[i+1].driving_parameters == -PI/2){
-         if(history[i+2].driving_parameters == -PI/2){
-         if(history[i+3].driving_parameters == -PI/2){
-         return 1;
-         }
-         }
-         }
-         }
-         }
-         
-         
-         if (history[i].driving_mode == 2){
-         if(history[i].driving_parameters == PI/2){
-         if(history[i+1].driving_parameters == PI/2){
-         if(history[i+2].driving_parameters == PI/2){
-         if(history[i+3].driving_parameters == PI/2){
-         return 1;
-         }
-         }
-         }
-         }
-         }
-         */
-        
-    }
+   std::vector<float> rots(4);
+   int rot_count=0;
+   
+   for(int i=1; i < hist_size && rot_count < 4; i++){
+   	if(history[i].driving_mode==2){
+   		rots[rot_count]=history[i].driving_parameters;
+   		rot_count++;
+   		
+   	}
+   }
+   
+   if(rot_count < 4){
+   	
+   	return 0;
+   
+   }
+   	
+   if(rots[0]==PI/2)
+   	if(rots[1]==-PI/2)
+   		if(rots[2]==PI/2)
+   			if(rots[3]==-PI/2)
+   				return 1;
+   				
+    if(rots[0]==-PI/2)
+   	if(rots[1]==PI/2)
+   		if(rots[2]==-PI/2)
+   			if(rots[3]==PI/2)
+   				return 1;
+   		
+   				
+   
+   
 	return 0;
 }
 
@@ -674,24 +647,24 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
     
 	int history_idx = 0, *rot_count=0;
 	bool turn=true;
-    
+
 	if(ir[0]==0 && ir[1]==0 && ir[2]==0 && ir[3]==0 && ir[4]==0 && ir[5]==0 && ir[6]==0 && ir[7]==0){
 		res.B=0;
 		return true;
 	}
-    
+
 	if(!active){ // motion will have to ask somewhere else
 		res.B=0;
 		initialize_history();
 		theia_services::stop stop_msg;
 		return true;
-        
+
 	}
-    
+
 	info_wall=0;
 	ros::Duration refresh(0.1);
 	refresh.sleep(); // wait a bit before sending new orders
-    
+
 	//Get empty space in history vector
 	shift_history();
     if (!stuck()){
@@ -867,7 +840,7 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
                 }
                 
             }else if ( !cross_detection()  &&  !object_detection() && flag_avoid){
-                //We are avoiding now something. A pointy wall or an object
+                //We are now avoiding something. A pointy wall or an object
                 //After rotation we want it to go forward and start the rotation behavior
                 history[0].driving_mode = 1;
                 history[0].driving_parameters=forward_avoid;
@@ -1020,6 +993,7 @@ bool think(theia_services::MotionCommand::Request &req, theia_services::MotionCo
             
         }
     }else{
+    	ROS_ERROR("I'M STUCK");
         history[0].driving_mode=2;
         history[0].driving_parameters=rotate2_last_wall();
     }

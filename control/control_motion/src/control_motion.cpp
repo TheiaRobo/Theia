@@ -67,7 +67,7 @@ double d_paralel=0.015;
 double std_velocity=25.0;
 double wall_velocity=10.0;
 double blind_velocity=25.0;
-double cut_speed = 7.5;
+double cut_speed = 7.0;
 double velocity_fw=std_velocity;
 double dist_wall_min=0.0;
 double epsilon_theta=0.00; // 5 degrees
@@ -80,7 +80,7 @@ double forward_distance=20.0;
 // Threshold for the sensors
 double heading_thres=0.01;
 double align_thres=100;//0.003;
-double dist_thres=6.0;
+double dist_thres=7.0;
 double max_angle = 0.723; // atan(max_ir/17);
 double ERROR_VAL = -123456789;
 const int OUTLIERS_MIN = 3000000;
@@ -89,7 +89,7 @@ int cross_outliers = 0;
 double cross_thres1=0.0;
 double cross_thres2=0.0;
 
-double dist_ref=2.0;
+double dist_ref=3.0;
 double inf_thres=20.0;
 double rotation_error_thres=0.10;
 
@@ -495,7 +495,7 @@ double paralel_controller(int wall,double ir_wall[2],double t_ref,double d_ref,d
 
 	double error_theta=0.0, error_dist=0.0,u_theta=0.0,u_dist=0.0;
 	double k_theta = 4;
-	double k_u_dist = 5;
+	double k_u_dist = 4;
 	
 	// get angle and distance to wall
 	error_theta=compute_ir_error(wall,ir_wall,t_ref);
