@@ -137,6 +137,17 @@ int Candidate::toRect(
 	double minY = imageRows / 2 + tanDepthY * atan(camLatMin);
 	double maxY = imageRows / 2 + tanDepthY * atan(camLatMax);
 
+	double centerX = (minX + maxX) / 2;
+	double lengthX = (maxX - minX) / 2;
+	double centerY = (minY + maxY) / 2;
+	double lengthY = (maxY - minY) / 2;
+
+	double factor = 1.5;
+	minX = centerX - factor * lengthX;
+	maxX = centerX + factor * lengthX;
+	minY = centerY - factor * lengthY;
+	maxY = centerY + factor * lengthY;
+	
 	if(minX < 0) minX = 0;
 	if(maxX > imageCols) maxX = imageCols - 1;
 	if(minY < 0) minY = 0;
