@@ -1,5 +1,6 @@
 #include <cmath>
 #include <iostream>
+#include <opencv2/highgui/highgui.hpp>
 
 #include "candidate.h"
 
@@ -131,8 +132,8 @@ int Candidate::toRect(
 	double tanDepthX = (double) imageCols / (2 * tan(camFOVLong / 2));
 	double tanDepthY = (double) imageRows / (2 * tan(camFOVLat / 2));
 
-	double minX = imageCols / 2 + tanDepthX * atan(camLongMin);
-	double maxX = imageCols / 2 + tanDepthX * atan(camLongMax);
+	double minX = imageCols / 2 - tanDepthX * atan(camLongMin);
+	double maxX = imageCols / 2 - tanDepthX * atan(camLongMax);
 	double minY = imageRows / 2 + tanDepthY * atan(camLatMin);
 	double maxY = imageRows / 2 + tanDepthY * atan(camLatMax);
 
@@ -172,26 +173,28 @@ int candFilterValid(
 int candShow(
 	const vector<Candidate> & inCandVect,
 	const CameraContext & inContext,
-	const cv::Mat & inImage,
-	cv::Mat & outImage
+	const cv::Mat & inImage
 ){
 	int errorCode = 0;
 
 	size_t numbCands = inCandVect.size();
 	if(!numbCands) return errorCode;
 
-	outImage = inImage.clone();
+	cv::Mat image = inImage.clone();
 	const cv::Scalar color(0, 255, 255);
 
 	for(size_t i = 0; i < numbCands; i++){
 		const Candidate & cand = inCandVect[i];
 
 		cv::Rect rect;
-		errorCode = cand.toRect(inContext, outImage, rect);
+		errorCode = cand.toRect(inContext, image, rect);
 		if(errorCode) return errorCode;
 		
-		cv::rectangle(outImage, rect, color);
+		cv::rectangle(image, rect, color);
 	}
+
+	cv::imshow("Candidates", image);
+	cv::waitKey(0);
 
 	return errorCode;
 }

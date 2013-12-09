@@ -55,8 +55,7 @@ int candFilterValid(
 int candShow(
 	const std::vector<Candidate> & inCandVect,
 	const CameraContext & inContext,
-	const cv::Mat & inImage,
-	cv::Mat & outImage
+	const cv::Mat & inImage
 );
 
 #endif
