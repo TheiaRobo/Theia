@@ -63,8 +63,8 @@ int Candidate::calcRobCoordsFromBox(
 	double lengthBoxX = (inBox.maxZ - inBox.minZ);
 	double centerBoxX = (inBox.minZ + inBox.maxZ) / 2;
 
-	double lengthBoxZ = (inBox.maxX - inBox.minX);
-	double centerBoxZ = - (inBox.minX + inBox.maxX) / 2;
+	double lengthBoxZ = (inBox.maxY - inBox.minY);
+	double centerBoxZ = -(inBox.minY + inBox.maxY) / 2;
 
 	// world coordinates
 	double robXCenter = offsetX;
