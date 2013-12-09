@@ -12,12 +12,14 @@ using namespace cv;
 ColorImageResult::ColorImageResult(){
 	colorError = std::numeric_limits<double>::infinity();
 	keypointError = std::numeric_limits<double>::infinity();
+	shapeError = std::numeric_limits<double>::infinity();
 	totalError = std::numeric_limits<double>::infinity();
 }
 
 void ColorImageResult::calcTotalError(const ColorImageContext & inContext){
-	totalError = colorError + keypointError;
 	// totalError = colorError;
+	totalError = shapeError;
+	// totalError = colorError + keypointError;
 }
 
 int ColorImageResult::getBestMatches(
@@ -181,6 +183,24 @@ int ColorImageData::matchKeypoints(
 
 	outResult.keypointError = totalSquareError / numbMatches;
 	
+	return errorCode;
+}
+
+int ColorImageData::matchShape(
+	const ColorImageData & inSample,
+	const ColorImageContext & inContext,
+	ColorImageResult & outResult
+){
+	int errorCode = 0;
+
+	double error = matchShapes(
+		shape,
+		inSample.shape,
+		CV_CONTOURS_MATCH_I1,
+		0
+	);
+	outResult.shapeError = error;
+
 	return errorCode;
 }
 
@@ -372,7 +392,6 @@ int ColorImageData::trainShape(const ColorImageContext & inContext){
 
 	imshow("Shape", drawing);
 	waitKey(0);
-
 
 	return errorCode;
 }

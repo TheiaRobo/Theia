@@ -142,7 +142,7 @@ int Candidate::toRect(
 	double centerY = (minY + maxY) / 2;
 	double lengthY = (maxY - minY) / 2;
 
-	double factor = 1.5;
+	double factor = 2;
 	minX = centerX - factor * lengthX;
 	maxX = centerX + factor * lengthX;
 	minY = centerY - factor * lengthY;

@@ -81,6 +81,12 @@ int publishResults(
 	const Candidate & cand = validCandVect[0];
 
 	cout << "Best Object: " << object.name << endl;
+	cout << "Object: " << object.name << endl;
+	cout << " Color: " << result.colorImage.colorError << endl;
+	cout << " Keypoint: " << result.colorImage.keypointError << endl;
+	cout << " Shape: " << result.colorImage.shapeError << endl;
+	cout << " Total: " << result.colorImage.totalError << endl;
+
 	
 	vision_object::Object msg;
 	msg.objectName = object.name;
@@ -126,6 +132,8 @@ int match(){
 		return errorCode;
 	}
 
+	candShow(validCandVect, context.camera, colorImage);
+
 	cout << "# total candidates: " << numbCands << endl;
 	cout << "# valid candidates: " << numbValidCands << endl;
 
@@ -159,11 +167,6 @@ int match(){
 				cout << "Object matching failed" << endl;
 				return errorCode;
 			}
-
-			cout << "Object: " << object.name << endl;
-			cout << " Color: " << result.colorImage.colorError << endl;
-			cout << " Keypoint: " << result.colorImage.keypointError << endl;
-			cout << " Total: " << result.colorImage.totalError << endl;
 
 			if(result.isGoodEnough(context)){
 				resultVect.push_back(make_pair(object, result));

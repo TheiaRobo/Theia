@@ -12,6 +12,7 @@ class ColorImageResult {
 	public:
 		double colorError;
 		double keypointError;
+		double shapeError;
 		double totalError;
 		cv::Mat homography;
 		std::vector<cv::DMatch> matches;
@@ -38,7 +39,7 @@ class ColorImageData {
 		cv::Mat descriptors;
 		std::vector<cv::KeyPoint> keypoints;
 		std::vector<cv::Point> shape;
-		
+
 		int match(
 			const ColorImageData & inSample,
 			const ColorImageContext & inContext,
@@ -71,6 +72,11 @@ class ColorImageData {
 			ColorImageResult & outResult
 		);
 		int matchKeypoints(
+			const ColorImageData & inSample,
+			const ColorImageContext & inContext,
+			ColorImageResult & outResult
+		);
+		int matchShape(
 			const ColorImageData & inSample,
 			const ColorImageContext & inContext,
 			ColorImageResult & outResult
