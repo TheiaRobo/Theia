@@ -621,7 +621,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 	if(forward_counter!=0){ 
 		(*commands).push_back(FORWARD);
 		(*vals).push_back(forward_counter);
-	}else{
+	}/*else{
 		int size = (*commands).size();
 		
 		if((*commands)[size-1] == 2){
@@ -632,7 +632,7 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 		}
 		
 	
-	}
+	}*/
 	
 	
 	return;

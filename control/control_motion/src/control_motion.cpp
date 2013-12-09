@@ -65,7 +65,7 @@ double d_paralel=0.015;
 
 // Forward velocity
 double std_velocity=25.0;
-double wall_velocity=15.0;
+double wall_velocity=10.0;
 double blind_velocity=25.0;
 double cut_speed = 7.5;
 double velocity_fw=std_velocity;

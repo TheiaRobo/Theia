@@ -27,7 +27,7 @@ double y=NO_VAL;
 double x_i=NO_VAL;
 double y_i=NO_VAL;
 double init_time = 45; //sec
-double P=0.05; //meter
+double P=0.15; //meter
 char heading='E';
 
 const int black=100;
