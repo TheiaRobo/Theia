@@ -148,6 +148,15 @@ int ColorImageData::matchKeypoints(
 ){
 	int errorCode = 0;
 
+	size_t numbKeypoints = keypoints.size();
+	size_t sampleNumbKeypoints = inSample.keypoints.size();
+
+	if(!numbKeypoints || !sampleNumbKeypoints){
+		std::cout << "Warning in " << __FUNCTION__ << std::endl;
+		std::cout << "Matching of empty descriptor set" << std::endl;
+		return errorCode;
+	}
+
 	std::vector<DMatch> matches;
   	inContext.matcher.match(
   		descriptors,
@@ -155,9 +164,10 @@ int ColorImageData::matchKeypoints(
   		matches
   	);
 
-  	size_t numbMatches;
-  	numbMatches = matches.size();
+  	size_t numbMatches = matches.size();
   	if(!numbMatches){
+  		std::cout << "Warning in " << __FUNCTION__ << std::endl;
+  		std::cout << "Empty set of matches" << std::endl;
   		return errorCode;
   	}
 
@@ -330,6 +340,15 @@ int ColorImageData::train(
 		return errorCode;
 	}
 
+/*
+	errorCode = showKeypoints();
+	if(errorCode){
+		std::cout << "Error in " << __FUNCTION__ << std::endl;
+		std::cout << "Could not show keypoints" << std::endl;
+		return errorCode;
+	}
+*/
+	
 	errorCode = trainHistogram(context);
 	if(errorCode){
 		std::cout << "Error in " << __FUNCTION__ << std::endl;
