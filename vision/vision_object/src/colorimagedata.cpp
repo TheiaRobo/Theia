@@ -16,8 +16,8 @@ ColorImageResult::ColorImageResult(){
 }
 
 void ColorImageResult::calcTotalError(const ColorImageContext & inContext){
-	//totalError = colorError + keypointError;
-	totalError = colorError;
+	totalError = colorError + keypointError;
+	// totalError = colorError;
 }
 
 int ColorImageResult::getBestMatches(
@@ -62,39 +62,39 @@ int ColorImageData::findHomography(
 ){
 	int errorCode = 0;
 
-  	size_t numbMatches = ioResult.matches.size();
-  	if(numbMatches < 4){
-  		std::cout << "Error in " << __FUNCTION__ << std::endl;
-  		std::cout << "Not enough keypoints for finding homography" << std::endl;
-  		return -1;
-  	}
+	size_t numbMatches = ioResult.matches.size();
+	if(numbMatches < 4){
+		std::cout << "Error in " << __FUNCTION__ << std::endl;
+		std::cout << "Not enough keypoints for finding homography" << std::endl;
+		return -1;
+	}
 
-  	// construct point vectors  	
-  	std::vector<Point2f> objectPoints;
-  	std::vector<Point2f> samplePoints;
-  	for(size_t i = 0; i < numbMatches; i++){
-  		size_t objectPointIndex = ioResult.matches[i].queryIdx;
-  		size_t samplePointIndex = ioResult.matches[i].trainIdx;
+	// construct point vectors  	
+	std::vector<Point2f> objectPoints;
+	std::vector<Point2f> samplePoints;
+	for(size_t i = 0; i < numbMatches; i++){
+		size_t objectPointIndex = ioResult.matches[i].queryIdx;
+		size_t samplePointIndex = ioResult.matches[i].trainIdx;
 
-  		objectPoints.push_back(keypoints[objectPointIndex].pt);
-  		samplePoints.push_back(inSample.keypoints[samplePointIndex].pt);
-  	}
+		objectPoints.push_back(keypoints[objectPointIndex].pt);
+		samplePoints.push_back(inSample.keypoints[samplePointIndex].pt);
+	}
 
-  	Mat homography;
-  	try{
-  		homography = cv::findHomography(
-  			objectPoints,
-  			samplePoints,
-  			CV_LMEDS,
-  			10
-  		);
-  	}catch(Exception ex){
-  		std::cout << "Error in " << __FUNCTION__ << std::endl;
-  		std::cout << "Could not find homography" << std::endl;
-  		return -1;
-  	}
+	Mat homography;
+	try{
+		homography = cv::findHomography(
+			objectPoints,
+			samplePoints,
+			CV_LMEDS,
+			10
+		);
+	}catch(Exception ex){
+		std::cout << "Error in " << __FUNCTION__ << std::endl;
+		std::cout << "Could not find homography" << std::endl;
+		return -1;
+	}
 
-  	ioResult.homography = homography;
+	ioResult.homography = homography;
 
 	return errorCode;
 }
@@ -157,30 +157,30 @@ int ColorImageData::matchKeypoints(
 	}
 
 	std::vector<DMatch> matches;
-  	inContext.matcher.match(
-  		descriptors,
-  		inSample.descriptors,
-  		matches
-  	);
+	inContext.matcher.match(
+		descriptors,
+		inSample.descriptors,
+		matches
+	);
 
-  	size_t numbMatches = matches.size();
-  	if(!numbMatches){
-  		std::cout << "Warning in " << __FUNCTION__ << std::endl;
-  		std::cout << "Empty set of matches" << std::endl;
-  		return errorCode;
-  	}
+	size_t numbMatches = matches.size();
+	if(!numbMatches){
+		std::cout << "Warning in " << __FUNCTION__ << std::endl;
+		std::cout << "Empty set of matches" << std::endl;
+		return errorCode;
+	}
 
-  	double totalError = 0;
-  	double totalSquareError = 0;
-  	for(size_t i = 0; i < numbMatches; i++){
-  		double distance = matches[i].distance;
+	double totalError = 0;
+	double totalSquareError = 0;
+	for(size_t i = 0; i < numbMatches; i++){
+		double distance = matches[i].distance;
 
-  		totalError += distance;
-  		totalSquareError += distance * distance;
-  	}
+		totalError += distance;
+		totalSquareError += distance * distance;
+	}
 
-  	outResult.keypointError = totalSquareError / numbMatches;
-  	
+	outResult.keypointError = totalSquareError / numbMatches;
+	
 	return errorCode;
 }
 
@@ -298,17 +298,19 @@ int ColorImageData::trainHistogram(const ColorImageContext & inContext){
 	int errorCode = 0;
 
 	int histBins = inContext.histBins;
-	int histSize[] = {histBins, histBins};
-
+	int histSize[] = {histBins, histBins, histBins};
+/*
 	float hRange[] = {0, 180};
 	float sRange[] = {0, 255};
 	const float * ranges[] = {hRange, sRange};
-
+*/
+	float range[] = {0, 255};
+	const float * ranges[] = {range, range, range};
 	// hue and saturation only	
-	int channels[] = {0, 2};
+	int channels[] = {0, 1, 2};
 
 	MatND workingHist;
-	calcHist(&color, 1, channels, Mat(), workingHist, 2, histSize, ranges);
+	calcHist(&color, 1, channels, Mat(), workingHist, 3, histSize, ranges);
 	normalize(workingHist, hist);
 
 	return errorCode;
@@ -323,13 +325,66 @@ int ColorImageData::trainKeypoints(const ColorImageContext & inContext){
 	return errorCode;
 }
 
+RNG rng(12345);
+int ColorImageData::trainShape(const ColorImageContext & inContext){
+	int errorCode = 0;
+
+	Mat blurredImage;
+	blur(gray, blurredImage, Size(3,3));
+
+	Mat cannyImage;
+	double thresh = 22;
+	Canny(blurredImage, cannyImage, thresh, thresh * 2);
+	
+	vector< vector< Point > > contours;
+	findContours(cannyImage, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+	size_t numbContours = contours.size();
+	if(!numbContours){
+		std::cout << "Warning in " << __FUNCTION__ << std::endl;
+		std::cout << "No contour found" << std::endl;
+		return errorCode;
+	}
+
+	double maxContourArea = 0;
+	size_t maxContourIndex = 0;
+	for(size_t i = 0; i < contours.size(); i++){
+		vector<Point> & contour = contours[i];
+		
+		Rect rect = boundingRect(contour);
+		double area = rect.width * rect.height;
+
+		if(area > maxContourArea){
+			maxContourArea = area;
+			maxContourIndex = i;
+		}
+	}
+
+	shape = contours[maxContourIndex];
+
+	/**
+	* DEBUG
+	*/
+	RNG rng = RNG(12345);
+  	Mat drawing = Mat::zeros(cannyImage.size(), CV_8UC3);
+	Scalar color = Scalar(rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255));
+	drawContours(drawing, contours, maxContourIndex, color);
+
+	imshow("Shape", drawing);
+	waitKey(0);
+
+
+	return errorCode;
+}
+
 int ColorImageData::train(
 	const Mat & inImage,
 	const ColorImageContext & context
 ){
 	int errorCode = 0;
 
-	cvtColor(inImage, color, CV_BGR2HLS);
+	//cvtColor(inImage, color, CV_BGR2HLS);
+	color = inImage.clone();
 	cvtColor(inImage, gray, CV_BGR2GRAY);
 
 	errorCode = trainKeypoints(context);
@@ -352,6 +407,13 @@ int ColorImageData::train(
 	if(errorCode){
 		std::cout << "Error in " << __FUNCTION__ << std::endl;
 		std::cout << "Histogram training failed" << std::endl;
+		return errorCode;
+	}
+
+	errorCode = trainShape(context);
+	if(errorCode){
+		std::cout << "Error in " << __FUNCTION__ << std::endl;
+		std::cout << "Shape training failed" << std::endl;
 		return errorCode;
 	}
 

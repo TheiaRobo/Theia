@@ -35,9 +35,10 @@ class ColorImageData {
 		// HLS8 version
 		cv::Mat gray;
 		cv::MatND hist;
-		std::vector<cv::KeyPoint> keypoints;
 		cv::Mat descriptors;
-
+		std::vector<cv::KeyPoint> keypoints;
+		std::vector<cv::Point> shape;
+		
 		int match(
 			const ColorImageData & inSample,
 			const ColorImageContext & inContext,
@@ -76,6 +77,7 @@ class ColorImageData {
 		);
 		int trainHistogram(const ColorImageContext & inContext);
 		int trainKeypoints(const ColorImageContext & inContext);
+		int trainShape(const ColorImageContext & inContext);
 };
 
 #endif
