@@ -85,7 +85,6 @@ int Candidate::calcRobCoordsFromBox(
 	return errorCode;
 }
 
-
 bool Candidate::isValid(const CandidateContext & inContext) const {	
 	if(robXMin < inContext.minX) return false;
 	if(robXMax > inContext.maxX) return false;

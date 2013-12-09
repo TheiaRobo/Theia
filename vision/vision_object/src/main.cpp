@@ -108,11 +108,6 @@ int match(){
 	size_t numbCands = candVect.size();
 	if(!numbCands) return errorCode;
 
-	cout << "Candidates" << endl;
-	for(size_t i = 0; i < numbCands; i++){
-//		candPrint(candVect[i]);
-	}
-
 	validCandVect.clear();
 	errorCode = candFilterValid(
 		candVect,

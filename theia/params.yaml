@@ -3,7 +3,7 @@ core: {L: 21.35, R1: 5.0, R2: 5.0}
 vision_object:
     config:
         camera:
-            posX: 0.30
+            posX: -0.15
             posY: 0
             posZ: 0.28
             angle: 22.5
@@ -16,7 +16,7 @@ vision_object:
             maxY:  0.15
             minZ: -0.10
             maxZ:  0.20
-        path: /home/robo/DD2425_2013/Project/vision/vision_object/train
+        path: /home/amotta/Documents/Theia/vision/vision_object/train
         colorImage:
             histBins: 32
             minHessian: 400
