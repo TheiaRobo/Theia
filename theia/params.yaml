@@ -6,7 +6,7 @@ vision_object:
             posX: -0.15
             posY: 0
             posZ: 0.35
-            angle: 0
+            angle: 25
             fovLat: 45
             fovLong: 57.5
         cand:

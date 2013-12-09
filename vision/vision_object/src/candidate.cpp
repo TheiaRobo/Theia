@@ -54,9 +54,9 @@ int Candidate::calcRobCoordsFromBox(
 ){
 	int errorCode = 0;
 
-	double offsetX = -inContext.posX;
-	double offsetY = -inContext.posY;
-	double offsetZ = -inContext.posZ;
+	double offsetX = inContext.posX;
+	double offsetY = inContext.posY;
+	double offsetZ = inContext.posZ;
 	double offsetAngle = inContext.angle * M_PI / 180;
 	
 	double lengthBoxX = (inBox.maxZ - inBox.minZ);
@@ -76,7 +76,7 @@ int Candidate::calcRobCoordsFromBox(
 	robYMax = offsetY - inBox.minX;
 
 	double robZCenter = offsetZ;
-	robZCenter += - centerBoxX * sin(offsetAngle);
+	robZCenter -= centerBoxX * sin(offsetAngle);
 	robZCenter += centerBoxZ * cos(offsetAngle);
 	robZMin = robZCenter - lengthBoxZ / 2;
 	robZMax = robZCenter + lengthBoxZ / 2;
