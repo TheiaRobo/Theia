@@ -12,6 +12,7 @@ class ColorImageResult {
 	public:
 		double colorError;
 		double keypointError;
+		double shapeError;
 		double totalError;
 		cv::Mat homography;
 		std::vector<cv::DMatch> matches;
@@ -35,8 +36,9 @@ class ColorImageData {
 		// HLS8 version
 		cv::Mat gray;
 		cv::MatND hist;
-		std::vector<cv::KeyPoint> keypoints;
 		cv::Mat descriptors;
+		std::vector<cv::KeyPoint> keypoints;
+		std::vector<cv::Point> shape;
 
 		int match(
 			const ColorImageData & inSample,
@@ -74,8 +76,14 @@ class ColorImageData {
 			const ColorImageContext & inContext,
 			ColorImageResult & outResult
 		);
+		int matchShape(
+			const ColorImageData & inSample,
+			const ColorImageContext & inContext,
+			ColorImageResult & outResult
+		);
 		int trainHistogram(const ColorImageContext & inContext);
 		int trainKeypoints(const ColorImageContext & inContext);
+		int trainShape(const ColorImageContext & inContext);
 };
 
 #endif

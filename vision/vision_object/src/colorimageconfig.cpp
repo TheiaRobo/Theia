@@ -10,6 +10,26 @@ int colorImageConfigBuild(ColorImageConfig & outConfig){
 
 	string prefix = "~config/colorImage/"; 
 	ros::param::getCached(
+		prefix + "blurRad",
+		outConfig.blurRad
+	); 
+	ros::param::getCached(
+		prefix + "cannyThresh",
+		outConfig.cannyThresh
+	);
+	ros::param::getCached(
+		prefix + "coefColor",
+		outConfig.coefColor
+	);
+	ros::param::getCached(
+		prefix + "coefKeypoints",
+		outConfig.coefKeypoints
+	);
+	ros::param::getCached(
+		prefix + "coefShape",
+		outConfig.coefShape
+	);
+	ros::param::getCached(
 		prefix + "histBins",
 		outConfig.histBins
 	);
