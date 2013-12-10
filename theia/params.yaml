@@ -20,9 +20,9 @@ vision_object:
         colorImage:
             blurRad: 5
             cannyThresh: 100
-            coefsColor: 1
-            coefsKeypoints: 0
-            coefsShape: 1
+            coefColor: 1
+            coefKeypoints: 0
+            coefShape: 0
             histBins: 32
             minHessian: 400
             maxTotalError: 2
