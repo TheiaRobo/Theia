@@ -64,10 +64,10 @@ double d_paralel=0.015;
 
 
 // Forward velocity
-double std_velocity=25.0;
+double std_velocity=27.0;
 double wall_velocity=10.0;
-double blind_velocity=25.0;
-double cut_speed = 7.0;
+double blind_velocity=20.0;
+double cut_speed = 8.0;
 double velocity_fw=std_velocity;
 double dist_wall_min=0.0;
 double epsilon_theta=0.00; // 5 degrees
@@ -495,7 +495,7 @@ double paralel_controller(int wall,double ir_wall[2],double t_ref,double d_ref,d
 
 	double error_theta=0.0, error_dist=0.0,u_theta=0.0,u_dist=0.0;
 	double k_theta = 4;
-	double k_u_dist = 4;
+	double k_u_dist = 5;
 	
 	// get angle and distance to wall
 	error_theta=compute_ir_error(wall,ir_wall,t_ref);
@@ -652,6 +652,7 @@ int none(ros::Rate loop_rate){
 			if(srv.response.B!=0){
 				ROS_WARN("BLIND ACTIVE");
 				blind=true;
+				stop_flag=false;
 				if(srv.response.B==2){
 					ROS_ERROR("WILL ROTATE");
 					heading_ref=srv.response.parameter;
@@ -660,6 +661,7 @@ int none(ros::Rate loop_rate){
 				}else{ // forward
 					forward_distance=srv.response.parameter;
 					ROS_ERROR("WILL MOVE FORWARD %.2f",forward_distance);
+					return 1; // to make sure we actually go to the forward behavior -> debug
 				}
 
 				return srv.response.B;
@@ -695,13 +697,25 @@ int forward(ros::Rate loop_rate){
 		initial_ir[i]=ir_readings[i];
 	ROS_INFO("Will go forward %.2f cm!",forward_distance);
 	// Will keep moving forward until sensors report obstacle or forward_distance is achieved
+	
+	if(blind){
+		ROS_ERROR("I AM MOVING FORWARD %.2f cm  BECAUSE OF THE BLIND. Curr_dist = %.2f", forward_distance,curr_dist);
+	}	
 
 	k_dist=0.0;
 	while(curr_dist<forward_distance){ 
 
+		if(blind){
+			
+			ROS_ERROR("I DID %.2f cm",curr_dist);
+		
+		}
 		if(stop_flag){
 			stop();
 			stop_flag=0;
+			if(blind){
+				ROS_ERROR("Stop flag!!!");
+			}
 			ROS_INFO("Object ahead!\n");
 			return 0;
 		}
@@ -738,7 +752,6 @@ int forward(ros::Rate loop_rate){
 			std_velocity=temp_s;
 			k_dist=temp_k;
 			loop_rate.sleep();
-
 
 
 			return 0;
@@ -1094,7 +1107,9 @@ int forward_wall(ros::Rate loop_rate){
 
 void object_stop(theia_services::stop::ConstPtr msg){
 
-	stop_flag=msg->stop;
+	if(blind==false){
+		stop_flag=msg->stop;
+	}
 
 }
 

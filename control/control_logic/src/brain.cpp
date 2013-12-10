@@ -104,7 +104,7 @@ void order_slaves(int slave,theia_services::brain_wall wall_req, theia_services:
 		blind_req.request.vals=vals;
 		blind_req.request.heading=heading;
 		if(!blind_done && prev_flag){
-			ROS_WARN("IM CALLING THE BRAIN!");
+			ROS_WARN("IM CALLING THE BLIND!");
 			prev_flag = false;
 			order_wall.call(wall_req);
 			order_blind.call(blind_req);
@@ -354,11 +354,11 @@ int main(int argc, char ** argv){
 	while(ros::ok()){
 
 		if(!phase_2 && !time_for_more(orig_time)){ //Independent of closed_perimeter (closed_perimeter(init_time) || !closed_perimeter(init_time)) = TRUE
+			heading = 'E';
 			ROS_ERROR("Ran out of time :(");
 			order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals);
 			phase_2 = true;
 			reset_odo_mapping(phase_2_pub);
-			heading = 'E'; //Should it be this one? Or an initial heading?? ????????????????????????
 			ROS_ERROR("Press any key to continue...");
 			getchar();
 		}
@@ -417,12 +417,12 @@ int main(int argc, char ** argv){
 				}else{
 					
 					//I have no time
+					heading = 'E';
 					ROS_ERROR("Ran out of time :(");
 					order_slaves(0,wall_req,blind_req,order_wall,order_blind,commands,vals);
 					phase_2 = true;
 					slave = 2;
 					reset_odo_mapping(phase_2_pub);
-					heading = 'E';
 					ROS_ERROR("Press any key to continue...");
 					getchar();
 
