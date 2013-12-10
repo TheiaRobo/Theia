@@ -62,7 +62,8 @@ bool compareResultPairs(
 }
 
 int publishResults(
-	const vector< pair<Object, ObjectDataResult> > & inResults
+	const vector< pair<Object, ObjectDataResult> > & inResults,
+	const Candidate & inCand
 ){
 	int errorCode = 0;
 
@@ -76,23 +77,13 @@ int publishResults(
 	const Object & object = workingVect[0].first;
 	const ObjectDataResult & result = workingVect[0].second;
 
-	// TODO
-	// improve
-	const Candidate & cand = validCandVect[0];
-
-	cout << "Best Object: " << object.name << endl;
-	cout << "Object: " << object.name << endl;
-	cout << " Color: " << result.colorImage.colorError << endl;
-	cout << " Keypoint: " << result.colorImage.keypointError << endl;
-	cout << " Shape: " << result.colorImage.shapeError << endl;
-	cout << " Total: " << result.colorImage.totalError << endl;
-
+	cout << "Best object: " << object.name << endl;
 	
 	vision_object::Object msg;
 	msg.objectName = object.name;
 	msg.objectAngle = result.angle;
-	msg.distX = (cand.robXMin + cand.robXMax) / 2;
-	msg.distY = (cand.robYMin + cand.robYMax) / 2;
+	msg.distX = (inCand.robXMin + inCand.robXMax) / 2;
+	msg.distY = (inCand.robYMin + inCand.robYMax) / 2;
 
 	// convert colorImage to image message
 	cv_bridge::CvImage cvImage;
@@ -137,9 +128,6 @@ int match(){
 	cout << "# total candidates: " << numbCands << endl;
 	cout << "# valid candidates: " << numbValidCands << endl;
 
-	pair<Object, ObjectDataResult> bestResult;
-	vector< pair<Object, ObjectDataResult> > resultVect;
-
 	for(size_t nCand = 0; nCand < numbValidCands; nCand++){
 		Candidate & cand = validCandVect[nCand];
 
@@ -157,6 +145,7 @@ int match(){
 			return errorCode;
 		}
 
+		vector< pair<Object, ObjectDataResult> > resultVect;
 		for(size_t nObj = 0; nObj < numbObjects; nObj++){
 			Object & object = objectVect[nObj];
 
@@ -168,17 +157,35 @@ int match(){
 				return errorCode;
 			}
 
+			cout << "Object: " << object.name << endl;
+			cout << " Color: " << result.colorImage.colorError << endl;
+			cout << " Keypoint: " << result.colorImage.keypointError << endl;
+			cout << " Shape: " << result.colorImage.shapeError << endl;
+			cout << " Total: " << result.colorImage.totalError << endl;
+
 			if(result.isGoodEnough(context)){
 				resultVect.push_back(make_pair(object, result));
 			}
 		}
-	}
 
-	errorCode = publishResults(resultVect);
-	if(errorCode){
-		cout << "Error in " << __FUNCTION__ << endl;
-		cout << "Could not publish results" << endl;
-		return -1;
+		if(resultVect.size()){
+			errorCode = publishResults(resultVect, cand);
+		}else{
+			Object ufo;
+			ufo.name = "UFO";
+			
+			ObjectDataResult ufoResult;
+			ufoResult.angle = 0;
+
+			resultVect.push_back(make_pair(ufo, ufoResult));
+			errorCode = publishResults(resultVect, cand);
+		}
+
+		if(errorCode){
+			cout << "Error in " << __FUNCTION__ << endl;
+			cout << "Could not publish results" << endl;
+			return errorCode;
+		}
 	}
 
 	return errorCode;
