@@ -195,6 +195,12 @@ int ColorImageData::matchShape(
 ){
 	int errorCode = 0;
 
+	if(!shape.size() || !inSample.shape.size()){
+		std::cout << "Warning in " << __FUNCTION__ << std::endl;
+		std::cout << "No shape found" << std::endl;
+		return errorCode;
+	}
+
 	double error = matchShapes(
 		shape,
 		inSample.shape,
@@ -350,9 +356,10 @@ int ColorImageData::trainKeypoints(const ColorImageContext & inContext){
 int ColorImageData::trainShape(const ColorImageContext & inContext){
 	int errorCode = 0;
 
-	Mat image = color.clone();
 	const double blurRad = inContext.blurRad;
 	const double cannyThresh = inContext.cannyThresh;
+
+	Mat image = color.clone();
 
 	Mat hsvImage;
 	cvtColor(image, hsvImage, CV_BGR2HSV);
@@ -375,6 +382,14 @@ int ColorImageData::trainShape(const ColorImageContext & inContext){
 	cvtColor(image, objectImage, CV_BGR2GRAY);
 	add(objectImage, floorMat, objectImage, floorMat);
 	blur(objectImage, blurredImage, Size(blurRad, blurRad));
+
+/*
+	Mat image;
+	cvtColor(color, image, CV_BGR2GRAY);
+
+	Mat blurredImage;
+	blur(image, blurredImage, Size(blurRad, blurRad));
+*/
 
 	Mat cannyImage;
 	Canny(blurredImage, cannyImage, cannyThresh, 2 * cannyThresh);
@@ -404,17 +419,6 @@ int ColorImageData::trainShape(const ColorImageContext & inContext){
 	}
 
 	shape = contours[maxContourIndex];
-
-	/**
-	* DEBUG
-	*/
-	RNG rng = RNG(12345);
-  	Mat drawing = Mat::zeros(cannyImage.size(), CV_8UC3);
-	Scalar color = Scalar(rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255));
-	drawContours(drawing, contours, maxContourIndex, color);
-
-	imshow("Shape", drawing);
-	waitKey(0);
 
 	return errorCode;
 }
