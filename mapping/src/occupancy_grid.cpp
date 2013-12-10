@@ -82,6 +82,8 @@ const int freq=100;
 
 bool phase_2 = false;
 
+int object_radius = 20;
+
 // high level info
 
 int wall=-1;
@@ -684,6 +686,22 @@ double * convert_object_distance(double distX, double distY){
 
 }
 
+bool nearby_objects(int x_i, int y_i){
+	
+	for(int x = x_i - object_radius; x < x_i + object_radius; x++){
+		for(int y = y_i - object_radius; y < y_i + object_radius; y++){
+			if(y > 0 && y < y_matrix && x > 0 && x < x_matrix){
+				if(Occupancy_Grid[x+y*y_matrix] != white && Occupancy_Grid[x+y*y_matrix] != gray && Occupancy_Grid[x+y*y_matrix] != blue && Occupancy_Grid[x+y*y_matrix] != black){
+					return true;
+				}
+			}
+		}
+	}
+	
+	return false;
+
+}
+
 void Place_Object(vision_object::Object::ConstPtr msg) {
 
 	object new_object;
@@ -695,8 +713,10 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 	contest_msgs::evidence comp_msg;
 
 	for(int i=0; i<object_list.size();i++){
-		if(object_list[i].name==new_name)
-			return;
+		if(object_list[i].name==new_name){
+			if(nearby_objects(cell_round(corrected_odo_x[0]*100),cell_round(corrected_odo_y[0]*100)))	
+				return;
+		}
 	}
 
 	if(wall==-1)
