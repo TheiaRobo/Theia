@@ -91,6 +91,7 @@ bool Candidate::isValid(const CandidateContext & inContext) const {
 	if(robYMin < inContext.minY) return false;
 	if(robYMax > inContext.maxY) return false;
 	if(robZMin < inContext.minZ) return false;
+	if(robZMin > 0.05) return false;
 	if(robZMax > inContext.maxZ) return false;
 	
 	return true;
