@@ -347,17 +347,37 @@ int ColorImageData::trainKeypoints(const ColorImageContext & inContext){
 	return errorCode;
 }
 
-RNG rng(12345);
 int ColorImageData::trainShape(const ColorImageContext & inContext){
 	int errorCode = 0;
 
+	Mat image = color.clone();
+	const double blurRad = inContext.blurRad;
+	const double cannyThresh = inContext.cannyThresh;
+
+	Mat hsvImage;
+	cvtColor(image, hsvImage, CV_BGR2HSV);
+
+	Mat blurredHsvImage;
+	blur(hsvImage, blurredHsvImage, Size(blurRad, blurRad));
+
+	// Hue, Saturation, Value
+	Scalar minColor(30 / 2, 0.00 * 255, 0.00 * 255);
+	Scalar maxColor(60 / 2, 0.60 * 255, 0.90 * 255);
+
+	// find floor pixels
+	Mat floorMat;
+	inRange(blurredHsvImage, minColor, maxColor, floorMat);
+	blur(floorMat, floorMat, Size(10, 10));
+
+	// white out floor
+	Mat objectImage;
 	Mat blurredImage;
-	Size blurSize(inContext.blurRad, inContext.blurRad);
-	blur(gray, blurredImage, blurSize);
+	cvtColor(image, objectImage, CV_BGR2GRAY);
+	add(objectImage, floorMat, objectImage, floorMat);
+	blur(objectImage, blurredImage, Size(blurRad, blurRad));
 
 	Mat cannyImage;
-	double thresh = inContext.cannyThresh;
-	Canny(blurredImage, cannyImage, thresh, thresh * 2);
+	Canny(blurredImage, cannyImage, cannyThresh, 2 * cannyThresh);
 	
 	vector< vector< Point > > contours;
 	findContours(cannyImage, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
