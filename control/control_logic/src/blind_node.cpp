@@ -35,6 +35,7 @@ const int hist_size = 100;
 const int ir_size = 8;
 const int median_size = 3;
 int current_idx = 0;
+int instr_size = 0;
 
 // info stuff
 char info_heading='E';
@@ -171,17 +172,6 @@ bool execute(theia_services::MotionCommand::Request &req, theia_services::Motion
 	
 	current_idx++;
 
-	if(current_idx >= b_parameters.size()){
-		ROS_WARN("Finished the instructions.");
-		//getchar();
-		done = true;
-		if(current_idx==b_parameters.size())
-			warn_brain();
-		res.B=0;
-		return true;
-		
-	}
-
 	///////////////////////////////////////////////////
 	//Finished cases. Debug
 	///////////////////////////////////////////////////
@@ -207,7 +197,19 @@ bool execute(theia_services::MotionCommand::Request &req, theia_services::Motion
 
 	//loop_rate.sleep();
 	ros::spinOnce();
-
+	
+	if(current_idx >= instr_size){
+		ROS_WARN("Finished the instructions.");
+		//getchar();
+		done = true;
+		if(current_idx==instr_size)
+			warn_brain();
+		else
+			res.B=0;
+		return true;
+		
+	}
+	
 	//Update in history vector
 	return true;
 }
@@ -238,7 +240,9 @@ bool status(theia_services::brain_blind::Request &req, theia_services::brain_bli
 		warn_brain();
 	}
 	if(req.size>1 && active){
-		ROS_INFO("GOT A NEW PATH.");
+		ROS_INFO("GOT A NEW PATH WITH SIZE %d",req.size);
+		instr_size=req.size;
+		current_idx=0;
 	}
 	
 	res.done=true;

@@ -47,6 +47,7 @@ const int blue=75;
 const int gray=50;
 const int white=0;
 
+const int erode_side = 100;
 
 // sensor array
 
@@ -96,6 +97,7 @@ ros::Publisher arrow_pub;
 ros::Publisher object_pub;
 ros::Publisher odo_pub;
 ros::Publisher corrected_map_pub;
+ros::Publisher eroded_map_pub;
 ros::Publisher talk_pub;
 ros::Publisher comp_pub;
 ros::Subscriber	odometry_sub;
@@ -200,34 +202,61 @@ void Correct_Map(int x_pixel_delta,int y_pixel_delta){
 
 	std::vector<signed char>  Temp_Map(x_matrix*y_matrix,blue);
 	cv::Mat map_image(x_matrix,y_matrix,CV_8U);
-	cv::Mat erode_kernel(20, 20, CV_32F);
-	cv::Point p(-1,-1);
+	cv::Mat erode_kernel(erode_side, erode_side, CV_8U);
 
 	Corrected_Map=Occupancy_Grid;
 	Temp_Map = Occupancy_Grid;
 
 
-	for(int x=0; x<20; x++)
-		for(int y=0; y<20; y++)
-			erode_kernel.at<float>(x,y)=255;
+	for(int x=0; x<erode_side; x++)
+		for(int y=0; y<erode_side; y++)
+			erode_kernel.at<unsigned char>(x,y)=255;
 
 	for(int x=0; x < x_matrix; x++){
 		for(int y=0; y < y_matrix; y++){
 
 			if(Temp_Map[x+y*y_matrix]==gray){
 
-				map_image.at<char>(x,y) = 255;
+				map_image.at<unsigned char>(x,y) = 255; // white
 
 			}else{
-				map_image.at<char>(x,y) = 0;
+				map_image.at<unsigned char>(x,y) = 0; // black
 			}
 
 		}
 	}
+	
+	for(int x=0; x < x_matrix; x++){
+		for(int y=0; y < y_matrix; y++){
+			if(Corrected_Map[x+y*y_matrix]==gray){
+				Corrected_Map[x+y*y_matrix]=white;
 
+			}
+		}
+	}
+	
+	
+	std::vector<int> imWriteParamVect;
+	imWriteParamVect.push_back(CV_IMWRITE_PNG_COMPRESSION);
+	imWriteParamVect.push_back(9);
+	cv::imwrite("beforeErosion.png", map_image, imWriteParamVect);
 	cv::erode(map_image,map_image,erode_kernel);
+	cv::imwrite("afterErosion.png", map_image, imWriteParamVect);
 
 	// got an eroded version of the gray spots on the map. Will apply them later.
+	
+	for(int x=0; x < x_matrix; x++){
+		for(int y=0; y < y_matrix; y++){
+			if(map_image.at<unsigned char>(x,y)==255)
+				Temp_Map[x+y*y_matrix]=gray;
+			else
+				Temp_Map[x+y*y_matrix]=black;
+		}
+	}
+	
+	for(int x=0; x<erode_side; x++)
+		for(int y=0; y<erode_side; y++)
+			erode_kernel.at<unsigned char>(x,y)=255;
 
 
 	/*cv::namedWindow( "Display window", CV_WINDOW_AUTOSIZE );// Create a window for display.
@@ -236,7 +265,7 @@ void Correct_Map(int x_pixel_delta,int y_pixel_delta){
 	cv::destroyAllWindows();*/
 	for(int x=0; x < x_matrix; x++){
 		for(int y=0; y < y_matrix; y++){
-			if(map_image.at<char>(x,y)==255){
+			if(Temp_Map[x+y*y_matrix]==gray){
 				Corrected_Map[x+y*y_matrix]=gray;
 
 			}
@@ -249,8 +278,21 @@ void Correct_Map(int x_pixel_delta,int y_pixel_delta){
 				Corrected_Map=place_map(Corrected_Map,x,y/y_matrix,robot_delta_x,robot_delta_y,black);
 		}
 	}
+	
+	nav_msgs::OccupancyGrid occ_msg;
+	nav_msgs::MapMetaData map_msg;
 
+	occ_msg.header.stamp=ros::Time::now();
+	occ_msg.header.frame_id= "/mapping";
 
+	map_msg.map_load_time=ros::Time::now();
+	map_msg.resolution=resolution_matrix;
+	map_msg.width=x_matrix;
+	map_msg.height=y_matrix;
+
+	occ_msg.info=map_msg;
+	occ_msg.data=Temp_Map;
+	eroded_map_pub.publish(occ_msg);
 
 
 }
@@ -939,6 +981,7 @@ int main(int argc, char **argv)
 	odo_pub = n.advertise<theia_services::corrected_odo>("/mapping/corrected_odo",1);
 	talk_pub = n.advertise<std_msgs::String>("robot/talk",1);
 	comp_pub = n.advertise<contest_msgs::evidence>("/contest_evidence",1);
+	eroded_map_pub = n.advertise<nav_msgs::OccupancyGrid>("/mapping/eroded",1);
 
 
 	ros::ServiceServer map_sender = n.advertiseService("/mapping/ProcessedMap", provide_map);

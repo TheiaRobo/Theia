@@ -77,7 +77,7 @@ double heur(int coords[2], int goal_coords[2]){
 
 	if(goal_coords[0]!=NO_VAL){
 		t_h = std::abs(coords[0]-goal_coords[0])+std::abs(coords[1]-goal_coords[1]);
-		return 1.0*t_h;
+		return 5.0*t_h;
 	}else{ // no goal, no heuristic
 		return 0.0;
 	}
@@ -95,7 +95,7 @@ double g_cost(int coords[2], int prev_coords[2], int prev_from_coords[2]){
 
 		}else{ // implies rotation
 
-			return 200;
+			return 500;
 		}
 
 	}else{ // movement along y
@@ -104,7 +104,7 @@ double g_cost(int coords[2], int prev_coords[2], int prev_from_coords[2]){
 
 			return 1;
 		}else{
-			return 200;
+			return 500;
 		}
 	}
 
@@ -618,10 +618,11 @@ void convert_to_commands(std::vector<node> sol, std::vector<int> *commands, std:
 	
 	// at the end of the for cycle we may still have forward counter != 0. If that's not the case, we set the last rotation to zero for convenience
 	
-	if(forward_counter!=0){ 
-		(*commands).push_back(FORWARD);
-		(*vals).push_back(forward_counter);
-	}/*else{
+//	if(forward_counter!=0){ 
+	(*commands).push_back(FORWARD);
+	(*vals).push_back(forward_counter);
+	//}
+	/*else{
 		int size = (*commands).size();
 		
 		if((*commands)[size-1] == 2){
@@ -714,6 +715,13 @@ bool planning_service(path_planner::path_srv::Request &req, path_planner::path_s
 
 
 	object_marker.points=pos_list;
+	
+	for(int i = 0 ; i < vals.size(); i++){
+	
+		ROS_WARN("PLANNED PATH: (%d,%.2f)", commands[i], vals[i]);
+	}
+	
+	
 	path_pub.publish(object_marker);
 
 
