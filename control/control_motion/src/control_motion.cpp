@@ -64,10 +64,10 @@ double d_paralel=0.015;
 
 
 // Forward velocity
-double std_velocity=27.0;
+double std_velocity=25.0;
 double wall_velocity=10.0;
 double blind_velocity=20.0;
-double cut_speed = 8.0;
+double cut_speed = 7.5;
 double velocity_fw=std_velocity;
 double dist_wall_min=0.0;
 double epsilon_theta=0.00; // 5 degrees
@@ -78,7 +78,7 @@ double last_angle = 0.0;
 double forward_distance=20.0;
 
 // Threshold for the sensors
-double heading_thres=0.01;
+double heading_thres=0.005;
 double align_thres=100;//0.003;
 double dist_thres=7.0;
 double max_angle = 0.723; // atan(max_ir/17);

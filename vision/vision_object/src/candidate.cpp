@@ -144,20 +144,25 @@ int Candidate::toRect(
 	double lengthY = (maxY - minY) / 2;
 
 	double factor = 2;
-	minX = centerX - factor * lengthX;
-	maxX = centerX + factor * lengthX;
-	minY = centerY - factor * lengthY;
-	maxY = centerY + factor * lengthY;
+	double tempMinX = centerX - factor * lengthX;
+	double tempMaxX = centerX + factor * lengthX;
+	double tempMinY = centerY - factor * lengthY;
+	double tempMaxY = centerY + factor * lengthY;
 	
+	minX = min(tempMinX, tempMaxX);
+	maxX = max(tempMinX, tempMaxX);
+	minY = min(tempMinY, tempMaxY);
+	maxY = max(tempMinY, tempMaxY);
+
 	if(minX < 0) minX = 0;
 	if(maxX > imageCols) maxX = imageCols - 1;
 	if(minY < 0) minY = 0;
 	if(maxY > imageRows) maxY = imageRows - 1;
-
-	outRect = cv::Rect(
-		cv::Point(minX, minY),
-		cv::Point(maxX, maxY)
-	);
+	
+	outRect.x = minX;
+	outRect.y = minY;
+	outRect.width = maxX - minX;
+	outRect.height = maxY - minY;
 
 	return errorCode;
 }

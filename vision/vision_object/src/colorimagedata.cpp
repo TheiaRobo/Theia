@@ -60,6 +60,21 @@ bool ColorImageResult::isGoodEnough(const ColorImageContext & inContext) const {
 	return isBetterThan(inContext.maxTotalError);
 }
 
+/*
+bool ColorImageData::isWall(const ColorImageContext & inContext){
+	double sum = 0;
+	const size_t minBin = inContext.histBins - 2;
+	const size_t maxBin = inContext.histBins;
+	for(size_t bin = minBin; bin < maxBin; bin++){
+		sum += hist[0][bin];
+		sum += hist[1][bin];
+		sum += hist[2][bin];
+	}
+	
+	return (sum > 0.8);
+}
+*/
+
 int ColorImageData::findHomography(
 	const ColorImageData & inSample,
 	const ColorImageContext & inContext,
@@ -338,6 +353,7 @@ int ColorImageData::trainHistogram(const ColorImageContext & inContext){
 	int channels[] = {0, 1, 2};
 
 	MatND workingHist;
+
 	calcHist(&color, 1, channels, Mat(), workingHist, 3, histSize, ranges);
 	normalize(workingHist, hist);
 

@@ -107,6 +107,10 @@ int match(){
 	size_t numbCands = candVect.size();
 	if(!numbCands) return errorCode;
 
+	for(size_t i = 0; i < numbCands; i++){
+		candVect[i].print();
+	}
+
 	validCandVect.clear();
 	errorCode = candFilterValid(
 		candVect,
@@ -125,7 +129,7 @@ int match(){
 		return errorCode;
 	}
 
-	candShow(validCandVect, context.camera, colorImage);
+//	candShow(validCandVect, context.camera, colorImage);
 
 	cout << "# total candidates: " << numbCands << endl;
 	cout << "# valid candidates: " << numbValidCands << endl;
@@ -136,9 +140,12 @@ int match(){
 		cv::Rect rect;
 		cand.toRect(context.camera, colorImage, rect);
 
+		if(!rect.width) continue;
+		if(!rect.height) continue;
+
 		ObjectData sampleData;
 		ColorImageData & colorData = sampleData.colorImage;
-
+		
 		cv::Mat candImage(colorImage, rect);
 		errorCode = colorData.train(candImage, context.colorImage);
 		if(errorCode){
@@ -146,7 +153,15 @@ int match(){
 			cout << "Could not train color image" << endl;
 			return errorCode;
 		}
-
+		
+/*
+		if(colorData.isWall(context.colorImage)){
+			cout << "Warning in " << __FUNCTION__ << endl;
+			cout << "Object candidate is probably wall" << endl;
+			continue;
+		}
+*/
+		
 		vector< pair<Object, ObjectDataResult> > resultVect;
 		for(size_t nObj = 0; nObj < numbObjects; nObj++){
 			Object & object = objectVect[nObj];

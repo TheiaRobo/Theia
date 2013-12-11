@@ -47,7 +47,7 @@ const int blue=75;
 const int gray=50;
 const int white=0;
 
-const int erode_side = 100;
+const int erode_side = 1000;
 
 // sensor array
 
@@ -82,7 +82,7 @@ const int freq=100;
 
 bool phase_2 = false;
 
-int object_radius = 20;
+int object_radius = 60;
 
 // high level info
 
@@ -718,6 +718,9 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 				return;
 		}
 	}
+	if(nearby_objects(cell_round(corrected_odo_x[0]*100),cell_round(corrected_odo_y[0]*100)))	
+		return;
+	
 
 	if(wall==-1)
 		return;
@@ -754,7 +757,7 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 
 	Occupancy_Grid=place_map(Occupancy_Grid,cell_round(pos_x*100),cell_round(pos_y*100),robot_delta_x,robot_delta_y,new_object.num);
 
-	ROS_INFO("New object: %s Num: %d at (%d,%d)",new_object.name.c_str(),new_object.num,cell_round(pos_x*100),cell_round(pos_y*100));
+	ROS_INFO("New object: %s Num: %d at (%d,%d). Current position (%d,%d)",new_object.name.c_str(),new_object.num,cell_round(pos_x*100),cell_round(pos_y*100),cell_round(corrected_odo_x[0]*100),cell_round(corrected_odo_y[0]*100));
 
 	talk_msg.data = new_object.name;
 	talk_pub.publish(talk_msg);
@@ -763,7 +766,7 @@ void Place_Object(vision_object::Object::ConstPtr msg) {
 	comp_msg.group_number = 3;
 	comp_msg.image_evidence = msg->image;
 	comp_msg.object_id = new_object.name;
-	
+	comp_pub.publish(comp_msg);
 	//robot/talk
 
 	object_marker.header.frame_id = "/mapping";

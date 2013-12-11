@@ -3,7 +3,7 @@
 		<node
 			pkg="control_mux"
 			type="control_mux"
-			name="mux"
+			name="control_mux"
 		/>
 	</group>
 </launch>

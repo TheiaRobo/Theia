@@ -39,7 +39,8 @@ class ColorImageData {
 		cv::Mat descriptors;
 		std::vector<cv::KeyPoint> keypoints;
 		std::vector<cv::Point> shape;
-
+		
+		// bool isWall(const ColorImageContext & inContext);
 		int match(
 			const ColorImageData & inSample,
 			const ColorImageContext & inContext,

@@ -51,6 +51,7 @@ bool blind_done = true;
 bool prev_flag = true;
 bool phase_2 = false;
 int goal = -1;
+int curr_obj=-1;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -175,7 +176,7 @@ bool close_object(){
 
 bool time_for_more(ros::Time orig){
 
-	if((ros::Time::now().toSec()-orig.toSec()) > 5*60){
+	if((ros::Time::now().toSec()-orig.toSec()) > 3*60){
 		ROS_WARN("NO TIME FOR MORE!");
 		phase_2=true;
 		return false;
@@ -233,7 +234,7 @@ int goal_picker(ros::ServiceClient srv){
 
 	}else{
 
-		ob_list.resize(size);
+		/*ob_list.resize(size);
 
 		ROS_INFO("Choose object from the list:");
 		for(int i=0; i < size; i++){
@@ -244,7 +245,17 @@ int goal_picker(ros::ServiceClient srv){
 
 		}
 
-		scanf("%d",&ret);
+		scanf("%d",&ret);*/
+		curr_obj++;
+		
+		if(curr_obj < size){
+			return curr_obj+1;
+		}else{
+			
+			ROS_ERROR("Finished second phase");
+			return ret;
+			
+		}
 
 	}
 
@@ -478,8 +489,8 @@ int main(int argc, char ** argv){
 			////////////////////////////////////////////////////////////////////////////////////////////////
 		}else{
 			ROS_INFO("OBJECT TOO CLOSE");
-			object_msg.object=1;
-			object_pub.publish(object_msg);
+			//object_msg.object=1;
+			//object_pub.publish(object_msg);
 		}
 
 

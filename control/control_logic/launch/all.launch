@@ -1,7 +1,12 @@
 <launch>
 	<node
 		pkg="control_logic"
-		type="control_logic"
-		name="logic"
+		type="blind"
+		name="blind"
+	/>
+	<node
+		pkg="control_logic"
+		type="wall_follower"
+		name="wall_follower"
 	/>
 </launch>
