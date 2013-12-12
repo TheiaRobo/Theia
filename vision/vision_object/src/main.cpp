@@ -38,6 +38,10 @@ ros::Subscriber boxSub;
 ros::Subscriber colorImageSub;
 ros::Publisher objectPub;
 
+/**
+* Load the configuration from the central ROS
+* parameter server and build a context from it.
+*/
 int init(){
 	int errorCode = 0;
 
@@ -61,6 +65,11 @@ bool compareResultPairs(
 	return inOne.second.isBetterThan(inTwo.second);
 }
 
+/**
+* Find the best best fitting training image and publish it
+* together with the viewing angle, the objects position and
+* and image as evidence.
+*/
 int publishResults(
 	const vector< pair<Object, ObjectDataResult> > & inResults,
 	const Candidate & inCand
@@ -98,6 +107,15 @@ int publishResults(
 	return errorCode;
 }
 
+/**
+* For each valid object candidate the corresponding region is
+* cropped out from the color image and is then made subject to
+* the object recognition algorithm.
+*
+* If a training object is found the performs well enough it is
+* publish to the mapping node. Otherwise it is declared as UFO
+* in order to avoid the obstacle of unkown nature.
+*/
 int match(){
 	int errorCode = 0;
 
@@ -121,7 +139,7 @@ int match(){
 		cout << "Error in " << __FUNCTION__ << endl;
 		cout << "Could not filter valid candidates" << endl;
 		return errorCode;
-	}
+	}	
 
 	size_t numbValidCands = validCandVect.size();
 	if(!numbValidCands){
@@ -129,11 +147,13 @@ int match(){
 		return errorCode;
 	}
 
-//	candShow(validCandVect, context.camera, colorImage);
-
+/*
 	cout << "# total candidates: " << numbCands << endl;
 	cout << "# valid candidates: " << numbValidCands << endl;
 
+	candShow(validCandVect, context.camera, colorImage);
+*/
+	
 	for(size_t nCand = 0; nCand < numbValidCands; nCand++){
 		Candidate & cand = validCandVect[nCand];
 
@@ -208,6 +228,11 @@ int match(){
 	return errorCode;
 }
 
+/**
+* This function scans the training directory for object data.
+* The found images are then analyzed using the same algorithms
+* that are applied on object candidates.
+*/
 int train(){
 	int errorCode = 0;
 
@@ -229,6 +254,10 @@ int train(){
 	return errorCode;
 }
 
+/**
+* Wait until the latest color image and candidate list is
+* received from the object detector.
+*/
 int tryToMatch(){
 	int errorCode = 0;
 
