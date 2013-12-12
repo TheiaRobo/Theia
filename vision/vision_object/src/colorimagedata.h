@@ -8,6 +8,10 @@
 
 #include "colorimagecontext.h"
 
+/**
+* This class contains all values resulting from object
+* detection algorithms applied to the color image.
+*/
 class ColorImageResult {
 	public:
 		double colorError;
@@ -28,6 +32,10 @@ class ColorImageResult {
 		bool isGoodEnough(const ColorImageContext & inContext) const;
 };
 
+/**
+* The ColorImageData class contains all data needed to
+* perform object detection algorithms on a color image.
+*/
 class ColorImageData {
 	public:
 		std::string path;
@@ -35,9 +43,13 @@ class ColorImageData {
 		cv::Mat color;
 		// HLS8 version
 		cv::Mat gray;
+		// Color distribution function
 		cv::MatND hist;
+		// all keypoint descriptors
 		cv::Mat descriptors;
+		// list of keypoints
 		std::vector<cv::KeyPoint> keypoints;
+		// object shape
 		std::vector<cv::Point> shape;
 		
 		// bool isWall(const ColorImageContext & inContext);

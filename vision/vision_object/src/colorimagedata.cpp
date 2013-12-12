@@ -25,6 +25,10 @@ void ColorImageResult::calcTotalError(const ColorImageContext & inContext){
 	totalError = total;
 }
 
+/**
+* Find the n best matching keypoint pairs based on their
+* descriptor difference vector.
+*/
 int ColorImageResult::getBestMatches(
 	int inNumbMatches,
 	std::vector<cv::DMatch> & outMatches
@@ -75,6 +79,11 @@ bool ColorImageData::isWall(const ColorImageContext & inContext){
 }
 */
 
+/**
+* Finding the coordinate transformation between a training image and
+* the object candidate image. This allows us to determine the precise
+* orientation of an object in the scene.
+*/  
 int ColorImageData::findHomography(
 	const ColorImageData & inSample,
 	const ColorImageContext & inContext,
@@ -119,6 +128,9 @@ int ColorImageData::findHomography(
 	return errorCode;
 }
 
+/**
+* Run all object recognition algorithms and calculate final score.
+*/
 int ColorImageData::match(
 	const ColorImageData & inSample,
 	const ColorImageContext & inContext,
@@ -145,6 +157,9 @@ int ColorImageData::match(
 	return errorCode;
 }
 
+/**
+* Calculate error between two color distribution functions.
+*/
 int ColorImageData::matchHistogram(
 	const ColorImageData & inSample,
 	const ColorImageContext & inContext,
@@ -159,6 +174,11 @@ int ColorImageData::matchHistogram(
 	return errorCode;
 }
 
+/**
+* Determine pairs of matching keypoints between trainig image and
+* object candidate. The error measurement is defined as the mean
+* square error between keypoint descriptors.
+*/
 int ColorImageData::matchKeypoints(
 	const ColorImageData & inSample,
 	const ColorImageContext & inContext,
@@ -203,6 +223,9 @@ int ColorImageData::matchKeypoints(
 	return errorCode;
 }
 
+/**
+* Match two shapes by calculating and comparing their Hu moments.
+*/
 int ColorImageData::matchShape(
 	const ColorImageData & inSample,
 	const ColorImageContext & inContext,
@@ -227,6 +250,12 @@ int ColorImageData::matchShape(
 	return errorCode;
 }
 
+/**
+* Show the object candidate image with an overlay indicating the
+* object's position.
+* This function is used for debugging the coordinate transformation
+* between an object candidate and a training image.
+*/
 int ColorImageData::showHomography(
 	const ColorImageData & inSample,
 	const ColorImageResult & inResult
@@ -263,6 +292,10 @@ int ColorImageData::showHomography(
 	return errorCode;
 }
 
+/**
+* Displays an image with all detected keypoints hightlighted.
+* Only used for debugging.
+*/
 int ColorImageData::showKeypoints(){
 	int errorCode = 0;
 
@@ -281,6 +314,11 @@ int ColorImageData::showKeypoints(){
 	return errorCode;
 }
 
+/**
+* Draw object candidate and training image side-by-side and
+* indicate matching keypoints using lines.
+* Only used for debugging.
+*/
 int ColorImageData::showMatches(
 	const ColorImageData & inSample,
 	const ColorImageResult & inResult
@@ -309,6 +347,9 @@ int ColorImageData::showMatches(
 	return errorCode;
 }
 
+/**
+* Read training image from file and launch training algorithm.
+*/
 int ColorImageData::train(const ColorImageContext & context){
 	int errorCode = 0;
 
@@ -333,7 +374,7 @@ int ColorImageData::train(const ColorImageContext & context){
 }
 
 /**
-* Calculating histogram from HLS8 image
+* Calculating color distribution function from BRG8 image.
 * Highly inspired by:
 * http://docs.opencv.org/modules/imgproc/doc/histograms.html?highlight=calchist#calchist
 */
@@ -341,25 +382,37 @@ int ColorImageData::trainHistogram(const ColorImageContext & inContext){
 	int errorCode = 0;
 
 	int histBins = inContext.histBins;
-	int histSize[] = {histBins, histBins, histBins};
-/*
+
+/**
+* In case of HLS8 image
+*
+	int histSize[] = {histBins, histBins};
 	float hRange[] = {0, 180};
 	float sRange[] = {0, 255};
 	const float * ranges[] = {hRange, sRange};
+	int channels[] = {0, 2}
 */
+
+	int histSize[] = {histBins, histBins, histBins};
 	float range[] = {0, 255};
 	const float * ranges[] = {range, range, range};
-	// hue and saturation only	
 	int channels[] = {0, 1, 2};
 
 	MatND workingHist;
-
+/**
+* In case of HLS8 image
+*
+	calcHist(&color, 1, channels, Mat(), workingHist, 2, histSize, ranges);
+*/	
 	calcHist(&color, 1, channels, Mat(), workingHist, 3, histSize, ranges);
 	normalize(workingHist, hist);
 
 	return errorCode;
 }
 
+/**
+* Detect keypoints and extract thei descriptor vectors.
+*/
 int ColorImageData::trainKeypoints(const ColorImageContext & inContext){
 	int errorCode = 0;
 	
@@ -369,6 +422,9 @@ int ColorImageData::trainKeypoints(const ColorImageContext & inContext){
 	return errorCode;
 }
 
+/**
+* Find object shape.
+*/
 int ColorImageData::trainShape(const ColorImageContext & inContext){
 	int errorCode = 0;
 
@@ -376,40 +432,53 @@ int ColorImageData::trainShape(const ColorImageContext & inContext){
 	const double cannyThresh = inContext.cannyThresh;
 
 	Mat image = color.clone();
-
+	
+	/**
+	* Convert color image go HSV
+	*/
 	Mat hsvImage;
 	cvtColor(image, hsvImage, CV_BGR2HSV);
 
+	/**
+	* Reduce noise in HSV image for noise reduction
+	*/
 	Mat blurredHsvImage;
 	blur(hsvImage, blurredHsvImage, Size(blurRad, blurRad));
 
-	// Hue, Saturation, Value
+	/**
+	* Range of hue, saturation and value for the wodden floor
+	* encountered in the competition maze.
+	*/
 	Scalar minColor(30 / 2, 0.00 * 255, 0.00 * 255);
 	Scalar maxColor(60 / 2, 0.60 * 255, 0.90 * 255);
 
-	// find floor pixels
+	/**
+	* Find and enlarge pixel areas matching wooden floor.
+	*/
 	Mat floorMat;
 	inRange(blurredHsvImage, minColor, maxColor, floorMat);
 	blur(floorMat, floorMat, Size(10, 10));
 
-	// white out floor
+	/**
+	* Convert color image to grayscale and white out all
+	* pixels that were identified as floor.
+	*/
 	Mat objectImage;
 	Mat blurredImage;
 	cvtColor(image, objectImage, CV_BGR2GRAY);
 	add(objectImage, floorMat, objectImage, floorMat);
 	blur(objectImage, blurredImage, Size(blurRad, blurRad));
 
-/*
-	Mat image;
-	cvtColor(color, image, CV_BGR2GRAY);
-
-	Mat blurredImage;
-	blur(image, blurredImage, Size(blurRad, blurRad));
-*/
-
+	/**
+	* Use Canny algorithm for edge detection in gray
+	* scale image.
+	*/
 	Mat cannyImage;
 	Canny(blurredImage, cannyImage, cannyThresh, 2 * cannyThresh);
 	
+	/**
+	* Extract contours.
+	*/
 	vector< vector< Point > > contours;
 	findContours(cannyImage, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
@@ -420,6 +489,9 @@ int ColorImageData::trainShape(const ColorImageContext & inContext){
 		return errorCode;
 	}
 
+	/**
+	* Find biggest contour in the image.
+	*/
 	double maxContourArea = 0;
 	size_t maxContourIndex = 0;
 	for(size_t i = 0; i < contours.size(); i++){
@@ -439,6 +511,9 @@ int ColorImageData::trainShape(const ColorImageContext & inContext){
 	return errorCode;
 }
 
+/**
+* Launch all training algorithms.
+*/
 int ColorImageData::train(
 	const Mat & inImage,
 	const ColorImageContext & context

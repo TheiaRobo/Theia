@@ -8,9 +8,14 @@
 
 class ColorImageContext {
 	public:
+		/**
+		* Wrapper around OpenCV feature detector and descriptor
+		* extractor containing all their configuration values
+		*/
 		cv::SurfFeatureDetector detector;
 		cv::SurfDescriptorExtractor extractor;
 		cv::BFMatcher matcher;
+		
 		double blurRad;
 		double cannyThresh;
 		double coefColor;
