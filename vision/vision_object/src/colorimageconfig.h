@@ -31,6 +31,7 @@ class ColorImageConfig {
 		/**
 		* Number of keypoints used for finding the
 		* homography between training image and object candidate
+		*/
 		int numbMatchesHomography;
 };
 
