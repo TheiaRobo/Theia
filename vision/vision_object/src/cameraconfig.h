@@ -3,11 +3,21 @@
 
 class CameraConfig {
 	public:
+		/**
+		* Position of the camera relative to the robot's center
+		* of gravity. All units are meters.
+		*/
 		double posX;
 		double posY;
 		double posZ;
+
+		// angle to the vertical in degrees 
 		double angle;
+
+		// lateral field of view in degrees
 		double fovLat;
+		
+		// longitudinal field of view in degrees
 		double fovLong;
 };
 

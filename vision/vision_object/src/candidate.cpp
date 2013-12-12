@@ -11,6 +11,10 @@ Candidate::Candidate(){
 	// nothing
 }
 
+/**
+* Building an object candidate using the bounding box
+* received from the object detection algorithm.
+*/
 Candidate::Candidate(
 	const Box & inBox,
 	const CameraContext & inContext
@@ -19,6 +23,10 @@ Candidate::Candidate(
 	calcCamCoordsFromBox(inBox, inContext);
 }
 
+/**
+* Calculate latitude and longitude of the object
+* relative to the camera's mounting point.
+*/
 int Candidate::calcCamCoordsFromBox(
 	const Box & inBox,
 	const CameraContext & inContext
@@ -49,6 +57,11 @@ int Candidate::calcCamCoordsFromBox(
 	return errorCode;
 }
 
+/**
+* Calculate coordinate of the bounding box around the object
+* candidate in the coordinate system relative to the robot's
+* center of gravity.
+*/
 int Candidate::calcRobCoordsFromBox(
 	const Box & inBox,
 	const CameraContext & inContext
@@ -86,12 +99,19 @@ int Candidate::calcRobCoordsFromBox(
 }
 
 bool Candidate::isValid(const CandidateContext & inContext) const {	
+	// too close?
 	if(robXMin < inContext.minX) return false;
+	// too far way?
 	if(robXMax > inContext.maxX) return false;
+	// too far left?
 	if(robYMin < inContext.minY) return false;
+	// too far right?
 	if(robYMax > inContext.maxY) return false;
+	// too low?
 	if(robZMin < inContext.minZ) return false;
+	// hovering over the floor?
 	if(robZMin > 0.05) return false;
+	// too high?
 	if(robZMax > inContext.maxZ) return false;
 	
 	return true;
@@ -117,6 +137,10 @@ int Candidate::print() const {
 	return errorCode;
 }
 
+/**
+* Transform the latitude and longitude coordinates of the object
+* candidate to a rectangle in the color image.
+*/
 int Candidate::toRect(
 	const CameraContext & inContext,
 	const cv::Mat & inImage,
@@ -167,6 +191,9 @@ int Candidate::toRect(
 	return errorCode;
 }
 
+/**
+* Remove all invalid object candidate from a vector.
+*/
 int candFilterValid(
 	const vector<Candidate> & inCands,
 	const CandidateContext & inContext,
@@ -187,6 +214,10 @@ int candFilterValid(
 	return errorCode;
 }
 
+/**
+* Show a color image with superposed rectangle around
+* the object candidates.
+*/
 int candShow(
 	const vector<Candidate> & inCandVect,
 	const CameraContext & inContext,

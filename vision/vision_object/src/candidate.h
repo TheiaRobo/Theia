@@ -10,11 +10,19 @@
 
 class Candidate {
 	public:
+		/**
+		* Latitude and longitude of the object in rads
+		* relative to the camera's facing direction.
+		*/
 		double camLatMin;
 		double camLatMax;
 		double camLongMin;
 		double camLongMax;
 		
+		/**
+		* Bounding box around the object relative to the
+		* robot. All units are meters.
+		*/
 		double robXMin;
 		double robXMax;
 		double robYMin;
