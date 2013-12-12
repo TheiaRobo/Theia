@@ -3,6 +3,10 @@
 
 class CandidateConfig {
 	public:
+		/**
+		* Coordinates of a bounding box for valid object candidates.
+		* These values are relative to the robot position and in meters.
+		*/
 		double minX;
 		double maxX;
 		double minY;
