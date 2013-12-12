@@ -67,6 +67,11 @@ void imageSave(string & fileName){
 	depthImageSet = false;
 }
 
+/**
+* This is a small tool for capturing color and deth images
+* of an object at the same time.
+* It was used for capturing training images of all objects.
+*/
 int main(int argc, char ** argv){
 	ros::init(argc, argv, NODE_NAME);
 	ros::NodeHandle node;

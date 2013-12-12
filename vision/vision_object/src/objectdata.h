@@ -7,6 +7,12 @@
 #include "colorimagedata.h"
 #include "context.h"
 
+/**
+* The ObjectDataResult class groups the detection results
+* from all object recgnition algorithms.
+* Initially it contained color image result and results
+* based on depth image data.
+*/
 class ObjectDataResult {
 	public:
 		int angle;
@@ -17,6 +23,12 @@ class ObjectDataResult {
 		bool isGoodEnough(const Context & inContext) const;
 };
 
+/**
+* This class serves as container for all data about a
+* training object from ONE single perspective.
+* If training images from multiple perspectives is needed
+* they are grouped in the Object class.
+*/
 class ObjectData {
 	public:
 		static int find(

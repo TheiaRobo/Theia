@@ -14,8 +14,11 @@ class Object {
 			std::vector<Object> & outObjectVect
 		);
 
+		// object name
 		std::string name;
+		// path to directory containing all trainig files
 		std::string path;
+		// list with training data from multiple perspectives
 		std::vector<ObjectData> objectDataVect;
 
 		int train(const Context & context);

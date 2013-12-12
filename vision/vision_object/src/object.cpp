@@ -4,6 +4,10 @@
 
 using namespace std;
 
+/**
+* Scan the configured folder for valid object training data.
+* Construct a list of object training data.
+*/
 int Object::find(
 	const string inPath,
 	vector<Object> & outObjectVect
@@ -31,6 +35,10 @@ int Object::find(
 	return errorCode;
 }
 
+/**
+* Run training algorithms on all object training files.
+* THIS CODE ACTUALLY IS NEVER USED
+*/
 int Object::train(const Context & context){
 	int errorCode = 0;
 
@@ -43,6 +51,9 @@ int Object::train(const Context & context){
 	return errorCode;
 }
 
+/**
+* Find the best matching object in an object candidate.
+*/
 int Object::match(
 	const ObjectData & inSampleData,
 	const Context & inContext,

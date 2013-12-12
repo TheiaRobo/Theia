@@ -9,9 +9,13 @@
 
 class Config {
 	public:
+		// path to the directory containing training images
 		std::string path;
+		// camera-related configuration values
 		CameraConfig camera;
+		// values related to object candidates
 		CandidateConfig candidate;
+		// configuration values for color image data
 		ColorImageConfig colorImage;
 };
 

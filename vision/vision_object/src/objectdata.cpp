@@ -17,6 +17,11 @@ bool ObjectDataResult::isGoodEnough(const Context & inContext) const {
 	return colorImage.isGoodEnough(inContext.colorImage);
 }
 
+/**
+* Find all training images provided for one specific object.
+* The directory names are expected to be numbers indicating
+* the viewing angle on the object.
+*/
 int ObjectData::find(
 	const string inPath,
 	vector<ObjectData> & outObjectDataVect
