@@ -1,6 +1,12 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
+
+/**
+* The unstable ROS package containing PCL 1.6 is used in order
+* to circumvent the segmentation fault in Euclidean distance clustering
+* present in older version of PCL
+*/
 #include <pcl16/common/centroid.h>
 #include <pcl16/ModelCoefficients.h>
 #include <pcl16/filters/extract_indices.h>
@@ -22,6 +28,10 @@
 #define NODE_NAME "vision_plane"
 #define TOPIC_IN "/camera/depth_registered/points"
 #define TOPIC_OUT_BOX "/vision/plane/box"
+
+/**
+* If subscribed to these topic debug point cloud are sent
+*/
 #define TOPIC_DEBUG_CROPPED_OUT "/vision/plane/debug/cropped"
 #define TOPIC_DEBUG_NON_PLANE_OUT "/vision/plane/debug/nonPlane"
 #define TOPIC_DEBUG_PLANE_OUT "/vision/plane/debug/plane"
@@ -66,8 +76,9 @@ int clusterToBox(
 }
 
 /**
-* Scaling down the cloud
-* This should improve performance for future operations
+* Reducing the number of elements in a point cloud using a
+* voxel grid with configured leaf size.
+* The main goal is to increase processing speed.
 */
 void scaleCloud(
 	TheiaCloudPtr in,
@@ -82,8 +93,8 @@ void scaleCloud(
 }
 
 /**
-* This function tries to find all planes in a point cloud.
-* A RANSAC algorithm is used for this.
+* This function tries to find all planes in a point cloud by applying
+* a model-based RANSAC algorithm.
 *
 * Heavily inspired by
 * http://www.pointclouds.org/documentation/tutorials/extract_indices.php
@@ -158,6 +169,12 @@ void filterPlanes(
 	*outObjects = TheiaCloud(*workingCloudPtr);
 }
 
+/**
+* Find object candidates by clustering the ramining point cloud.
+* The minimum number of point forming an object candidate and
+* the maximum object size is configurable.
+* This helps to filter noise.
+*/
 int findBoxes(
 	TheiaCloudPtr inCloud,
 	std::vector<Box> & outBoxVect
@@ -193,6 +210,10 @@ int findBoxes(
 	return errorCode;
 }
 
+/**
+* Copy configuration values from the central ROS parameter server
+* to a local configuration object.
+*/
 void initConfig(){
 	ros::param::getCached("~config/leafSize", config.leafSize);
 	ros::param::getCached("~config/minClusterSize", config.minClusterSize);
